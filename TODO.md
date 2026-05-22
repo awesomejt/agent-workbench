@@ -117,7 +117,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 
 - [X] Implement `projects` module for project metadata, Git source location, type, environment, and defaults. Completed 2026-05-22 by claude-sonnet-4-6; CRUD routes (list, create, get, patch), service layer, serialization, optimistic locking, slug conflict handling.
 - [X] Implement `project_sections` module for modules/sections within a project. Completed 2026-05-22 by claude-sonnet-4-6; nested CRUD routes under /api/projects/{id}/sections, sort_order support, project ownership validation.
-- [ ] Implement `project_status` module for project-wide and section-scoped current status and history.
+- [X] Implement `project_status` module for project-wide and section-scoped current status and history. Completed 2026-05-22 by claude-sonnet-4-6; list/create/patch routes nested under /api/projects/{id}/status, optional project_section_id, optimistic locking.
 - [ ] Implement `project_tasks` module for project-wide and section-scoped tasks, priorities, phases, dependencies, assignee/owner, leases, and completion evidence.
 - [ ] Implement `agents` module for agent registry, capabilities, defaults, and runtime hints.
 - [ ] Scaffold Go 1.26 CLI and configure builds to write artifacts into `cli/builds/`.

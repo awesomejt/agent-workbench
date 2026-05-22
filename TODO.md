@@ -86,11 +86,13 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Add migration commands that require explicit `APP_ENV` for dev/stage/prod targets.
 - [X] Add safe database bootstrap docs and SQL template for creating target schemas without embedding secrets. Completed 2026-05-22 by Codex.
 - [ ] Add environment-aware wrapper command for running schema bootstrap against local/dev/stage/prod.
-- [ ] Add root `Makefile` with setup, lint, test, smoke, integration-test, migration, cleanup, and CLI build targets.
+- [ ] Expand root `Makefile` with setup, lint, test, smoke, integration-test, migration, cleanup, and real CLI build targets.
 - [ ] Add curl smoke checks for API health and basic workflow validation.
 - [ ] Add Python containerized integration-test runner.
-- [ ] Add stub CLI/bootstrap commands for OpenCode: task next, claim, heartbeat, complete, block, status show.
-- [ ] Confirm `cli/builds/` is excluded from Git.
+- [X] Add stub CLI/bootstrap commands for OpenCode: task next, claim, heartbeat, complete, block, status show. Completed 2026-05-22 by Codex.
+- [X] Confirm `cli/builds/` is excluded from Git. Completed 2026-05-22 by Codex.
+- [X] Add root `Makefile` with bootstrap `task-next`, `status-show`, `validate`, and placeholder `build-cli` targets. Completed 2026-05-22 by Codex.
+- [ ] Add scheduled OpenCode wrapper that calls bootstrap commands and runs one focused task.
 
 ### Implementation Phase: Core API Modules
 
@@ -122,6 +124,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Document database migration workflow.
 - [X] Add database environment and schema planning doc. Completed 2026-05-22 by Codex in `docs/Database.md`.
 - [ ] Document secret handling and Ansible integration expectations without copying secrets.
+- [X] Document bootstrap CLI command workflow for OpenCode in `docs/Bootstrap-CLI.md`. Completed 2026-05-22 by Codex.
 - [ ] Document OpenCode automation workflow once the OpenCode setup repo is ready.
 - [ ] Record decisions and milestones in `MEMORY.md`.
 

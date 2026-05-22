@@ -34,13 +34,15 @@ This repo will initially use familiar agent Markdown files:
 - `AGENTS.md`
 - `AGENT_WORKFLOW.md`
 
-Once the database schema and scripts exist, the normal agent workflow should shift toward:
+The bootstrap command stubs are now available and store transient local state under ignored `.agent-workbench/`. The normal bootstrap workflow is:
 
 ```bash
-./scripts/task-next
-./scripts/task-claim <task-id>
+./scripts/status-show --json
+./scripts/task-next --json
+./scripts/task-claim <task-id> --agent opencode
+./scripts/task-heartbeat <task-id>
 ./scripts/task-complete <task-id>
-./scripts/status-show
+./scripts/task-block <task-id> --note "blocked reason"
 ```
 
 OpenCode should use these stub CLI commands first. Later, those scripts should become or wrap a real Go CLI/API workflow.

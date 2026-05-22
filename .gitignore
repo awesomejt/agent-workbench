@@ -97,3 +97,6 @@ test-output/
 
 # CLI build artifacts
 cli/builds/
+
+# Agent Workbench bootstrap local state
+.agent-workbench/

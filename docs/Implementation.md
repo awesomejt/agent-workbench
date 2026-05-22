@@ -29,14 +29,15 @@ High-level order of implementation. Keep this aligned with `TODO.md`.
 - Add Alembic migration baseline.
 - Add environment-aware migration commands for local/dev/stage/prod, with explicit confirmation for prod.
 - Implement project, project section, task, status, agent, run, event, and review schema foundations.
-- Add bootstrap scripts or CLI commands:
+- Maintain bootstrap scripts or CLI commands documented in `docs/Bootstrap-CLI.md`:
   - `task-next`
   - `task-claim`
   - `task-heartbeat`
   - `task-complete`
   - `task-block`
   - `status-show`
-- Add root `Makefile` for setup, validation, smoke, integration, migration, cleanup, and CLI builds.
+- Evolve bootstrap commands from local ignored state to database/API-backed behavior.
+- Expand root `Makefile` for setup, validation, smoke, integration, migration, cleanup, and CLI builds.
 - Add Go 1.26 CLI scaffold with build artifacts under `cli/builds/`.
 
 ## Implementation Phase: API Modules

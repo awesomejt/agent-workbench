@@ -43,12 +43,12 @@ uv run alembic upgrade head
 uv run agent-workbench-api
 
 # Bootstrap agent workflow examples
-./scripts/task-next
-./scripts/task-claim <task-id>
+make status-show
+make task-next
+./scripts/task-claim <task-id> --agent opencode
 ./scripts/task-heartbeat <task-id>
 ./scripts/task-complete <task-id>
-./scripts/task-block <task-id>
-./scripts/status-show
+./scripts/task-block <task-id> --note "blocked reason"
 
 # Build CLI once scaffolded
 make build-cli

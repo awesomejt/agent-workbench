@@ -46,7 +46,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Production database: `postgresql`/`postgresql.taylor.lan` with secrets supplied externally.
 - Deployment target: Docker Compose VM first; K3s is future work.
 - CLI direction: Go 1.26 managed by Makefile, with build artifacts under `cli/builds/` excluded from Git.
-- OpenCode direction: use stub CLI commands first, then gradually replace with real CLI/API-backed behavior.
+- OpenCode direction: use stub CLI commands first, then gradually replace with real CLI/API-backed behavior. Current stubs live under `scripts/` and use ignored `.agent-workbench/bootstrap-state.json`.
 
 ## Manual Validation Findings
 
@@ -71,6 +71,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - Codex
+
+- Task: Add bootstrap commands for OpenCode handoff.
+- Files changed: `scripts/`, `docs/Bootstrap-CLI.md`, `Makefile`, README, TODO, MEMORY, and `.gitignore`.
+- Validation: `make validate`, `./scripts/status-show --json`, and `./scripts/task-next --json` passed.
+- Result: Added local-state-backed command stubs for task next, claim, heartbeat, complete, block, and status show.
+- Blockers or follow-up: add scheduled OpenCode wrapper and later replace stubs with database/API-backed CLI.
 
 ### 2026-05-22 - Codex
 

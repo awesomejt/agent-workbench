@@ -50,7 +50,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 ### Discovery And Planning
 
 - [X] Replace template placeholders with Agent Workbench project direction.
-- [ ] Inventory reusable lessons from `/shared/projects/dev/project-status` without copying known implementation drift.
+- [X] Inventory reusable lessons from `/shared/projects/dev/project-status` without copying known implementation drift. Completed 2026-05-22 by Copilot.
 - [ ] Inventory OpenCode setup repo requirements from `/shared/projects/ai/opencode-setup`.
 - [X] Decide initial API framework: Python 3.14 latest plus Flask. Completed 2026-05-22 by Jason.
 - [ ] Decide Flask package layout.
@@ -77,6 +77,9 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Define optimistic locking/version fields for mutable resources.
 - [ ] Define idempotency key behavior for agent-submitted commands.
 - [ ] Define task claim/lease/heartbeat behavior, including interaction with task assignee/owner.
+- [ ] Establish standard API response formats for errors (e.g., 422 Unprocessable Entity for validation) and collection pagination (`page`/`per_page`).
+- [ ] Define in-code API documentation strategy (e.g., OpenAPI auto-generation) to prevent API contract drift.
+- [ ] Evaluate `pydantic-settings` for type-safe configuration validation and failing fast on missing `DATABASE_URL`.
 - [ ] Define append-only event model, structured logging fallback, and retention expectations.
 - [ ] Define Markdown summary/mirroring strategy for `MEMORY.md`, `TODO.md`, and project status snapshots.
 - [X] Define local/dev/stage/prod environment variable names in `docs/Database.md`. Completed 2026-05-22 by Codex.
@@ -85,14 +88,15 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 ### Scaffolding
 
 - [ ] Add backend project structure after framework decision.
-- [ ] Add Docker Compose with local PostgreSQL container.
+- [ ] Add Docker Compose with local PostgreSQL 18 container and separate `migrations` service.
 - [ ] Add Docker Compose secret/env-file pattern for non-local deployment without committing secrets.
 - [ ] Add example env files without secrets.
-- [ ] Add database migration tooling.
+- [ ] Add database migration tooling (Alembic) configured for semantic revision IDs and downgrade functions.
 - [ ] Add migration commands that require explicit `APP_ENV` for dev/stage/prod targets.
 - [X] Add safe database bootstrap docs and SQL template for creating target schemas without embedding secrets. Completed 2026-05-22 by Codex.
 - [ ] Add environment-aware wrapper command for running schema bootstrap against local/dev/stage/prod.
 - [ ] Expand root `Makefile` with setup, lint, test, smoke, integration-test, migration, cleanup, and real CLI build targets.
+- [ ] Configure `pytest` with `autouse` fixtures for per-test PostgreSQL 18 database cleanup.
 - [ ] Add curl smoke checks for API health and basic workflow validation.
 - [ ] Add Python containerized integration-test runner.
 - [X] Add stub CLI/bootstrap commands for OpenCode: task next, claim, heartbeat, complete, block, status show. Completed 2026-05-22 by Codex.

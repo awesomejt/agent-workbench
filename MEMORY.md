@@ -49,23 +49,24 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Architecture Notes
 
-- Planned API namespace style: `/api/projects`, `/api/projects/{project_id}/status`, `/api/projects/{project_id}/tasks`, with aliases or convenience routes considered during contract design.
-- Avoid URL versioning at first; prefer explicit compatibility policy and deprecation notes.
-- Core coordination concepts: task leases, heartbeats, idempotency keys, optimistic locking, append-only events, and validation evidence.
-- Potential modules: projects, project_sections, project_status, project_tasks, agents, runs, events, reviews.
+- API namespace style: canonical multi-project routes `/api/projects`, `/api/projects/{project_id}/status`, `/api/projects/{project_id}/tasks`; explicit action routes for atomic transitions (e.g., `/api/tasks/{task_id}/claim`).
+- No URL versioning for MVP; document compatibility and deprecation when routes change.
+- Core coordination concepts: task leases, heartbeats, idempotency keys, optimistic locking (`version` field), append-only events, and validation evidence.
+- Implemented modules (as of 2026-05-22 scaffolding): `projects`, `project_sections`, `project_status`, `tasks`, `agents`, `runs`, `events`, `reviews` — each with SQLAlchemy models, Blueprint stub, and service stub.
+- All models use `Uuid` PKs, `DateTime(timezone=True)`, `version` int for optimistic locking; `MetaData(schema="agent_workbench")` applied globally.
+- Tasks have lease fields: `claimed_by`, `claimed_until`, `lease_version`, `idempotency_key`.
+- Events table is append-only by design; no `updated_at` column.
 
 ## Technical Notes
 
-- API framework: Flask.
-- API runtime: Python 3.14 latest.
-- Package manager: `uv`.
-- Local database: PostgreSQL container via Docker Compose.
-- Target schema plan is documented in `docs/Database.md`.
-- Database servers: local container, `postgresql-dev`, `postgresql-stage`, and `postgresql`/`postgresql.taylor.lan` for prod.
-- Production database: `postgresql`/`postgresql.taylor.lan` with secrets supplied externally.
+- API: Flask 3.x, Flask-SQLAlchemy 3.x (SQLAlchemy 2.x), Alembic 1.x, psycopg 3.x, pydantic-settings 2.x; Python 3.14; `uv` package manager.
+- Package location: `api/src/agent_workbench/`; entry point `agent-workbench-api = "agent_workbench.app:main"`.
+- Local database: PostgreSQL 18 container via `docker compose up -d db`; schema `agent_workbench` created by Alembic `env.py` on first migration run.
+- Database servers: local container, `postgresql-dev`, `postgresql-stage`, `postgresql`/`postgresql.taylor.lan` for prod.
+- Production database: `postgresql`/`postgresql.taylor.lan` with secrets supplied externally; never committed.
 - Deployment target: Docker Compose VM first; K3s is future work.
-- CLI direction: Go 1.26 managed by Makefile, with build artifacts under `cli/builds/` excluded from Git.
-- OpenCode direction: use stub CLI commands first, then gradually replace with real CLI/API-backed behavior. Current stubs live under `scripts/` and use ignored `.agent-workbench/bootstrap-state.json`.
+- CLI direction: Go 1.26 managed by Makefile, build artifacts under `cli/builds/` (git-ignored).
+- Bootstrap scripts: `scripts/` (root level), backed by `.agent-workbench/bootstrap-state.json` (git-ignored), used until Go CLI replaces them.
 
 ## Manual Validation Findings
 

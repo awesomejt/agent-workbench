@@ -115,7 +115,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 
 ### Implementation Phase: Core API Modules
 
-- [ ] Implement `projects` module for project metadata, Git source location, type, environment, and defaults.
+- [X] Implement `projects` module for project metadata, Git source location, type, environment, and defaults. Completed 2026-05-22 by claude-sonnet-4-6; CRUD routes (list, create, get, patch), service layer, serialization, optimistic locking, slug conflict handling.
 - [ ] Implement `project_sections` module for modules/sections within a project.
 - [ ] Implement `project_status` module for project-wide and section-scoped current status and history.
 - [ ] Implement `project_tasks` module for project-wide and section-scoped tasks, priorities, phases, dependencies, assignee/owner, leases, and completion evidence.

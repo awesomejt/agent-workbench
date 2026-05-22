@@ -14,17 +14,20 @@
 - Multi-project registry with Git source location, project type, environment, default agents, and workflow hints.
 - Project sections/modules within each project so work can be tracked at project-wide or module/section level.
 - Project status tracking for current state, module/section, phase, blockers, reason, details, and history.
-- Task management with priorities, module/section association, phase, dependencies, leases, claim/heartbeat/complete/block transitions, and completion evidence.
+- Task management with priorities, module/section association, phase, dependencies, assignee/owner, leases, claim/heartbeat/complete/block transitions, and completion evidence.
 - Agent registry with capabilities, default model/agent suggestions, and runtime notes.
 - Agent run tracking for attempts, heartbeats, validation commands, outputs, and outcomes.
-- Append-only event history for project, task, status, review, and run transitions.
+- Append-only event history for project, task, status, review, and run transitions; initial implementations may expose this through structured logs before richer event-query APIs exist.
 - Review module for cloud review findings, refactor tasks, and signoff gates.
 - Bootstrap scripts or CLI commands that let agents interact with Postgres before the full web UI exists.
 - Markdown summary/memory bridge for agent context resets, generated or manually maintained during early development.
+- MVP scope is API plus CLI/scripts so at least one test project can use the workbench before the web UI is built.
+- Web UI follows MVP and should focus on human review plus adding/editing tasks on the fly.
 - Local Docker Compose PostgreSQL for development and tests.
 - Environment-driven database configuration for local, dev, stage, and production.
 - Explicit environment selection through `APP_ENV=local|dev|stage|prod` and optional `--env` flags in CLI/scripts.
 - Configurable local project discovery roots, defaulting to `~/projects/ai`, `~/projects/courses`, `~/projects/dev`, and `~/projects/infra`.
+- Optional Prometheus metrics endpoint for API health, task claims, run outcomes, and queue depth.
 
 ## API Shape
 
@@ -54,7 +57,7 @@ Convenience routes such as `/api/project/status` can be considered for current-p
 - `project`: named Git-controlled work item with type, source URL/path, environment, default agent, and metadata.
 - `project_section`: optional module/section inside a project, such as API, web, CLI, chapter, lesson, article section, or infrastructure area.
 - `project_status`: current state and status history for a project, optionally scoped to a `project_section`, and always associated with a phase.
-- `task`: actionable work item with status, priority, phase, optional `project_section`, dependencies, claim lease, owner, and validation expectations.
+- `task`: actionable work item with status, priority, phase, optional `project_section`, dependencies, assignee/owner, claim lease, and validation expectations.
 - `agent`: named automation or model profile with capabilities and defaults.
 - `run`: one agent execution attempt with task/project linkage, heartbeat, logs, validation, and result.
 - `event`: append-only audit record for important transitions and notes.
@@ -73,9 +76,10 @@ Convenience routes such as `/api/project/status` can be considered for current-p
 ## Non-Functional Requirements
 
 - Performance: support many projects and multiple simultaneous agents without task duplication.
-- Security: secrets must stay out of Git; database URLs and credentials are environment-injected.
+- Security: private-network MVP may run without authentication; secrets must stay out of Git; database URLs and credentials are environment-injected.
 - Reliability: task claims and status transitions must be atomic and recoverable after agent failure.
-- Auditability: meaningful state transitions should create durable events.
+- Auditability: meaningful state transitions should create durable events or structured log entries during the bootstrap phase.
+- Observability: Prometheus support should be optional, disabled by default or explicitly configured, and simple to enable for `prometheus.taylor.lan`.
 - Compatibility: local development uses Docker Compose PostgreSQL; production may use Docker Compose VM or K3s.
 - Agent ergonomics: command outputs should be concise, machine-readable when needed, and useful after context reset.
 - Maintainability: modules should be internally cohesive but deployed as one modular monolith initially.
@@ -83,19 +87,22 @@ Convenience routes such as `/api/project/status` can be considered for current-p
 ## Out Of Scope
 
 - Public multi-tenant SaaS behavior in MVP.
+- Web UI in MVP; API and CLI/scripts come first.
+- Authentication/authorization in MVP for trusted local-network use; IDP research is a future work item.
 - Replacing Git as source control.
 - Committing production secrets or raw long-form transcripts.
 - Building many independently deployed microservices at the start.
 
 ## Acceptance Criteria
 
-- A local agent can discover, claim, update, and complete tasks without editing Markdown as the primary state store.
+- A local agent can discover, claim, update, and complete tasks through API/CLI without editing Markdown as the primary state store.
 - PostgreSQL stores projects, sections/modules, status records, tasks, agents, runs, and events with migrations.
 - Local, dev, stage, and prod database targets can run the same schema/migrations, with prod expected on `postgresql.taylor.lan`.
-- Multiple agents can safely attempt work without claiming the same task concurrently.
+- Multiple agents can safely attempt work without claiming the same task concurrently, and each task can show its current assignee/owner.
 - Project types can influence default sections/modules, default phases, default agents, and workflow hints.
 - Local dev can run with a PostgreSQL container.
 - Dev/stage/production database URLs can be configured without code changes or committed secrets.
 - Markdown context files can still summarize current state for local agent loops.
 - Smoke and integration validation exist before real use.
+- Optional Prometheus metrics can be enabled and scraped by the homelab Prometheus server.
 - Cloud review/refactor is completed or explicitly deferred before production deployment.

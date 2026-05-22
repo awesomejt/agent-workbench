@@ -23,7 +23,9 @@ Document the approved tools, languages, frameworks, libraries, and versions for 
   - PostgreSQL-backed integration tests.
   - Curl smoke checks for quick human feedback.
   - Python containerized integration tests for agent workflows.
-- Web UI: defer until API/CLI bootstrap is stable, unless Jason prioritizes it.
+- Web UI: post-MVP; defer until API/CLI bootstrap is stable enough for a test project.
+- Observability: optional Prometheus metrics endpoint, likely `/metrics`, enabled by configuration.
+- Authentication: deferred for private-network MVP; future IDP integration should be researched before broader exposure.
 
 ## Commands
 
@@ -71,6 +73,7 @@ Root `Makefile` targets should wrap these once implemented.
   - `DATABASE_URL`: active PostgreSQL connection URL.
   - `APP_ENV`: `local`, `dev`, `stage`, or `prod`.
   - `API_HOST` and `API_PORT`: optional local bind settings.
+  - `PROMETHEUS_ENABLED`: optional flag for metrics endpoint exposure.
 - Optional database URL variables for bootstrap scripts:
   - `AGENT_WORKBENCH_LOCAL_DATABASE_URL`
   - `AGENT_WORKBENCH_DEV_DATABASE_URL`
@@ -80,6 +83,8 @@ Root `Makefile` targets should wrap these once implemented.
   - PostgreSQL container managed by Docker Compose.
 - Dev/stage/production:
   - Use separate PostgreSQL hosts: `postgresql-dev`, `postgresql-stage`, and `postgresql`/`postgresql.taylor.lan`.
+  - Initial non-local deployment can use Docker Compose env files or Compose secrets.
+  - HashiCorp Vault exists in the homelab and should be investigated later, not required for MVP.
   - Production host is expected to be `postgresql` on the LAN and/or `postgresql.taylor.lan`.
   - Use `agent_workbench` as the stable schema name unless Jason confirms separate schema names per environment.
   - Database credentials must come from deployment secrets, not Git.
@@ -89,5 +94,5 @@ Root `Makefile` targets should wrap these once implemented.
 
 ## Version Notes
 
-- Verify current Python 3.14 patch, PostgreSQL, Flask, SQLAlchemy, Alembic, psycopg, and Go 1.26 versions before scaffolding.
+- Verify current Python 3.14 patch, PostgreSQL, Flask, SQLAlchemy, Alembic, psycopg, Go 1.26, and Prometheus client library versions before scaffolding related modules.
 - Use stable releases; avoid experimental/canary packages for the coordination core.

@@ -7,9 +7,9 @@ Task list for `Agent Workbench`, organized by ownership and project phase.
 Items here require Jason's input, a decision, credentials, external access, or manual validation before agent work can continue.
 
 - [X] Confirm API framework: Flask. Completed 2026-05-22 by Jason.
-- [ ] Confirm whether MVP includes web UI or starts with API plus CLI/scripts.
-- [ ] Confirm production authentication and network exposure expectations.
-- [ ] Confirm dev/stage/production database names, users, schema layout, and secret injection approach.
+- [X] Confirm MVP starts with API plus CLI/scripts; web UI is post-MVP for human review and ad hoc task entry. Completed 2026-05-22 by Jason.
+- [X] Confirm private-network MVP can defer authentication; research IDP before wider exposure. Completed 2026-05-22 by Jason.
+- [ ] Confirm exact dev/stage/production database names and users; initial secret injection direction is Docker Compose env files/secrets with Vault as future research.
 - [X] Confirm OpenCode scheduled runs should use stub CLI commands during bootstrap, with gradual replacement by real CLI/API. Completed 2026-05-22 by Jason.
 - [X] Confirm deployed runtime should default to `APP_ENV=prod` while local/test commands explicitly select `APP_ENV=local`. Completed 2026-05-22 by Jason.
 - [X] Confirm shared PostgreSQL environments use separate servers/databases with same schema `agent_workbench`. Completed 2026-05-22 by Jason.
@@ -56,11 +56,16 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Decide Flask package layout.
 - [ ] Define initial module boundaries: projects, project_sections, status, tasks, agents, runs, events, reviews.
 - [ ] Define initial API route style and compatibility policy without URL versioning by default.
-- [ ] Define initial database schema and migration strategy.
+- [ ] Define initial database schema and migration strategy, including task assignee/owner fields.
 - [ ] Define local/dev/stage/prod database target names and stable schema policy in `docs/Database.md`.
 - [ ] Define project discovery config for `~/projects/ai`, `~/projects/courses`, `~/projects/dev`, and `~/projects/infra`.
 - [ ] Define project type vocabulary, default sections/modules, phase workflows, and default agent selection rules.
 - [ ] Define state machines for project status, task status, agent run status, and review findings.
+- [ ] Define task assignee/owner model for agent and human responsibility.
+- [ ] Define status/task event history strategy, including bootstrap structured logging before full event APIs if needed.
+- [ ] Define optional Prometheus metrics scope, config flag, endpoint, and deployment notes for `prometheus.taylor.lan`.
+- [ ] Research future authentication/IDP options for post-MVP use.
+- [ ] Research HashiCorp Vault integration for deployment secrets after Compose secrets/env files are working.
 - [ ] Define bootstrap transition from Markdown files to Postgres-backed scripts/CLI/API.
 
 ### Architecture And Contracts
@@ -71,8 +76,8 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Define phase enum and validation behavior for status records and tasks.
 - [ ] Define optimistic locking/version fields for mutable resources.
 - [ ] Define idempotency key behavior for agent-submitted commands.
-- [ ] Define task claim/lease/heartbeat behavior.
-- [ ] Define append-only event model and retention expectations.
+- [ ] Define task claim/lease/heartbeat behavior, including interaction with task assignee/owner.
+- [ ] Define append-only event model, structured logging fallback, and retention expectations.
 - [ ] Define Markdown summary/mirroring strategy for `MEMORY.md`, `TODO.md`, and project status snapshots.
 - [X] Define local/dev/stage/prod environment variable names in `docs/Database.md`. Completed 2026-05-22 by Codex.
 - [ ] Add example environment files for local, dev, stage, and prod without secrets.
@@ -81,6 +86,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 
 - [ ] Add backend project structure after framework decision.
 - [ ] Add Docker Compose with local PostgreSQL container.
+- [ ] Add Docker Compose secret/env-file pattern for non-local deployment without committing secrets.
 - [ ] Add example env files without secrets.
 - [ ] Add database migration tooling.
 - [ ] Add migration commands that require explicit `APP_ENV` for dev/stage/prod targets.
@@ -93,17 +99,18 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Confirm `cli/builds/` is excluded from Git. Completed 2026-05-22 by Codex.
 - [X] Add root `Makefile` with bootstrap `task-next`, `status-show`, `validate`, and placeholder `build-cli` targets. Completed 2026-05-22 by Codex.
 - [ ] Add scheduled OpenCode wrapper that calls bootstrap commands and runs one focused task.
+- [ ] Add optional Prometheus metrics dependencies and `/metrics` endpoint behind configuration.
 
 ### Implementation Phase: Core API Modules
 
 - [ ] Implement `projects` module for project metadata, Git source location, type, environment, and defaults.
 - [ ] Implement `project_sections` module for modules/sections within a project.
 - [ ] Implement `project_status` module for project-wide and section-scoped current status and history.
-- [ ] Implement `project_tasks` module for project-wide and section-scoped tasks, priorities, phases, dependencies, leases, and completion evidence.
+- [ ] Implement `project_tasks` module for project-wide and section-scoped tasks, priorities, phases, dependencies, assignee/owner, leases, and completion evidence.
 - [ ] Implement `agents` module for agent registry, capabilities, defaults, and runtime hints.
 - [ ] Scaffold Go 1.26 CLI and configure builds to write artifacts into `cli/builds/`.
 - [ ] Implement `runs` module for run attempts, heartbeats, validation, and outcomes.
-- [ ] Implement `events` module as append-only audit trail.
+- [ ] Implement `events` module as append-only audit trail for status/task/run/review history.
 - [ ] Implement `reviews` module for cloud review findings and signoff gates.
 
 ### Tests And Quality
@@ -123,9 +130,11 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Document deployment, environment variables, and operational notes.
 - [ ] Document database migration workflow.
 - [X] Add database environment and schema planning doc. Completed 2026-05-22 by Codex in `docs/Database.md`.
-- [ ] Document secret handling and Ansible integration expectations without copying secrets.
+- [ ] Document secret handling, Docker Compose secrets/env files, Vault future option, and Ansible integration expectations without copying secrets.
 - [X] Document bootstrap CLI command workflow for OpenCode in `docs/Bootstrap-CLI.md`. Completed 2026-05-22 by Codex.
 - [ ] Document OpenCode automation workflow once the OpenCode setup repo is ready.
+- [ ] Document post-MVP web UI scope for human review and adding tasks on the fly.
+- [ ] Document optional Prometheus setup and scrape example.
 - [ ] Record decisions and milestones in `MEMORY.md`.
 
 ## In Progress

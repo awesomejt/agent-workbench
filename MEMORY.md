@@ -10,11 +10,17 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 - Current phase: planning and bootstrap.
 - Last major milestone: initialized the project direction for a modular monolith, PostgreSQL-backed AI agent workbench.
-- Next recommended task: confirm database target names/schema layout and API framework, then finalize the initial data model and API route contract before scaffolding backend migrations.
-- Current blocker: Jason should confirm production authentication expectations and exact dev/stage/prod credential injection details.
+- Next recommended task: finalize the initial data model and API/CLI route contract for the API-plus-CLI MVP before scaffolding backend migrations.
+- Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions
 
+- MVP scope is API plus CLI/scripts first; web UI is post-MVP for human review and adding tasks on the fly.
+- Private-network/local homelab MVP can defer authentication; research IDP-backed auth before broader exposure.
+- First non-local deployment should use Docker Compose env files or Compose secrets; HashiCorp Vault is future research.
+- Tasks need assignee/owner information for the responsible agent or human.
+- Status and task changes need event history; structured logs are acceptable as an initial bootstrap mechanism.
+- Prometheus support should be optional and easy to enable; Jason's server is `prometheus.taylor.lan`.
 - Use a modular monolith before considering separate services.
 - PostgreSQL should become the preferred source of truth for project/task/status/agent/run state.
 - Git remains the source of truth for source code and migrations.
@@ -56,10 +62,9 @@ Record findings from real systems, live services, browser/device testing, deploy
 
 ## Open Questions
 
-- Should the initial MVP include a web UI, or API/CLI/scripts only?
-- What is the production authentication model for private-network deployment?
+- Which IDP/auth model should be used after the private-network MVP?
 - What are the exact dev, stage, and production database names/users?
-- What are the exact dev/stage/prod credential injection details?
+- What are the exact dev/stage/prod credential injection details for the first Docker Compose VM deployment?
 - Should OpenCode automation interact with the workbench through CLI, API, or both during bootstrap?
 - Should API URLs use nested project routes, flat convenience routes, or both?
 - What section/module defaults should each project type create?
@@ -71,6 +76,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - Codex
+
+- Task: Record MVP, auth, secrets, ownership, event history, and Prometheus planning decisions.
+- Files changed: planning docs, TODO, MEMORY, and status.
+- Validation: documentation-only update.
+- Result: Clarified API/CLI MVP, post-MVP web UI, deferred auth/IDP research, Compose-first secrets with Vault later, task assignee/owner requirement, event-history/logging requirement, and optional Prometheus support.
+- Blockers or follow-up: confirm exact dev/stage/prod database names/users and secret injection details before non-local deployment.
 
 ### 2026-05-22 - Codex
 

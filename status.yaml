@@ -11,7 +11,7 @@
 #   working - agent is actively changing the repo; other agents should skip
 
 status: "active"
-phase: "bootstrap"
-reason: "OpenCode bootstrap command stubs are available for overnight handoff"
+phase: "planning"
+reason: "MVP, auth, secrets, ownership, event history, and metrics decisions are recorded"
 worker: "codex"
 updated: "2026-05-22"

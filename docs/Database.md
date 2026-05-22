@@ -56,6 +56,8 @@ Choose one layout before migrations are finalized and record the decision in `ME
 - Ansible secrets are expected under `~/projects/infra/ansible/vars/common/secrets.yaml` on the Ansible host.
 - Agents may reference that path as an operational source, but must not read, copy, summarize, or commit secret values.
 - Deployment should inject the correct database URL through environment variables, Docker Compose secrets, K3s secrets, or Ansible-managed env files.
+- First Docker Compose VM deployments should prefer env files or Docker Compose secrets for simplicity.
+- HashiCorp Vault integration is a future option to investigate after MVP; do not block local/API/CLI work on Vault.
 
 ## Module/Section And Phase Model
 

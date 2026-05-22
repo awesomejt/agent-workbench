@@ -21,6 +21,7 @@ The project is successful when:
 - A modular API can track multiple projects, tasks, status records, agents, runs, and append-only events in PostgreSQL.
 - Agents can safely claim, heartbeat, block, complete, and review tasks using atomic state transitions.
 - Local development uses a PostgreSQL container, while dev, stage, and production can use configured PostgreSQL hosts such as `postgresql.taylor.lan` without committing secrets.
+- API and CLI workflows are enough for MVP so a test project can start using the system before the web UI exists.
 - A CLI and lightweight scripts can bootstrap agent workflows before the full web UI exists.
 - Project metadata can describe different project types, source locations, default agents, and workflow defaults.
 - Markdown files remain available as compact context handoff artifacts, but the database/API is the preferred source of truth once available.
@@ -48,12 +49,17 @@ The project is successful when:
 - Phase tracking for status and tasks across planning, research, implementation, testing, and review.
 - Default agent selection and workflow hints per project type.
 - Bootstrap scripts or CLI commands that can operate before the full web UI exists.
+- Task ownership/assignment for either an agent name or a human operator.
+- Status and task event history; the first implementation may use append-only logging before richer query/reporting behavior.
 - Agent-focused Markdown memory and handoff files until the database-backed context workflow is mature.
 - Curl smoke checks and containerized Python integration tests.
 
 ## Nice To Include
 
-- Web UI for humans to inspect projects, tasks, agents, runs, and events.
+- Web UI for humans to inspect projects, tasks, agents, runs, and events after API/CLI MVP is usable.
+- Optional Prometheus metrics endpoint that can be enabled for local homelab monitoring.
+- Future authentication/authorization backed by an IDP once private-network MVP behavior is proven.
+- Future HashiCorp Vault integration for deployment secrets.
 - Git integration for repository metadata and branch/commit status.
 - OpenCode automation integration for scheduled runs.
 - Review dashboard for cloud-agent findings and refactor tasks.
@@ -62,7 +68,7 @@ The project is successful when:
 ## Out Of Scope
 
 - Multi-tenant public SaaS behavior in the initial release.
-- Production authentication/authorization beyond what is needed for Jason's private network deployment.
+- Authentication/authorization for the private-network MVP; local LAN use can start without auth while an IDP is researched for later.
 - Replacing Git as the source of truth for source code.
 - Storing raw long-form chat transcripts in the application database by default.
 - Directly reading Ansible secrets into the repo or committing any database credentials.
@@ -77,8 +83,9 @@ The project is successful when:
 - Deployment target: Docker Compose VM first; K3s on the Proxmox cluster is a future feature.
 - Database hosts: local Docker container for local dev, `postgresql-dev` for dev, `postgresql-stage` for stage, and `postgresql`/`postgresql.taylor.lan` for prod via environment-injected `DATABASE_URL` or equivalent secret mechanism.
 - Environment flag: `APP_ENV=local|dev|stage|prod`; deployed runtime should default to `prod`, while local commands must set `APP_ENV=local` explicitly.
-- Secrets: production/dev/stage credentials live outside Git; Ansible secrets are referenced only as an operational source, not read or copied by agents.
-- Authentication requirements: private-network MVP can start minimal, but production access model must be decided before real use.
+- Secrets: production/dev/stage credentials live outside Git; Ansible secrets are referenced only as an operational source, not read or copied by agents. Docker Compose deployments should use env files or Compose secrets first; HashiCorp Vault is a future integration candidate.
+- Authentication requirements: private-network MVP can start without auth; research an IDP-backed model before exposing beyond the trusted LAN or broadening use.
+- Observability: Prometheus integration should be optional and easy to enable; Jason's Prometheus server is `prometheus.taylor.lan`.
 - Accessibility or browser/device support: web UI should support current evergreen desktop browsers and keyboard-accessible workflows.
 
 ## Source Material
@@ -95,7 +102,7 @@ The project is successful when:
 ## Validation Needed
 
 - Confirm exact Python 3.14 patch version during scaffolding.
-- Confirm whether the first web UI should be included in MVP or follow the CLI/API bootstrap.
-- Confirm production authentication and network exposure expectations.
+- Confirmed: MVP is API plus CLI/scripts; web UI follows for human review and ad hoc task entry.
+- Confirmed: initial use is private LAN/local homelab; authentication is deferred and IDP research is future work.
 - Confirm dev/stage/production database names, users, schema layout, and secret injection approach.
 - Confirm exact OpenCode scheduled-run command once stub CLI commands exist.

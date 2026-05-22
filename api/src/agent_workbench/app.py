@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from flask import Flask
+from flask import Flask, jsonify
+from sqlalchemy import text
 
 from .config import Settings
 from .database import db
@@ -24,7 +25,14 @@ def create_app(settings: Settings | None = None) -> Flask:
 
     @app.get("/health")
     def health():
-        return {"status": "ok", "env": settings.app_env}
+        try:
+            db.session.execute(text("SELECT 1"))
+            db_status = "ok"
+        except Exception:
+            db_status = "unavailable"
+        status = "ok" if db_status == "ok" else "degraded"
+        code = 200 if status == "ok" else 503
+        return jsonify({"status": status, "env": settings.app_env, "db": db_status}), code
 
     return app
 

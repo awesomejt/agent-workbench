@@ -5,9 +5,9 @@ High-level order of implementation. Keep this aligned with `TODO.md`.
 ## Discovery
 
 - Confirm product scope and MVP boundary.
-- Confirm API framework and package layout.
+- Confirm exact Flask package layout.
 - Inventory lessons from the `project-status` prototype.
-- Inventory OpenCode automation needs from `/shared/projects/ai/opencode-setup`.
+- Inventory OpenCode automation needs from `/shared/projects/ai/opencode-setup`, using stub CLI commands first and replacing them gradually.
 - Identify blockers and manual validation needs.
 
 ## Planning
@@ -24,7 +24,7 @@ High-level order of implementation. Keep this aligned with `TODO.md`.
 
 ## Bootstrap MVP
 
-- Scaffold backend package and dependency management.
+- Scaffold Flask backend package and dependency management.
 - Add Docker Compose PostgreSQL local development service.
 - Add Alembic migration baseline.
 - Add environment-aware migration commands for local/dev/stage/prod, with explicit confirmation for prod.
@@ -36,7 +36,8 @@ High-level order of implementation. Keep this aligned with `TODO.md`.
   - `task-complete`
   - `task-block`
   - `status-show`
-- Add root `Makefile` for setup, validation, smoke, integration, migration, and cleanup.
+- Add root `Makefile` for setup, validation, smoke, integration, migration, cleanup, and CLI builds.
+- Add Go 1.26 CLI scaffold with build artifacts under `cli/builds/`.
 
 ## Implementation Phase: API Modules
 

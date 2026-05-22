@@ -11,7 +11,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Current phase: planning and bootstrap.
 - Last major milestone: initialized the project direction for a modular monolith, PostgreSQL-backed AI agent workbench.
 - Next recommended task: confirm database target names/schema layout and API framework, then finalize the initial data model and API route contract before scaffolding backend migrations.
-- Current blocker: Jason should confirm API framework, production authentication expectations, and initial deployment target preference.
+- Current blocker: Jason should confirm production authentication expectations and exact dev/stage/prod credential injection details.
 
 ## Key Decisions
 
@@ -37,12 +37,16 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Technical Notes
 
-- Candidate API framework: FastAPI or Flask; decide before scaffolding.
-- Candidate package manager: `uv`.
+- API framework: Flask.
+- API runtime: Python 3.14 latest.
+- Package manager: `uv`.
 - Local database: PostgreSQL container via Docker Compose.
 - Target schema plan is documented in `docs/Database.md`.
-- Production database: `postgresql.taylor.lan` with secrets supplied externally.
-- Deployment target: Docker Compose VM first, K3s later.
+- Database servers: local container, `postgresql-dev`, `postgresql-stage`, and `postgresql`/`postgresql.taylor.lan` for prod.
+- Production database: `postgresql`/`postgresql.taylor.lan` with secrets supplied externally.
+- Deployment target: Docker Compose VM first; K3s is future work.
+- CLI direction: Go 1.26 managed by Makefile, with build artifacts under `cli/builds/` excluded from Git.
+- OpenCode direction: use stub CLI commands first, then gradually replace with real CLI/API-backed behavior.
 
 ## Manual Validation Findings
 
@@ -52,11 +56,10 @@ Record findings from real systems, live services, browser/device testing, deploy
 
 ## Open Questions
 
-- Should the API framework be FastAPI, Flask, or another Python framework?
 - Should the initial MVP include a web UI, or API/CLI/scripts only?
 - What is the production authentication model for private-network deployment?
 - What are the exact dev, stage, and production database names/users?
-- Should shared PostgreSQL environments use separate databases with stable schema `agent_workbench`, or separate schemas per environment?
+- What are the exact dev/stage/prod credential injection details?
 - Should OpenCode automation interact with the workbench through CLI, API, or both during bootstrap?
 - Should API URLs use nested project routes, flat convenience routes, or both?
 - What section/module defaults should each project type create?
@@ -68,6 +71,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - Codex
+
+- Task: Record stack, deployment, database, OpenCode, and CLI build decisions.
+- Files changed: planning docs, TODO, MEMORY, README, status.
+- Validation: documentation-only update.
+- Result: Documented Python 3.14 plus Flask APIs, stub CLI bootstrap for OpenCode, Docker Compose VM deployment first, separate database servers with stable schema, and Go 1.26 CLI build output under `cli/builds/`.
+- Blockers or follow-up: add stub CLI commands and decide Flask package layout.
 
 ### 2026-05-22 - Codex
 

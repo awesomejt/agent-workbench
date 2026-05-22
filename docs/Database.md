@@ -7,9 +7,9 @@
 Use one explicit environment flag everywhere:
 
 - `APP_ENV=local` - local development using a Docker Compose PostgreSQL container.
-- `APP_ENV=dev` - shared development database for separated testing.
-- `APP_ENV=stage` - staging database for release-candidate validation.
-- `APP_ENV=prod` - production database, expected on `postgresql.taylor.lan`.
+- `APP_ENV=dev` - shared development database on `postgresql-dev`.
+- `APP_ENV=stage` - staging database on `postgresql-stage` for release-candidate validation.
+- `APP_ENV=prod` - production database on `postgresql`/`postgresql.taylor.lan`.
 
 Deployed runtime should default to `prod` once the system is in real use. Local commands, tests, and Make targets must set `APP_ENV=local` explicitly so local work never accidentally talks to production.
 
@@ -35,11 +35,11 @@ Preferred layout:
 | Environment | PostgreSQL target | Database | Schema |
 | --- | --- | --- | --- |
 | local | Docker Compose container | `agent_workbench` | `agent_workbench` |
-| dev | shared dev PostgreSQL | `agent_workbench_dev` | `agent_workbench` |
-| stage | shared stage PostgreSQL | `agent_workbench_stage` | `agent_workbench` |
-| prod | `postgresql.taylor.lan` | `agent_workbench_prod` | `agent_workbench` |
+| dev | `postgresql-dev` | `agent_workbench_dev` | `agent_workbench` |
+| stage | `postgresql-stage` | `agent_workbench_stage` | `agent_workbench` |
+| prod | `postgresql` / `postgresql.taylor.lan` | `agent_workbench_prod` | `agent_workbench` |
 
-Use separate databases or hosts per environment where available. Keep the schema name stable as `agent_workbench` so migrations are environment-independent.
+Use separate database servers per non-local environment and keep the schema name stable as `agent_workbench` so migrations are environment-independent.
 
 If the existing PostgreSQL layout uses one database per server and separate schemas instead, use these schema names instead:
 

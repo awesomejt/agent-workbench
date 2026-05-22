@@ -6,14 +6,14 @@ Task list for `Agent Workbench`, organized by ownership and project phase.
 
 Items here require Jason's input, a decision, credentials, external access, or manual validation before agent work can continue.
 
-- [ ] Confirm API framework: FastAPI, Flask, or another Python framework.
+- [X] Confirm API framework: Flask. Completed 2026-05-22 by Jason.
 - [ ] Confirm whether MVP includes web UI or starts with API plus CLI/scripts.
 - [ ] Confirm production authentication and network exposure expectations.
 - [ ] Confirm dev/stage/production database names, users, schema layout, and secret injection approach.
-- [ ] Confirm whether OpenCode scheduled runs should use CLI, API, or both during bootstrap.
-- [ ] Confirm whether deployed runtime should default to `APP_ENV=prod` while local/test commands explicitly select `APP_ENV=local`.
-- [ ] Confirm whether shared PostgreSQL environments should use separate databases with schema `agent_workbench` or separate schemas per environment.
-- [ ] Confirm deployment target order: Docker Compose VM first, K3s later.
+- [X] Confirm OpenCode scheduled runs should use stub CLI commands during bootstrap, with gradual replacement by real CLI/API. Completed 2026-05-22 by Jason.
+- [X] Confirm deployed runtime should default to `APP_ENV=prod` while local/test commands explicitly select `APP_ENV=local`. Completed 2026-05-22 by Jason.
+- [X] Confirm shared PostgreSQL environments use separate servers/databases with same schema `agent_workbench`. Completed 2026-05-22 by Jason.
+- [X] Confirm deployment target order: Docker Compose VM first, K3s later as future feature. Completed 2026-05-22 by Jason.
 
 ## Manual Validation
 
@@ -52,7 +52,8 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Replace template placeholders with Agent Workbench project direction.
 - [ ] Inventory reusable lessons from `/shared/projects/dev/project-status` without copying known implementation drift.
 - [ ] Inventory OpenCode setup repo requirements from `/shared/projects/ai/opencode-setup`.
-- [ ] Decide initial API framework and package layout.
+- [X] Decide initial API framework: Python 3.14 latest plus Flask. Completed 2026-05-22 by Jason.
+- [ ] Decide Flask package layout.
 - [ ] Define initial module boundaries: projects, project_sections, status, tasks, agents, runs, events, reviews.
 - [ ] Define initial API route style and compatibility policy without URL versioning by default.
 - [ ] Define initial database schema and migration strategy.
@@ -85,10 +86,11 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Add migration commands that require explicit `APP_ENV` for dev/stage/prod targets.
 - [X] Add safe database bootstrap docs and SQL template for creating target schemas without embedding secrets. Completed 2026-05-22 by Codex.
 - [ ] Add environment-aware wrapper command for running schema bootstrap against local/dev/stage/prod.
-- [ ] Add root `Makefile` with setup, lint, test, smoke, integration-test, migration, and cleanup targets.
+- [ ] Add root `Makefile` with setup, lint, test, smoke, integration-test, migration, cleanup, and CLI build targets.
 - [ ] Add curl smoke checks for API health and basic workflow validation.
 - [ ] Add Python containerized integration-test runner.
-- [ ] Add scripts or CLI bootstrap commands for task next/claim/complete/block/status.
+- [ ] Add stub CLI/bootstrap commands for OpenCode: task next, claim, heartbeat, complete, block, status show.
+- [ ] Confirm `cli/builds/` is excluded from Git.
 
 ### Implementation Phase: Core API Modules
 
@@ -97,6 +99,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Implement `project_status` module for project-wide and section-scoped current status and history.
 - [ ] Implement `project_tasks` module for project-wide and section-scoped tasks, priorities, phases, dependencies, leases, and completion evidence.
 - [ ] Implement `agents` module for agent registry, capabilities, defaults, and runtime hints.
+- [ ] Scaffold Go 1.26 CLI and configure builds to write artifacts into `cli/builds/`.
 - [ ] Implement `runs` module for run attempts, heartbeats, validation, and outcomes.
 - [ ] Implement `events` module as append-only audit trail.
 - [ ] Implement `reviews` module for cloud review findings and signoff gates.

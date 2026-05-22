@@ -12,6 +12,6 @@
 
 status: "active"
 phase: "planning"
-reason: "Project sections/modules and phase tracking for status and tasks are documented"
+reason: "Stack, deployment, database, OpenCode, and CLI build decisions are documented"
 worker: "codex"
 updated: "2026-05-22"

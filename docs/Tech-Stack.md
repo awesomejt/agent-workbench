@@ -4,18 +4,19 @@ Document the approved tools, languages, frameworks, libraries, and versions for 
 
 ## Runtime And Language
 
-- API language/runtime: Python 3.14 preferred unless framework decision changes this.
+- API language/runtime: Python 3.14 latest.
 - Package manager: `uv` preferred.
 - Database runtime: PostgreSQL.
 - Local orchestration: Docker Engine with Docker Compose v2.
-- Deployment target: Docker Compose VM first, possible K3s deployment later.
+- Deployment target: Docker Compose VM first; K3s deployment is a future feature.
 
 ## Frameworks And Libraries
 
-- API framework: FastAPI or Flask; decision pending.
+- API framework: Flask.
 - Database access: SQLAlchemy 2.x plus Alembic migrations is the default recommendation unless another stack is chosen.
 - PostgreSQL driver: psycopg 3.x preferred for new Python work.
-- CLI/bootstrap: Python scripts or a small CLI, then a stable CLI package when the API contract is clear.
+- CLI/bootstrap: initial stub commands for OpenCode, then a Go 1.26 CLI managed by Makefile.
+- CLI build output: `cli/builds/`, excluded from Git.
 - Testing:
   - Unit tests for state machines and validation.
   - API tests for route contracts.
@@ -44,7 +45,13 @@ uv run agent-workbench-api
 # Bootstrap agent workflow examples
 ./scripts/task-next
 ./scripts/task-claim <task-id>
+./scripts/task-heartbeat <task-id>
 ./scripts/task-complete <task-id>
+./scripts/task-block <task-id>
+./scripts/status-show
+
+# Build CLI once scaffolded
+make build-cli
 
 # Run tests
 uv run pytest
@@ -72,8 +79,8 @@ Root `Makefile` targets should wrap these once implemented.
 - Local services:
   - PostgreSQL container managed by Docker Compose.
 - Dev/stage/production:
-  - Use separate PostgreSQL databases or hosts where available.
-  - Production host is expected to be `postgresql.taylor.lan`.
+  - Use separate PostgreSQL hosts: `postgresql-dev`, `postgresql-stage`, and `postgresql`/`postgresql.taylor.lan`.
+  - Production host is expected to be `postgresql` on the LAN and/or `postgresql.taylor.lan`.
   - Use `agent_workbench` as the stable schema name unless Jason confirms separate schema names per environment.
   - Database credentials must come from deployment secrets, not Git.
 - Ansible:
@@ -82,5 +89,5 @@ Root `Makefile` targets should wrap these once implemented.
 
 ## Version Notes
 
-- Verify current Python, PostgreSQL, FastAPI/Flask, SQLAlchemy, Alembic, and psycopg versions before scaffolding.
+- Verify current Python 3.14 patch, PostgreSQL, Flask, SQLAlchemy, Alembic, psycopg, and Go 1.26 versions before scaffolding.
 - Use stable releases; avoid experimental/canary packages for the coordination core.

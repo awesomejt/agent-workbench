@@ -76,9 +76,9 @@ flowchart TD
 ## Deployment Shape
 
 - Local: Docker Compose with API and PostgreSQL container.
-- Dev/stage: external PostgreSQL URLs or separate Compose/K3s environments.
-- Production: Docker Compose VM first, K3s later if useful.
-- Production database host: expected `postgresql.taylor.lan`; credentials injected via deployment secrets.
+- Dev/stage: external PostgreSQL servers `postgresql-dev` and `postgresql-stage`.
+- Production: Docker Compose VM first; K3s is future work.
+- Production database host: expected `postgresql`/`postgresql.taylor.lan`; credentials injected via deployment secrets.
 - Local project discovery roots: `~/projects/ai`, `~/projects/courses`, `~/projects/dev`, and `~/projects/infra`, configurable rather than hard-coded.
 - Ansible project reference: `~/projects/infra/ansible`; agents must not read or copy secrets.
 

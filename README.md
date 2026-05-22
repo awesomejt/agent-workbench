@@ -11,7 +11,7 @@ The goal is to move agent coordination state out of noisy per-repo Markdown edit
 - Git remains the source of truth for source code.
 - PostgreSQL becomes the source of truth for projects, tasks, status, agents, runs, leases, and events.
 - Local development uses Docker Compose with a local PostgreSQL container.
-- Dev, stage, and production can use external PostgreSQL hosts such as `postgresql.taylor.lan` through environment-injected secrets.
+- Dev, stage, and production use separate PostgreSQL hosts: `postgresql-dev`, `postgresql-stage`, and `postgresql`/`postgresql.taylor.lan` through environment-injected secrets.
 - Environment selection uses `APP_ENV=local|dev|stage|prod`; deployed runtime should default to prod while local commands explicitly select local.
 
 ## Planned Modules
@@ -43,7 +43,7 @@ Once the database schema and scripts exist, the normal agent workflow should shi
 ./scripts/status-show
 ```
 
-Later, those scripts should become or wrap a real CLI/API workflow.
+OpenCode should use these stub CLI commands first. Later, those scripts should become or wrap a real Go CLI/API workflow.
 
 ## Root Files
 

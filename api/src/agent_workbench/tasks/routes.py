@@ -10,7 +10,7 @@ from ..database import db
 from ..projects import service as projects_service
 from . import service
 from .models import Task
-from .service import LeaseConflictError, LeaseOwnershipError
+from .service import DEFAULT_LEASE_SECONDS, LeaseConflictError, LeaseOwnershipError
 
 bp = Blueprint("tasks", __name__, url_prefix="/api")
 
@@ -28,6 +28,7 @@ def _serialize(t: Task) -> dict:
         "dependencies": t.dependencies,
         "assignee_type": t.assignee_type,
         "assignee_name": t.assignee_name,
+        "estimated_duration_seconds": t.estimated_duration_seconds,
         "claimed_by": t.claimed_by,
         "claimed_until": t.claimed_until.isoformat() if t.claimed_until else None,
         "lease_version": t.lease_version,
@@ -146,15 +147,20 @@ def claim_task(task_id: str):
     except ValueError:
         abort(400, "task_id must be a valid UUID")
 
-    if service.get_task(tid) is None:
-        abort(404, f"Task {task_id} not found")
-
     data = request.get_json(silent=True) or {}
     agent_name = data.get("agent_name")
     if not agent_name:
         abort(422, "agent_name is required")
 
-    duration = int(data.get("duration_seconds", 900))
+    # Duration priority: request body > task's per-task estimate > system default
+    task_obj = service.get_task(tid)
+    if task_obj is None:
+        abort(404, f"Task {task_id} not found")
+    duration = int(
+        data["duration_seconds"]
+        if "duration_seconds" in data
+        else (task_obj.estimated_duration_seconds or DEFAULT_LEASE_SECONDS)
+    )
     idempotency_key = data.get("idempotency_key")
 
     try:
@@ -184,7 +190,14 @@ def heartbeat_task(task_id: str):
     if not agent_name:
         abort(422, "agent_name is required")
 
-    duration = int(data.get("duration_seconds", 900))
+    task_obj = service.get_task(tid)
+    if task_obj is None:
+        abort(404, f"Task {task_id} not found")
+    duration = int(
+        data["duration_seconds"]
+        if "duration_seconds" in data
+        else (task_obj.estimated_duration_seconds or DEFAULT_LEASE_SECONDS)
+    )
 
     try:
         task = service.heartbeat_task(tid, agent_name, duration=duration)

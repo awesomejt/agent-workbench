@@ -71,6 +71,17 @@ class TestCreateTask:
         assert data["phase"] == "implementation"
         assert data["assignee_name"] == "claude"
 
+    def test_stores_estimated_duration_seconds(self, client):
+        p = _make_project(client)
+        resp = _make_task(client, p["id"], estimated_duration_seconds=3600)
+        assert resp.status_code == 201
+        assert resp.get_json()["estimated_duration_seconds"] == 3600
+
+    def test_estimated_duration_seconds_defaults_to_null(self, client):
+        p = _make_project(client)
+        resp = _make_task(client, p["id"])
+        assert resp.get_json()["estimated_duration_seconds"] is None
+
 
 class TestGetTask:
     def test_returns_task(self, client):
@@ -189,6 +200,33 @@ class TestTaskLeaseLifecycle:
         )
         assert resp.status_code == 200
         assert resp.get_json()["status"] == "blocked"
+
+    def test_claim_uses_task_estimated_duration(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"], estimated_duration_seconds=7200).get_json()
+        resp = client.post(
+            f"/api/tasks/{task['id']}/claim",
+            json={"agent_name": "agent-a"},
+        )
+        assert resp.status_code == 200
+        # claimed_until should be ~2 hours from now (not the 30-min default)
+        from datetime import UTC, datetime, timedelta
+        claimed_until = datetime.fromisoformat(resp.get_json()["claimed_until"])
+        delta = claimed_until - datetime.now(UTC)
+        assert timedelta(hours=1, minutes=50) < delta < timedelta(hours=2, minutes=10)
+
+    def test_claim_request_duration_overrides_task_estimate(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"], estimated_duration_seconds=7200).get_json()
+        resp = client.post(
+            f"/api/tasks/{task['id']}/claim",
+            json={"agent_name": "agent-a", "duration_seconds": 300},
+        )
+        assert resp.status_code == 200
+        from datetime import UTC, datetime, timedelta
+        claimed_until = datetime.fromisoformat(resp.get_json()["claimed_until"])
+        delta = claimed_until - datetime.now(UTC)
+        assert timedelta(minutes=4) < delta < timedelta(minutes=6)
 
     def test_claim_requires_agent_name(self, client):
         p = _make_project(client)

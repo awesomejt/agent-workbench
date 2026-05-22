@@ -7,7 +7,7 @@ session; each test gets a clean slate via TRUNCATE before it runs.
 from __future__ import annotations
 
 import os
-from typing import Iterator
+from collections.abc import Iterator
 
 import pytest
 from flask import Flask

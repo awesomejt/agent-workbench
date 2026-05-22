@@ -8,7 +8,7 @@ from sqlalchemy import func, or_, select, update
 from ..database import db
 from .models import Task
 
-_DEFAULT_LEASE_SECONDS = 900  # 15 minutes
+DEFAULT_LEASE_SECONDS = 1800  # 30 minutes — generous default for local AI agents
 
 
 class LeaseConflictError(Exception):
@@ -57,6 +57,7 @@ def create_task(project_id: uuid.UUID, data: dict) -> Task:
         dependencies=data.get("dependencies"),
         assignee_type=data.get("assignee_type"),
         assignee_name=data.get("assignee_name"),
+        estimated_duration_seconds=data.get("estimated_duration_seconds"),
         validation_expectations=data.get("validation_expectations"),
     )
     db.session.add(task)
@@ -68,7 +69,7 @@ def update_task(task: Task, data: dict) -> Task:
     mutable = (
         "title", "description", "status", "priority", "phase",
         "dependencies", "assignee_type", "assignee_name",
-        "validation_expectations", "completion_evidence",
+        "estimated_duration_seconds", "validation_expectations", "completion_evidence",
     )
     for field in mutable:
         if field in data:
@@ -84,7 +85,7 @@ def update_task(task: Task, data: dict) -> Task:
 def claim_task(
     task_id: uuid.UUID,
     agent_name: str,
-    duration: int = _DEFAULT_LEASE_SECONDS,
+    duration: int = DEFAULT_LEASE_SECONDS,
     idempotency_key: str | None = None,
 ) -> Task:
     now = datetime.now(UTC)
@@ -122,7 +123,7 @@ def claim_task(
 def heartbeat_task(
     task_id: uuid.UUID,
     agent_name: str,
-    duration: int = _DEFAULT_LEASE_SECONDS,
+    duration: int = DEFAULT_LEASE_SECONDS,
 ) -> Task:
     now = datetime.now(UTC)
     new_until = now + timedelta(seconds=duration)

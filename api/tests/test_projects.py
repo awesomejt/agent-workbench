@@ -1,8 +1,6 @@
 """API contract tests for the projects module."""
 from __future__ import annotations
 
-import pytest
-
 
 def _create(client, **kwargs):
     payload = {"name": "Test Project", "slug": "test-project", **kwargs}

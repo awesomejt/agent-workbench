@@ -65,6 +65,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Define project type vocabulary, default sections/modules, phase workflows, and default agent selection rules.
 - [ ] Define state machines for project status, task status, agent run status, and review findings.
 - [ ] Define task assignee/owner model for agent and human responsibility.
+- [ ] Define task duration estimation model: t-shirt sizing (XS/S/M/L/XL) or Agile story points mapped to seconds, with agent-capability multipliers (cloud vs. local AI) so lease windows auto-scale without manual `estimated_duration_seconds` on every task.
 - [ ] Define status/task event history strategy, including bootstrap structured logging before full event APIs if needed.
 - [ ] Define optional Prometheus metrics scope, config flag, endpoint, and deployment notes for `prometheus.taylor.lan`.
 - [ ] Research future authentication/IDP options for post-MVP use.

@@ -48,6 +48,9 @@ class Task(db.Model):
     idempotency_key: Mapped[str | None] = mapped_column(
         String(255), nullable=True, unique=True, index=True
     )
+    # Per-task lease window in seconds; overrides the system default when set.
+    # Set this generously for local AI agents — token generation can take many minutes.
+    estimated_duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)
     validation_expectations: Mapped[str | None] = mapped_column(Text, nullable=True)
     completion_evidence: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(

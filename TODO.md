@@ -53,6 +53,8 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Inventory reusable lessons from `/shared/projects/dev/project-status` without copying known implementation drift. Completed 2026-05-22 by Copilot.
 - [ ] Inventory OpenCode setup repo requirements from `/shared/projects/ai/opencode-setup`.
 - [X] Decide initial API framework: Python 3.14 latest plus Flask. Completed 2026-05-22 by Jason.
+- [X] Decide initial CLI stack: Go 1.26 with Cobra and Viper. Completed 2026-05-22 by Jason.
+- [X] Decide post-MVP web stack: React with Node.js 24 LTS, latest npm, and Express. Completed 2026-05-22 by Jason.
 - [ ] Decide Flask package layout.
 - [ ] Define initial module boundaries: projects, project_sections, status, tasks, agents, runs, events, reviews.
 - [ ] Define initial API route style and compatibility policy without URL versioning by default.
@@ -102,6 +104,8 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Add stub CLI/bootstrap commands for OpenCode: task next, claim, heartbeat, complete, block, status show. Completed 2026-05-22 by Codex.
 - [X] Confirm `cli/builds/` is excluded from Git. Completed 2026-05-22 by Codex.
 - [X] Add root `Makefile` with bootstrap `task-next`, `status-show`, `validate`, and placeholder `build-cli` targets. Completed 2026-05-22 by Codex.
+- [ ] Scaffold Go CLI command tree using Cobra and Viper for config/env resolution.
+- [ ] Add post-MVP web scaffold using React + Express on Node.js 24 LTS with npm latest (only if MVP API/CLI queue is unblocked).
 - [ ] Add scheduled OpenCode wrapper that calls bootstrap commands and runs one focused task.
 - [ ] Add optional Prometheus metrics dependencies and `/metrics` endpoint behind configuration.
 
@@ -137,7 +141,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Document secret handling, Docker Compose secrets/env files, Vault future option, and Ansible integration expectations without copying secrets.
 - [X] Document bootstrap CLI command workflow for OpenCode in `docs/Bootstrap-CLI.md`. Completed 2026-05-22 by Codex.
 - [ ] Document OpenCode automation workflow once the OpenCode setup repo is ready.
-- [ ] Document post-MVP web UI scope for human review and adding tasks on the fly.
+- [ ] Document post-MVP web UI scope for human review and adding tasks on the fly, using React + Express on Node.js 24 LTS.
 - [ ] Document optional Prometheus setup and scrape example.
 - [ ] Record decisions and milestones in `MEMORY.md`.
 

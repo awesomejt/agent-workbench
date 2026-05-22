@@ -10,6 +10,8 @@ The goal is to move agent coordination state out of noisy per-repo Markdown edit
 - Multiple internal modules instead of many small services at the start.
 - Git remains the source of truth for source code.
 - PostgreSQL becomes the source of truth for projects, tasks, status, agents, runs, leases, and events.
+- CLI target stack: Go 1.26 with Cobra and Viper.
+- Web UI target stack (post-MVP): React with Node.js 24 LTS, latest npm, and Express.
 - Local development uses Docker Compose with a local PostgreSQL container.
 - Dev, stage, and production use separate PostgreSQL hosts: `postgresql-dev`, `postgresql-stage`, and `postgresql`/`postgresql.taylor.lan` through environment-injected secrets.
 - Environment selection uses `APP_ENV=local|dev|stage|prod`; deployed runtime should default to prod while local commands explicitly select local.

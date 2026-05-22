@@ -6,6 +6,8 @@
 
 Git remains the source of truth for code. PostgreSQL becomes the source of truth for agent coordination state.
 
+CLI implementation target is Go 1.26 with Cobra and Viper. Web UI remains post-MVP and should use React with Node.js 24 LTS, latest npm, and Express.
+
 ## System Diagram
 
 ```mermaid

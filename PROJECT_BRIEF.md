@@ -78,8 +78,10 @@ The project is successful when:
 - Preferred language/runtime: Python 3.14 latest for the API and worker scripts.
 - Preferred framework: Flask for APIs.
 - Preferred package manager: `uv` for Python.
+- Preferred CLI stack: Go 1.26 with Cobra and Viper.
 - Preferred database/storage: PostgreSQL.
 - Local development: Docker and Docker Compose with a local PostgreSQL container.
+- Preferred post-MVP web stack: React with Node.js 24 LTS, latest npm, and Express.
 - Deployment target: Docker Compose VM first; K3s on the Proxmox cluster is a future feature.
 - Database hosts: local Docker container for local dev, `postgresql-dev` for dev, `postgresql-stage` for stage, and `postgresql`/`postgresql.taylor.lan` for prod via environment-injected `DATABASE_URL` or equivalent secret mechanism.
 - Environment flag: `APP_ENV=local|dev|stage|prod`; deployed runtime should default to `prod`, while local commands must set `APP_ENV=local` explicitly.

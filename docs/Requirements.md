@@ -20,9 +20,11 @@
 - Append-only event history for project, task, status, review, and run transitions; initial implementations may expose this through structured logs before richer event-query APIs exist.
 - Review module for cloud review findings, refactor tasks, and signoff gates.
 - Bootstrap scripts or CLI commands that let agents interact with Postgres before the full web UI exists.
+- CLI implementation target is a Go client built with Cobra for command structure and Viper for configuration.
 - Markdown summary/memory bridge for agent context resets, generated or manually maintained during early development.
 - MVP scope is API plus CLI/scripts so at least one test project can use the workbench before the web UI is built.
 - Web UI follows MVP and should focus on human review plus adding/editing tasks on the fly.
+- Post-MVP web UI target stack is React, Node.js 24 LTS, latest npm, and Express.
 - Local Docker Compose PostgreSQL for development and tests.
 - Environment-driven database configuration for local, dev, stage, and production.
 - Explicit environment selection through `APP_ENV=local|dev|stage|prod` and optional `--env` flags in CLI/scripts.

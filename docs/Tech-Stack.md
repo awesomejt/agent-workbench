@@ -7,6 +7,9 @@ Document the approved tools, languages, frameworks, libraries, and versions for 
 - API language/runtime: Python 3.14 latest.
 - Package manager: `uv` preferred.
 - Database runtime: PostgreSQL 18. Do not use SQLite.
+- CLI language/runtime: Go 1.26.
+- CLI libraries: Cobra and Viper.
+- Web language/runtime: Node.js 24 LTS with latest npm.
 - Local orchestration: Docker Engine with Docker Compose v2.
 - Deployment target: Docker Compose VM first; K3s deployment is a future feature.
 
@@ -15,7 +18,7 @@ Document the approved tools, languages, frameworks, libraries, and versions for 
 - API framework: Flask.
 - Database access: SQLAlchemy 2.x plus Alembic migrations is the default recommendation unless another stack is chosen.
 - PostgreSQL driver: psycopg 3.x preferred for new Python work.
-- CLI/bootstrap: initial stub commands for OpenCode, then a Go 1.26 CLI managed by Makefile.
+- CLI/bootstrap: initial stub commands for OpenCode, then a Go 1.26 CLI using Cobra and Viper, managed by Makefile.
 - CLI build output: `cli/builds/`, excluded from Git.
 - Testing:
   - Unit tests for state machines and validation.
@@ -24,6 +27,7 @@ Document the approved tools, languages, frameworks, libraries, and versions for 
   - Curl smoke checks for quick human feedback.
   - Python containerized integration tests for agent workflows.
 - Web UI: post-MVP; defer until API/CLI bootstrap is stable enough for a test project.
+- Web UI framework/runtime: React client with Node.js 24 LTS, latest npm, and Express for web-server/API proxy integration where needed.
 - Observability: optional Prometheus metrics endpoint, likely `/metrics`, enabled by configuration.
 - Authentication: deferred for private-network MVP; future IDP integration should be researched before broader exposure.
 
@@ -52,8 +56,12 @@ make task-next
 ./scripts/task-complete <task-id>
 ./scripts/task-block <task-id> --note "blocked reason"
 
-# Build CLI once scaffolded
+# Build CLI once scaffolded (Go + Cobra/Viper)
 make build-cli
+
+# Build and run web once post-MVP web work is scheduled
+make web-install
+make web-dev
 
 # Run tests
 uv run pytest
@@ -94,5 +102,5 @@ Root `Makefile` targets should wrap these once implemented.
 
 ## Version Notes
 
-- Verify current Python 3.14 patch, PostgreSQL, Flask, SQLAlchemy, Alembic, psycopg, Go 1.26, and Prometheus client library versions before scaffolding related modules.
+- Verify current Python 3.14 patch, PostgreSQL 18 patch, Flask, SQLAlchemy, Alembic, psycopg, Go 1.26, Cobra, Viper, Node.js 24 LTS, npm latest, Express, and Prometheus client library versions before scaffolding related modules.
 - Use stable releases; avoid experimental/canary packages for the coordination core.

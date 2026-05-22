@@ -9,7 +9,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Current Status
 
 - Current phase: implementation.
-- Last major milestone: 50 API contract tests passing (agents, health, projects, tasks + full lease lifecycle) in 0.83s.
+- Last major milestone: 54 API contract tests passing; task duration per-task config added; Grok security fixes applied.
 - Next recommended task: scaffold Go CLI (Cobra + Viper, builds to cli/builds/), then cloud review gate.
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
@@ -95,6 +95,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - claude-sonnet-4-6 (session 5)
+
+- Task: Grok review triage + task lease duration + two Grok security fixes.
+- Files changed: `api/src/agent_workbench/tasks/models.py` (add `estimated_duration_seconds`), `tasks/service.py` (DEFAULT_LEASE_SECONDS=1800, use task estimate as fallback), `tasks/routes.py` (3-level duration resolution), `api/migrations/versions/20260522_a1b2c3d4e5f6_*` (ADD COLUMN migration), `api/tests/test_tasks.py` (4 new duration tests), `api/src/agent_workbench/config.py` (secret_key prod validator), `api/src/agent_workbench/app.py` (/health DB ping, 503 on failure), `TODO.md` (t-shirt sizing future item).
+- Validation: 54 tests, 54 passed, 0.89s; `make lint` clean.
+- Result: Task leases now use a 3-level duration resolution (request > task estimate > 1800s system default). Prod secret_key default is rejected at startup. /health returns db status and 503 when DB is unreachable. Confirmed Flask over FastAPI; kept agent_workbench namespace. Committed two fixes separately: feat(tasks) and fix(api).
+- Blockers or follow-up: next task is Go CLI scaffold (Cobra + Viper, cli/builds/); cloud review gate before real use.
 
 ### 2026-05-22 - claude-sonnet-4-6 (session 4)
 

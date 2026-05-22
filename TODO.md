@@ -121,6 +121,8 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Implement `project_status` module for project-wide and section-scoped current status and history. Completed 2026-05-22 by claude-sonnet-4-6; list/create/patch routes nested under /api/projects/{id}/status, optional project_section_id, optimistic locking.
 - [X] Implement `project_tasks` module for project-wide and section-scoped tasks, priorities, phases, dependencies, assignee/owner, leases, and completion evidence. Completed 2026-05-22 by claude-sonnet-4-6; list/create at /api/projects/{id}/tasks; get/patch/claim/heartbeat/complete/block at /api/tasks/{id}/...; atomic lease via targeted UPDATE with rowcount check.
 - [X] Implement `agents` module for agent registry, capabilities, defaults, and runtime hints. Completed 2026-05-22 by claude-sonnet-4-6; CRUD routes at /api/agents, name uniqueness enforced, optimistic locking.
+- [X] Add per-task `estimated_duration_seconds` for local-AI-friendly lease windows. Completed 2026-05-22 by claude-sonnet-4-6; 3-level resolution (request > task estimate > 1800s default); 4 new tests.
+- [X] Harden config: reject default SECRET_KEY in prod; add DB connectivity check to /health (503 on failure). Completed 2026-05-22 by claude-sonnet-4-6.
 - [ ] Scaffold Go 1.26 CLI and configure builds to write artifacts into `cli/builds/`.
 - [X] Implement `runs` module for run attempts, heartbeats, validation, and outcomes. Completed 2026-05-22 by claude-sonnet-4-6; POST create, GET, heartbeat, complete, fail; atomic state transitions via targeted UPDATE.
 - [X] Implement `events` module as append-only audit trail for status/task/run/review history. Completed 2026-05-22 by claude-sonnet-4-6; GET /api/projects/{id}/events and POST /api/events; no update/delete routes.
@@ -129,7 +131,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 ### Tests And Quality
 
 - [ ] Add unit tests for state transitions and validation.
-- [X] Add API tests for all module contracts. Completed 2026-05-22 by claude-sonnet-4-6; test_projects.py, test_tasks.py (incl. lease lifecycle), test_agents.py — 50 tests, 50 passed, 0.83s.
+- [X] Add API tests for all module contracts. Completed 2026-05-22 by claude-sonnet-4-6; test_projects.py, test_tasks.py (incl. lease lifecycle + duration), test_agents.py — 54 tests, 54 passed, 0.89s.
 - [ ] Add database integration tests using local PostgreSQL container.
 - [ ] Add smoke script tests for health and minimal task lifecycle.
 - [ ] Add Python containerized integration tests for multi-project workflows and task leases.

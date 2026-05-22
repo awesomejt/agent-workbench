@@ -119,11 +119,11 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Implement `project_sections` module for modules/sections within a project. Completed 2026-05-22 by claude-sonnet-4-6; nested CRUD routes under /api/projects/{id}/sections, sort_order support, project ownership validation.
 - [X] Implement `project_status` module for project-wide and section-scoped current status and history. Completed 2026-05-22 by claude-sonnet-4-6; list/create/patch routes nested under /api/projects/{id}/status, optional project_section_id, optimistic locking.
 - [X] Implement `project_tasks` module for project-wide and section-scoped tasks, priorities, phases, dependencies, assignee/owner, leases, and completion evidence. Completed 2026-05-22 by claude-sonnet-4-6; list/create at /api/projects/{id}/tasks; get/patch/claim/heartbeat/complete/block at /api/tasks/{id}/...; atomic lease via targeted UPDATE with rowcount check.
-- [ ] Implement `agents` module for agent registry, capabilities, defaults, and runtime hints.
+- [X] Implement `agents` module for agent registry, capabilities, defaults, and runtime hints. Completed 2026-05-22 by claude-sonnet-4-6; CRUD routes at /api/agents, name uniqueness enforced, optimistic locking.
 - [ ] Scaffold Go 1.26 CLI and configure builds to write artifacts into `cli/builds/`.
-- [ ] Implement `runs` module for run attempts, heartbeats, validation, and outcomes.
-- [ ] Implement `events` module as append-only audit trail for status/task/run/review history.
-- [ ] Implement `reviews` module for cloud review findings and signoff gates.
+- [X] Implement `runs` module for run attempts, heartbeats, validation, and outcomes. Completed 2026-05-22 by claude-sonnet-4-6; POST create, GET, heartbeat, complete, fail; atomic state transitions via targeted UPDATE.
+- [X] Implement `events` module as append-only audit trail for status/task/run/review history. Completed 2026-05-22 by claude-sonnet-4-6; GET /api/projects/{id}/events and POST /api/events; no update/delete routes.
+- [X] Implement `reviews` module for cloud review findings and signoff gates. Completed 2026-05-22 by claude-sonnet-4-6; list/create nested under project, PATCH /api/reviews/{id} for status updates.
 
 ### Tests And Quality
 

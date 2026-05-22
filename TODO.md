@@ -51,7 +51,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 
 - [X] Replace template placeholders with Agent Workbench project direction.
 - [X] Inventory reusable lessons from `/shared/projects/dev/project-status` without copying known implementation drift. Completed 2026-05-22 by Copilot.
-- [ ] Inventory OpenCode setup repo requirements from `/shared/projects/ai/opencode-setup`.
+- [X] Inventory OpenCode setup repo requirements from `/shared/projects/ai/opencode-setup`. Completed 2026-05-22 by OpenCode.
 - [X] Decide initial API framework: Python 3.14 latest plus Flask. Completed 2026-05-22 by Jason.
 - [X] Decide initial CLI stack: Go 1.26 with Cobra and Viper. Completed 2026-05-22 by Jason.
 - [X] Decide post-MVP web stack: React with Node.js 24 LTS, latest npm, and Express. Completed 2026-05-22 by Jason.

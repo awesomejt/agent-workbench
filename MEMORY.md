@@ -8,9 +8,9 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Current Status
 
-- Current phase: scaffolding.
-- Last major milestone: Flask API scaffold complete — `api/` directory with application factory, 8 domain modules (models + blueprint stubs), Alembic configured, Docker Compose, pydantic-settings config, expanded Makefile.
-- Next recommended task: implement core API modules (`projects`, `project_tasks`) starting with the highest-priority Implementation Phase items.
+- Current phase: implementation.
+- Last major milestone: All 8 core API modules fully implemented — `projects`, `project_sections`, `project_status`, `tasks`, `agents`, `runs`, `events`, `reviews` — each with routes, service layer, and serialization.
+- Next recommended task: generate and run the first Alembic migration (requires local DB up via `make db-up`), then add pytest configuration and smoke tests.
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions
@@ -90,6 +90,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - claude-sonnet-4-6 (session 2)
+
+- Task: Implement all 8 core API modules after context compaction; close planning tasks L61-L63; clean up .claude/settings.json allow rules.
+- Files changed: `api/src/agent_workbench/projects/`, `project_sections/`, `project_status/`, `tasks/`, `agents/`, `runs/`, `events/`, `reviews/` (routes + service for each); `TODO.md`, `MEMORY.md`, `status.yaml`, `.claude/settings.json`.
+- Validation: `make lint` clean, `make validate` passes imports.
+- Result: All 8 modules have working route + service implementations. Tasks module has atomic lease coordination (targeted UPDATE, rowcount check). Events module is append-only. Runs module has heartbeat/complete/fail state transitions. Reviewed/explained Claude Code settings file priority (user > project-local > project > enterprise).
+- Blockers or follow-up: First Alembic migration needs DB up; pytest setup with PostgreSQL fixture is the next unlocked task; dev/stage/prod database names/users still unconfirmed.
 
 ### 2026-05-22 - claude-sonnet-4-6
 

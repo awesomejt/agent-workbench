@@ -12,6 +12,6 @@
 
 status: "active"
 phase: "implementation"
-reason: "Go CLI scaffolded (awb binary, all task/project/status commands); next: cloud review gate"
+reason: "CLI install script added (make install-cli); config paths ~/.config/awb + ~/.config/agent-workbench with yaml/json support; next: cloud review gate"
 worker: "claude-sonnet-4-6"
-updated: "2026-05-22T23:30:00-06:00"
+updated: "2026-05-22T23:55:00-06:00"

@@ -6,14 +6,14 @@
 
 Git remains the source of truth for code. PostgreSQL becomes the source of truth for agent coordination state.
 
-CLI implementation target is Go 1.26 with Cobra and Viper. Web UI remains post-MVP and should use React with Node.js 24 LTS, latest npm, and Express.
+CLI is Go 1.26 with Cobra and Viper (`awb` binary). Config resolves from `~/.config/awb/` (preferred) or `~/.config/agent-workbench/`; yaml, json, and toml formats supported. Web UI remains post-MVP and should use React with Node.js 24 LTS, latest npm, and Express.
 
 ## System Diagram
 
 ```mermaid
 flowchart TD
     Human[Jason / Human Operator] --> Web[Future Web UI]
-    Human --> CLI[CLI / Bootstrap Scripts]
+    Human --> CLI[awb CLI / Bootstrap Scripts]
     LocalAgent[Local OpenCode Agent] --> CLI
     CloudAgent[Cloud Review Agent] --> API[Agent Workbench API]
     CLI --> API

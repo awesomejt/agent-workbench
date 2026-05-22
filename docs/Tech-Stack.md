@@ -18,8 +18,8 @@ Document the approved tools, languages, frameworks, libraries, and versions for 
 - API framework: Flask.
 - Database access: SQLAlchemy 2.x plus Alembic migrations is the default recommendation unless another stack is chosen.
 - PostgreSQL driver: psycopg 3.x preferred for new Python work.
-- CLI/bootstrap: initial stub commands for OpenCode, then a Go 1.26 CLI using Cobra and Viper, managed by Makefile.
-- CLI build output: `cli/builds/`, excluded from Git.
+- CLI: Go 1.26 CLI (`awb`) using Cobra and Viper, managed by Makefile. Binary builds to `cli/builds/` (excluded from Git). Installed via `make install-cli` or `scripts/install-awb.sh`.
+- Bootstrap scripts: thin `scripts/` wrappers backed by Markdown/local state; serve as interim OpenCode commands until the API-backed CLI is the primary interface.
 - Testing:
   - Unit tests for state machines and validation.
   - API tests for route contracts.
@@ -37,9 +37,9 @@ The repository is organized as a monorepo with three top-level component directo
 
 ```
 api/        Python/Flask API — package managed by uv, pyproject.toml, alembic.ini, migrations/
-cli/        Go CLI — Cobra/Viper, builds to cli/builds/ (stub until scaffolded)
+cli/        Go CLI (awb) — Cobra/Viper, builds to cli/builds/, installed via scripts/install-awb.sh
 web/        React web UI — Node.js 24 LTS, npm, Express (post-MVP stub)
-scripts/    Bootstrap agent scripts (Markdown-backed local state, MVP interim tools)
+scripts/    Bootstrap agent scripts (Markdown-backed local state, MVP interim tools) + install-awb.sh
 db/         Database bootstrap SQL (schema creation templates)
 ```
 
@@ -56,16 +56,29 @@ make setup
 # Start database container
 make db-up                          # or: docker compose up -d db
 
-# Run Alembic migrations against local db via Docker Compose
-make migrate                        # docker compose --profile migrate run --rm migrations
+# Run Alembic migrations against local db
+make migrate
 
 # Start API server via Docker Compose (api profile)
 docker compose --profile api up api
 
-# Bootstrap agent workflow (Markdown-backed, interim until CLI is ready)
+# Go CLI — build, install, and use
+make build-cli                      # builds cli/builds/awb
+make install-cli                    # builds and installs to ~/.local/bin or ~/bin
+awb --help
+awb task next
+awb task list --status pending
+awb task claim <id> --agent opencode
+awb task heartbeat <id> --agent opencode
+awb task complete <id> --agent opencode
+awb task block <id> --agent opencode --reason "blocked on X"
+awb project list
+awb status show --project <slug>
+
+# Bootstrap scripts (Markdown-backed, interim fallback)
 make status-show
 make task-next
-./scripts/task-claim <task-id> --agent opencode
+./scripts/task-claim <task-id> --agent opencode --note "starting work"
 ./scripts/task-heartbeat <task-id>
 ./scripts/task-complete <task-id>
 ./scripts/task-block <task-id> --note "blocked reason"
@@ -81,9 +94,6 @@ make test
 
 # Run curl smoke checks against running API
 make smoke
-
-# Build Go CLI (stub until cli/ is scaffolded)
-make build-cli
 
 # Stop everything and clean volumes
 make clean
@@ -103,6 +113,14 @@ Root `Makefile` wraps all the above with `API_DIR = api` prefix for Python targe
   - `AGENT_WORKBENCH_DEV_DATABASE_URL`
   - `AGENT_WORKBENCH_STAGE_DATABASE_URL`
   - `AGENT_WORKBENCH_PROD_DATABASE_URL`
+- CLI environment variables (prefix `AWB_`, override config file):
+  - `AWB_API_URL`: API base URL (default `http://localhost:8000`)
+  - `AWB_PROJECT`: default project slug
+  - `AWB_AGENT`: default agent name
+  - `AWB_OUTPUT`: output format (`table` or `json`)
+- CLI config file (optional, any supported format — yaml, json, toml):
+  - `~/.config/awb/config.yaml` (preferred)
+  - `~/.config/agent-workbench/config.yaml` (fallback)
 - Local services:
   - PostgreSQL container managed by Docker Compose.
 - Dev/stage/production:

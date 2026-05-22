@@ -112,6 +112,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Add root `Makefile` with bootstrap `task-next`, `status-show`, `validate`, and placeholder `build-cli` targets. Completed 2026-05-22 by Codex.
 - [X] Establish `api/`, `cli/`, `web/` top-level component directories with stubs for cli and web. Completed 2026-05-22 by claude-sonnet-4-6; `cli/.gitkeep` and `web/.gitkeep` added; Python API lives under `api/`.
 - [X] Scaffold Go CLI command tree using Cobra and Viper for config/env resolution. Completed 2026-05-22 by claude-sonnet-4-6; `awb` binary with task (next/list/get/claim/heartbeat/complete/block), project list, status show, version; builds to cli/builds/awb.
+- [X] Add CLI install script and user-level config path support. Completed 2026-05-22 by claude-sonnet-4-6; `scripts/install-awb.sh` installs to `~/.local/bin` or `~/bin`; config now resolves `~/.config/awb` (preferred) then `~/.config/agent-workbench`; yaml/json/toml all supported; `make install-cli` target added.
 - [ ] Add post-MVP web scaffold using React + Express on Node.js 24 LTS with npm latest (only if MVP API/CLI queue is unblocked).
 - [ ] Add scheduled OpenCode wrapper that calls bootstrap commands and runs one focused task.
 - [ ] Add optional Prometheus metrics dependencies and `/metrics` endpoint behind configuration.

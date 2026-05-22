@@ -20,7 +20,7 @@
 - Append-only event history for project, task, status, review, and run transitions; initial implementations may expose this through structured logs before richer event-query APIs exist.
 - Review module for cloud review findings, refactor tasks, and signoff gates.
 - Bootstrap scripts or CLI commands that let agents interact with Postgres before the full web UI exists.
-- CLI implementation target is a Go client built with Cobra for command structure and Viper for configuration.
+- CLI is a Go client (`awb`) built with Cobra and Viper. Commands cover task lifecycle (next, claim, heartbeat, complete, block), project listing, and status inspection. Config resolves from `~/.config/awb/` (preferred) or `~/.config/agent-workbench/`, with `AWB_*` env vars and `--flag` overrides taking priority. Binary installs to `~/.local/bin` or `~/bin` via `make install-cli`.
 - Markdown summary/memory bridge for agent context resets, generated or manually maintained during early development.
 - MVP scope is API plus CLI/scripts so at least one test project can use the workbench before the web UI is built.
 - Web UI follows MVP and should focus on human review plus adding/editing tasks on the fly.
@@ -30,6 +30,7 @@
 - Explicit environment selection through `APP_ENV=local|dev|stage|prod` and optional `--env` flags in CLI/scripts.
 - Configurable local project discovery roots, defaulting to `~/projects/ai`, `~/projects/courses`, `~/projects/dev`, and `~/projects/infra`.
 - Optional Prometheus metrics endpoint for API health, task claims, run outcomes, and queue depth.
+- Runtime agent metrics captured per run: `model_id`, `prompt_tokens`, `completion_tokens`, `latency_ms`, and `prompt_category` — stored on the `runs` table to inform lease duration tuning and model selection heuristics.
 
 ## API Shape
 

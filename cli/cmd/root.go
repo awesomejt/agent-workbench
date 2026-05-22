@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"agent-workbench/cli/internal/api"
 
@@ -48,8 +49,11 @@ func init() {
 
 func initConfig() {
 	viper.SetConfigName("config")
-	viper.SetConfigType("yaml")
-	viper.AddConfigPath("$HOME/.config/agent-workbench")
+	// No SetConfigType — Viper auto-detects yaml, json, toml, etc.
+	if home, err := os.UserHomeDir(); err == nil {
+		viper.AddConfigPath(filepath.Join(home, ".config", "awb"))
+		viper.AddConfigPath(filepath.Join(home, ".config", "agent-workbench"))
+	}
 	viper.AddConfigPath(".")
 	_ = viper.ReadInConfig() // config file is optional
 }

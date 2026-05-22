@@ -42,7 +42,7 @@ Goal: get API plus CLI/scripts usable by at least one test project before buildi
   - `status-show`
 - Evolve bootstrap commands from local ignored state to database/API-backed behavior.
 - Expand root `Makefile` for setup, validation, smoke, integration, migration, cleanup, and CLI builds.
-- Add Go 1.26 CLI scaffold using Cobra and Viper with build artifacts under `cli/builds/`.
+- Add Go 1.26 CLI scaffold using Cobra and Viper with build artifacts under `cli/builds/`. ✓ Done — `awb` binary with full task/project/status command tree; `make install-cli` and `scripts/install-awb.sh` added; config resolves `~/.config/awb/` then `~/.config/agent-workbench/`.
 - Defer web UI until API/CLI can support real project workflow validation.
 - When web work starts post-MVP, use React with Node.js 24 LTS, latest npm, and Express.
 

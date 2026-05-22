@@ -10,7 +10,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 - Current phase: implementation.
 - Last major milestone: 54 API contract tests passing; task duration per-task config added; Grok security fixes applied.
-- Next recommended task: cloud review gate (all 9 review items in TODO), then expand CLI with config file support and shell completion.
+- Next recommended task: cloud review gate (all 9 review items in TODO), then CLI shell completion.
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions
@@ -72,7 +72,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Database servers: local container, `postgresql-dev`, `postgresql-stage`, `postgresql`/`postgresql.taylor.lan` for prod.
 - Production database: `postgresql`/`postgresql.taylor.lan` with secrets supplied externally; never committed.
 - Deployment target: Docker Compose VM first; K3s is future work.
-- CLI direction: Go 1.26, Cobra + Viper, binary `awb` built to `cli/builds/` (git-ignored). Module path `agent-workbench/cli` (local; update when GitHub remote is added). Config via `~/.config/agent-workbench/config.yaml` or env vars prefixed `AWB_`.
+- CLI direction: Go 1.26, Cobra + Viper, binary `awb` built to `cli/builds/` (git-ignored). Module path `agent-workbench/cli` (local; update when GitHub remote is added). Config resolution: `--flag` > `AWB_*` env var > `~/.config/awb/config.*` > `~/.config/agent-workbench/config.*`; yaml, json, and toml formats all supported. Install via `make install-cli` or `scripts/install-awb.sh` (targets `~/.local/bin`, then `~/bin`).
 - Bootstrap scripts: `scripts/` (root level), backed by `.agent-workbench/bootstrap-state.json` (git-ignored), used until Go CLI replaces them.
 
 ## Manual Validation Findings
@@ -97,6 +97,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - claude-sonnet-4-6 (session 7)
+
+- Task: CLI install script and config path improvements.
+- Files changed: `cli/cmd/root.go` (fix `$HOME` expansion bug, add `~/.config/awb` as first config path, drop `SetConfigType` to support yaml/json/toml), `scripts/install-awb.sh` (new; installs to `~/.local/bin` or `~/bin`, auto-builds if binary absent, warns when dir not on PATH), `Makefile` (`install-cli` target added, help text updated).
+- Validation: `go vet ./...` clean; `make build-cli` succeeds; install script syntax-checked.
+- Result: `awb` can now be installed with `make install-cli`. Config files in `~/.config/awb/` take priority over `~/.config/agent-workbench/`; both yaml and json are supported.
+- Blockers or follow-up: cloud review gate is the next priority.
 
 ### 2026-05-22 - claude-sonnet-4-6 (session 5)
 

@@ -1,0 +1,83 @@
+# OS and editor
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Agent and tool config
+.agent/
+.claude/
+.codex/
+.cursor/
+.continue/
+.aider*
+
+# Logs and generated transcripts
+*.log
+chats/*.md
+!chats/.gitkeep
+agents/chats/*.md
+!agents/chats/.gitkeep
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.crt
+
+# Temp, build, cache, and output
+tmp/
+temp/
+working/
+build/
+dist/
+out/
+output/
+cache/
+.cache/
+coverage/
+test-output/
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.next/
+.nuxt/
+.svelte-kit/
+.astro/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Go
+bin/
+pkg/
+
+# Java / JVM
+target/
+.gradle/
+build/
+
+# Archives and large binaries
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z

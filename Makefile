@@ -1,5 +1,5 @@
 .PHONY: help setup up down db-up db-down migrate migrate-dev migrate-stage migrate-prod \
-        lint format type-check test smoke validate build-cli \
+        lint format type-check test smoke validate build-cli cli-tidy cli-vet \
         task-next status-show clean
 
 API_DIR = api
@@ -31,7 +31,9 @@ help:
 	@echo "    smoke         Run curl smoke checks against running API"
 	@echo ""
 	@echo "  CLI:"
-	@echo "    build-cli     Build Go CLI into cli/builds/ (stub until cli/ is scaffolded)"
+	@echo "    build-cli     Build Go CLI binary to cli/builds/awb"
+	@echo "    cli-tidy      Run go mod tidy for the CLI module"
+	@echo "    cli-vet       Run go vet on the CLI"
 	@echo ""
 	@echo "  Bootstrap scripts (local Markdown-backed state):"
 	@echo "    task-next     Show next available AI Agent Work task"
@@ -106,10 +108,20 @@ smoke:
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
+CLI_DIR = cli
+CLI_BIN = cli/builds/awb
+
 build-cli:
 	@mkdir -p cli/builds
 	@which go > /dev/null 2>&1 || (echo "ERROR: go not found in PATH" && exit 1)
-	@echo "Go CLI scaffold not yet added — see TODO: Scaffold Go CLI command tree"
+	cd $(CLI_DIR) && go build -o builds/awb .
+	@echo "built: $(CLI_BIN)"
+
+cli-tidy:
+	cd $(CLI_DIR) && go mod tidy
+
+cli-vet:
+	cd $(CLI_DIR) && go vet ./...
 
 # ── Bootstrap scripts (local Markdown state) ──────────────────────────────────
 

@@ -68,6 +68,8 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Define task duration estimation model: t-shirt sizing (XS/S/M/L/XL) or Agile story points mapped to seconds, with agent-capability multipliers (cloud vs. local AI) so lease windows auto-scale without manual `estimated_duration_seconds` on every task.
 - [ ] Define status/task event history strategy, including bootstrap structured logging before full event APIs if needed.
 - [ ] Define optional Prometheus metrics scope, config flag, endpoint, and deployment notes for `prometheus.taylor.lan`.
+- [ ] Add runtime metrics fields to `runs` table: `model_id`, `prompt_tokens`, `completion_tokens`, `latency_ms`, `prompt_category` — to inform lease duration tuning and model selection heuristics.
+- [ ] Create `benchmark-harness` as a separate project: structured AI agent evaluation with prompt libraries, scoring rubrics, and comparison reports; consumes agent-workbench API as infrastructure.
 - [ ] Research future authentication/IDP options for post-MVP use.
 - [ ] Research HashiCorp Vault integration for deployment secrets after Compose secrets/env files are working.
 - [X] Define bootstrap transition from Markdown files to Postgres-backed scripts/CLI/API. Completed 2026-05-22 by Codex; `docs/Bootstrap-CLI.md` now describes Markdown/local state, API-backed scripts, full CLI coordination, and post-MVP web phases.
@@ -109,7 +111,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Confirm `cli/builds/` is excluded from Git. Completed 2026-05-22 by Codex.
 - [X] Add root `Makefile` with bootstrap `task-next`, `status-show`, `validate`, and placeholder `build-cli` targets. Completed 2026-05-22 by Codex.
 - [X] Establish `api/`, `cli/`, `web/` top-level component directories with stubs for cli and web. Completed 2026-05-22 by claude-sonnet-4-6; `cli/.gitkeep` and `web/.gitkeep` added; Python API lives under `api/`.
-- [ ] Scaffold Go CLI command tree using Cobra and Viper for config/env resolution.
+- [X] Scaffold Go CLI command tree using Cobra and Viper for config/env resolution. Completed 2026-05-22 by claude-sonnet-4-6; `awb` binary with task (next/list/get/claim/heartbeat/complete/block), project list, status show, version; builds to cli/builds/awb.
 - [ ] Add post-MVP web scaffold using React + Express on Node.js 24 LTS with npm latest (only if MVP API/CLI queue is unblocked).
 - [ ] Add scheduled OpenCode wrapper that calls bootstrap commands and runs one focused task.
 - [ ] Add optional Prometheus metrics dependencies and `/metrics` endpoint behind configuration.
@@ -123,7 +125,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Implement `agents` module for agent registry, capabilities, defaults, and runtime hints. Completed 2026-05-22 by claude-sonnet-4-6; CRUD routes at /api/agents, name uniqueness enforced, optimistic locking.
 - [X] Add per-task `estimated_duration_seconds` for local-AI-friendly lease windows. Completed 2026-05-22 by claude-sonnet-4-6; 3-level resolution (request > task estimate > 1800s default); 4 new tests.
 - [X] Harden config: reject default SECRET_KEY in prod; add DB connectivity check to /health (503 on failure). Completed 2026-05-22 by claude-sonnet-4-6.
-- [ ] Scaffold Go 1.26 CLI and configure builds to write artifacts into `cli/builds/`.
+- [X] Scaffold Go 1.26 CLI and configure builds to write artifacts into `cli/builds/`. Completed 2026-05-22 by claude-sonnet-4-6.
 - [X] Implement `runs` module for run attempts, heartbeats, validation, and outcomes. Completed 2026-05-22 by claude-sonnet-4-6; POST create, GET, heartbeat, complete, fail; atomic state transitions via targeted UPDATE.
 - [X] Implement `events` module as append-only audit trail for status/task/run/review history. Completed 2026-05-22 by claude-sonnet-4-6; GET /api/projects/{id}/events and POST /api/events; no update/delete routes.
 - [X] Implement `reviews` module for cloud review findings and signoff gates. Completed 2026-05-22 by claude-sonnet-4-6; list/create nested under project, PATCH /api/reviews/{id} for status updates.

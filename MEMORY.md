@@ -10,7 +10,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 - Current phase: implementation.
 - Last major milestone: 54 API contract tests passing; task duration per-task config added; Grok security fixes applied.
-- Next recommended task: scaffold Go CLI (Cobra + Viper, builds to cli/builds/), then cloud review gate.
+- Next recommended task: cloud review gate (all 9 review items in TODO), then expand CLI with config file support and shell completion.
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions
@@ -22,6 +22,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Status and task changes need event history; structured logs are acceptable as an initial bootstrap mechanism.
 - Prometheus support should be optional and easy to enable; Jason's server is `prometheus.taylor.lan`.
 - Use a modular monolith before considering separate services.
+- Runtime agent metrics (model_id, token counts, latency_ms, prompt_category) belong on the `runs` table in agent-workbench — used to inform future lease duration tuning and model selection.
+- A separate `benchmark-harness` project will handle structured evaluation: prompt libraries, scoring rubrics, comparison reports. It will consume agent-workbench as infrastructure but live independently.
 - PostgreSQL should become the preferred source of truth for project/task/status/agent/run state.
 - Git remains the source of truth for source code and migrations.
 - Markdown files remain useful as a context bridge while OpenCode/local agent iterations reset context.
@@ -70,7 +72,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Database servers: local container, `postgresql-dev`, `postgresql-stage`, `postgresql`/`postgresql.taylor.lan` for prod.
 - Production database: `postgresql`/`postgresql.taylor.lan` with secrets supplied externally; never committed.
 - Deployment target: Docker Compose VM first; K3s is future work.
-- CLI direction: Go 1.26 managed by Makefile, build artifacts under `cli/builds/` (git-ignored).
+- CLI direction: Go 1.26, Cobra + Viper, binary `awb` built to `cli/builds/` (git-ignored). Module path `agent-workbench/cli` (local; update when GitHub remote is added). Config via `~/.config/agent-workbench/config.yaml` or env vars prefixed `AWB_`.
 - Bootstrap scripts: `scripts/` (root level), backed by `.agent-workbench/bootstrap-state.json` (git-ignored), used until Go CLI replaces them.
 
 ## Manual Validation Findings

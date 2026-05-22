@@ -9,8 +9,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Current Status
 
 - Current phase: planning and bootstrap.
-- Last major milestone: initialized the project direction for a modular monolith, PostgreSQL-backed AI agent workbench.
-- Next recommended task: finalize the initial data model and API/CLI route contract for the API-plus-CLI MVP before scaffolding backend migrations.
+- Last major milestone: incorporated multi-AI planning review by adding a canonical API contract guide, Mermaid data/claim diagrams, and bootstrap transition roadmap.
+- Next recommended task: decide Flask package layout, then scaffold the backend/API and Alembic migration foundation against the documented contracts.
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions
@@ -33,6 +33,9 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Support multiple project types with default sections/modules, phases, default agent choices, and workflow hints.
 - Status records and tasks should both track phase and optional `project_section_id`; null section means project-wide/general work.
 - Add cloud review/refactor before real use.
+- Accepted Grok review recommendations: centralize API contracts in `docs/API-Contracts.md`, add human-readable diagrams, clarify bootstrap CLI transition phases, and weight task selection toward high-impact API/CLI MVP unblockers.
+- Deferred Grok review recommendations: separate `CHANGELOG.md` and heavy web/ops/auth work are unnecessary before API/CLI scaffolding; `MEMORY.md` remains the lightweight decision log for now.
+- Project boundary clarified: active work is in `agent-workbench`; `/shared/projects/dev/project-status` is a prototype/reference source only. If future context points at mixed projects, agents should ask before editing.
 
 ## Architecture Notes
 
@@ -76,6 +79,22 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - Codex
+
+- Task: Record project-boundary clarification after mixed `project-status`/`agent-workbench` context.
+- Files changed: `AGENTS.md`, `MEMORY.md`, `status.yaml`.
+- Validation: pending final validation before commit.
+- Result: Made `agent-workbench` the explicit default work target and documented `project-status` as reference material only.
+- Blockers or follow-up: none.
+
+### 2026-05-22 - Codex
+
+- Task: Evaluate Grok's planning/scaffolding review and apply recommendations with merit.
+- Files changed: `docs/API-Contracts.md`, `docs/Architecture.md`, `docs/Bootstrap-CLI.md`, `docs/Requirements.md`, `docs/Implementation.md`, `AGENT_WORKFLOW.md`, `TODO.md`, `MEMORY.md`, `status.yaml`.
+- Validation: `make validate` passed; `git diff --check` passed.
+- Result: Accepted the review's strongest low-risk recommendations: centralized API contract planning, added Mermaid ERD and task-claim sequence diagrams, documented bootstrap transition phases, and made task selection explicitly favor high-impact MVP unblockers. Deferred a separate changelog and heavier post-MVP scope.
+- Blockers or follow-up: Jason still needs to confirm non-local database names/users and secret injection details; next engineering task remains Flask package/backend scaffolding.
 
 ### 2026-05-22 - Codex
 

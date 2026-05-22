@@ -38,6 +38,84 @@ flowchart TD
 - `events`: append-only audit log for state changes, notes, claims, completions, review updates, and validation.
 - `reviews`: cloud review findings, severity, status, refactor tasks, and signoff.
 
+## Data Model Diagram
+
+```mermaid
+erDiagram
+    PROJECTS ||--o{ PROJECT_SECTIONS : contains
+    PROJECTS ||--o{ PROJECT_STATUS : records
+    PROJECTS ||--o{ TASKS : owns
+    PROJECTS ||--o{ RUNS : tracks
+    PROJECTS ||--o{ EVENTS : audits
+    PROJECTS ||--o{ REVIEWS : receives
+    PROJECT_SECTIONS ||--o{ PROJECT_STATUS : scopes
+    PROJECT_SECTIONS ||--o{ TASKS : scopes
+    TASKS ||--o{ RUNS : attempted_by
+    TASKS ||--o{ EVENTS : emits
+    RUNS ||--o{ EVENTS : emits
+    REVIEWS ||--o| TASKS : may_create
+
+    PROJECTS {
+        uuid id
+        string slug
+        string project_type
+        string local_path
+        int version
+    }
+    PROJECT_SECTIONS {
+        uuid id
+        uuid project_id
+        string slug
+        string section_type
+        int version
+    }
+    TASKS {
+        uuid id
+        uuid project_id
+        uuid project_section_id
+        string status
+        string phase
+        string assignee_name
+        datetime claimed_until
+        int version
+    }
+    RUNS {
+        uuid id
+        uuid project_id
+        uuid task_id
+        string agent_name
+        string status
+    }
+    EVENTS {
+        uuid id
+        uuid project_id
+        string event_type
+        string actor_name
+        datetime created_at
+    }
+```
+
+## Task Claim Sequence
+
+```mermaid
+sequenceDiagram
+    participant Agent
+    participant CLI as CLI / Bootstrap Script
+    participant API as Agent Workbench API
+    participant DB as PostgreSQL
+
+    Agent->>CLI: task-next / task-claim
+    CLI->>API: request next task or claim task
+    API->>DB: select eligible task and check lease/version
+    DB-->>API: task row
+    API->>DB: atomic claim + append event
+    API-->>CLI: task + lease metadata
+    CLI-->>Agent: concise machine-readable assignment
+    Agent->>CLI: task-heartbeat while running
+    CLI->>API: heartbeat with lease holder
+    API->>DB: extend lease + append event
+```
+
 ## Data Flow
 
 1. Jason creates or imports a project with type, Git source, and default agent hints.

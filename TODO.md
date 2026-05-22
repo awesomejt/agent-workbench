@@ -50,6 +50,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 ### Discovery And Planning
 
 - [X] Replace template placeholders with Agent Workbench project direction.
+- [X] Clarify that `agent-workbench` is the active work target and `project-status` is reference material only. Completed 2026-05-22 by Codex.
 - [X] Inventory reusable lessons from `/shared/projects/dev/project-status` without copying known implementation drift. Completed 2026-05-22 by Copilot.
 - [X] Inventory OpenCode setup repo requirements from `/shared/projects/ai/opencode-setup`. Completed 2026-05-22 by OpenCode.
 - [X] Decide initial API framework: Python 3.14 latest plus Flask. Completed 2026-05-22 by Jason.
@@ -68,24 +69,26 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Define optional Prometheus metrics scope, config flag, endpoint, and deployment notes for `prometheus.taylor.lan`.
 - [ ] Research future authentication/IDP options for post-MVP use.
 - [ ] Research HashiCorp Vault integration for deployment secrets after Compose secrets/env files are working.
-- [ ] Define bootstrap transition from Markdown files to Postgres-backed scripts/CLI/API.
+- [X] Define bootstrap transition from Markdown files to Postgres-backed scripts/CLI/API. Completed 2026-05-22 by Codex; `docs/Bootstrap-CLI.md` now describes Markdown/local state, API-backed scripts, full CLI coordination, and post-MVP web phases.
+- [X] Evaluate Grok planning/scaffolding review for worthwhile recommendations. Completed 2026-05-22 by Codex; accepted centralized API contract doc, additional Mermaid diagrams, bootstrap transition roadmap, and impact-weighted task selection guidance.
 
 ### Architecture And Contracts
 
-- [ ] Draft API route contract for project info, project sections/modules, project status, project tasks, agents, runs, and events.
-- [ ] Draft database ERD or schema notes for projects, project_sections, status records, tasks, task events, agents, runs, leases, and reviews.
-- [ ] Define nullable `project_section_id` behavior for project-wide/general status records and tasks.
-- [ ] Define phase enum and validation behavior for status records and tasks.
-- [ ] Define optimistic locking/version fields for mutable resources.
+- [X] Draft API route contract for project info, project sections/modules, project status, project tasks, agents, runs, and events. Completed 2026-05-22 by Codex in `docs/API-Contracts.md`; keep it aligned with future OpenAPI/tests.
+- [X] Draft database ERD or schema notes for projects, project_sections, status records, tasks, task events, agents, runs, leases, and reviews. Completed 2026-05-22 by Codex; `docs/Architecture.md` now includes a Mermaid ERD and `docs/Database.md` holds schema planning notes.
+- [X] Define nullable `project_section_id` behavior for project-wide/general status records and tasks. Completed 2026-05-22 by Codex; canonical behavior is `null` for project-wide/general work.
+- [X] Define phase enum and validation behavior for status records and tasks. Completed 2026-05-22 by Codex; initial phases are `planning`, `research`, `implementation`, `testing`, and `review`.
+- [X] Define optimistic locking/version fields for mutable resources. Completed 2026-05-22 by Codex; `docs/API-Contracts.md` requires mutable resources to include `version`.
 - [ ] Define idempotency key behavior for agent-submitted commands.
 - [ ] Define task claim/lease/heartbeat behavior, including interaction with task assignee/owner.
-- [ ] Establish standard API response formats for errors (e.g., 422 Unprocessable Entity for validation) and collection pagination (`page`/`per_page`).
+- [X] Establish standard API response formats for errors (e.g., 422 Unprocessable Entity for validation) and collection pagination (`page`/`per_page`). Completed 2026-05-22 by Codex in `docs/API-Contracts.md`.
 - [ ] Define in-code API documentation strategy (e.g., OpenAPI auto-generation) to prevent API contract drift.
 - [ ] Evaluate `pydantic-settings` for type-safe configuration validation and failing fast on missing `DATABASE_URL`.
 - [ ] Define append-only event model, structured logging fallback, and retention expectations.
 - [ ] Define Markdown summary/mirroring strategy for `MEMORY.md`, `TODO.md`, and project status snapshots.
 - [X] Define local/dev/stage/prod environment variable names in `docs/Database.md`. Completed 2026-05-22 by Codex.
 - [ ] Add example environment files for local, dev, stage, and prod without secrets.
+- [ ] Decide whether to split future contract details into generated OpenAPI plus this human-readable contract guide, or keep `docs/API-Contracts.md` as the canonical source through MVP.
 
 ### Scaffolding
 

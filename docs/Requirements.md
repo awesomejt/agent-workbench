@@ -33,6 +33,8 @@
 
 ## API Shape
 
+See `docs/API-Contracts.md` for the current canonical planning contract. This section is a summary only.
+
 Prefer stable resource names over URL versioning for the first release. Initial route style should be decided during contract planning, with likely routes such as:
 
 - `GET /api/projects`

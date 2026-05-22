@@ -13,7 +13,7 @@ High-level order of implementation. Keep this aligned with `TODO.md`.
 ## Planning
 
 - Finalize modular monolith architecture.
-- Define initial API route contract.
+- Define initial API route contract in `docs/API-Contracts.md` and keep it aligned with future OpenAPI/tests.
 - Define initial database schema and migration approach.
 - Define `project_sections` and nullable section association for project-wide/general status records and tasks.
 - Define phase tracking for status records and tasks.

@@ -56,7 +56,7 @@ OpenCode should use these stub CLI commands first. Later, those scripts should b
 - `TODO.md` - current work queue during bootstrap.
 - `MEMORY.md` - durable project memory during bootstrap.
 - `status.yaml` - local agent-loop state during bootstrap.
-- `docs/` - requirements, architecture, implementation, and stack notes.
+- `docs/` - requirements, API contracts, architecture, implementation, database, bootstrap, and stack notes.
 - `QUALITY_CHECKLIST.md` - pre-review and release quality gate.
 
 ## Current Status

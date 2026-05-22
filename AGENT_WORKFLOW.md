@@ -70,14 +70,15 @@ Do not move a task to Done based only on generated code, a partial build, or an 
 
 Prefer tasks in this order:
 
-1. Contract drift between docs, implementation, tests, and agent-facing commands.
-2. Broken builds, failing tests, or safety/security issues.
-3. Requirements and architecture tasks that unblock many later tasks.
-4. Project scaffolding and developer experience.
-5. Core feature implementation.
-6. Tests and validation gaps.
-7. Documentation and deployment tasks.
-8. Cleanup tasks.
+1. Highest-impact unblockers for API/CLI MVP architecture, data model, and scaffolding.
+2. Contract drift between docs, implementation, tests, and agent-facing commands.
+3. Broken builds, failing tests, or safety/security issues.
+4. Requirements and architecture tasks that unblock many later tasks.
+5. Project scaffolding and developer experience.
+6. Core feature implementation.
+7. Tests and validation gaps.
+8. Documentation and deployment tasks.
+9. Cleanup tasks.
 
 Do not perform manual validation tasks unless Jason explicitly asks. Prepare checklists or scripts for them instead.
 

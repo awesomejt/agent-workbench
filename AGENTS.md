@@ -4,6 +4,12 @@ Start here before doing any work in `agent-workbench`.
 
 This project is the future source-of-truth service for coordinating AI agents across many Git-controlled projects. The repo is intentionally documentation-heavy at first because local agent context resets are lossy; concise Markdown memory remains useful until the database/API workflow can fully replace it.
 
+## Project Boundary
+
+Work in `agent-workbench` unless Jason explicitly names another repository as the target. Other local projects, especially `/shared/projects/dev/project-status`, are source material and learning references only.
+
+If the IDE context, shell working directory, chat history, or open tabs point at mixed projects, pause and confirm the intended target before editing files. Do not apply `project-status` implementation details directly to this repo without checking `PROJECT_BRIEF.md`, `MEMORY.md`, `TODO.md`, and the current Agent Workbench contracts.
+
 ## Agent Priorities
 
 1. Preserve the product direction: modular monolith, PostgreSQL 18 source of truth, multiple project types, and agent-safe task coordination.

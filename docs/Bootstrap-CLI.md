@@ -15,6 +15,19 @@ The commands read `TODO.md` and store transient claim/heartbeat state in `.agent
 ./scripts/status-show --json
 ```
 
+## Transition Roadmap
+
+The bootstrap commands are intentionally stable even while their implementation changes.
+
+| Phase | Backing store | Goal | Exit criteria |
+| --- | --- | --- | --- |
+| 1. Markdown + local state | `TODO.md`, `MEMORY.md`, `.agent-workbench/bootstrap-state.json` | Give OpenCode and humans a usable command shape immediately. | Commands return predictable JSON and agents still update Markdown handoff files. |
+| 2. API-backed CLI/scripts | Flask API + PostgreSQL | Replace ignored local state with durable task/status/runs/events records. | `task-next`, claim, heartbeat, complete, block, and status-show all call the API and append events. |
+| 3. Full coordination workflow | API + Go CLI + generated Markdown summaries | Make Postgres/API the coordination source of truth while preserving concise handoff files. | A test project can run an agent task loop without direct Markdown edits for primary state. |
+| 4. Human review UI | API + CLI + web UI | Add browser workflows for review, ad hoc task entry, and signoff. | Web UI covers project/task/review inspection without changing the agent-facing contracts. |
+
+The scripts should remain thin wrappers once the Go CLI exists. Keep their output compatible with scheduled OpenCode usage unless a replacement command is documented first.
+
 ## Overnight OpenCode Flow
 
 A scheduled OpenCode run can use this rough flow:

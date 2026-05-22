@@ -58,9 +58,9 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Decide post-MVP web stack: React with Node.js 24 LTS, latest npm, and Express. Completed 2026-05-22 by Jason.
 - [X] Decide Flask package layout. Completed 2026-05-22 by claude-sonnet-4-6; `src/` layout, application factory, Flask-SQLAlchemy 3.x, pydantic-settings, per-module blueprints inside `api/`.
 - [X] Define initial module boundaries: projects, project_sections, status, tasks, agents, runs, events, reviews. Completed 2026-05-22 by claude-sonnet-4-6; modules scaffolded with models, routes, and service stubs.
-- [ ] Define initial API route style and compatibility policy without URL versioning by default.
-- [ ] Define initial database schema and migration strategy, including task assignee/owner fields.
-- [ ] Define local/dev/stage/prod database target names and stable schema policy in `docs/Database.md`.
+- [X] Define initial API route style and compatibility policy without URL versioning by default. Completed 2026-05-22 by claude-sonnet-4-6; documented in `docs/API-Contracts.md` (no URL versioning, canonical routes, pagination, error shape).
+- [X] Define initial database schema and migration strategy, including task assignee/owner fields. Completed 2026-05-22 by claude-sonnet-4-6; 8 SQLAlchemy models with UUID PKs, optimistic locking, lease fields on tasks, append-only events; Alembic configured in `api/`.
+- [X] Define local/dev/stage/prod database target names and stable schema policy in `docs/Database.md`. Completed 2026-05-22 by claude-sonnet-4-6; DB targets, schema `agent_workbench`, and env var names documented in `docs/Database.md`.
 - [ ] Define project discovery config for `~/projects/ai`, `~/projects/courses`, `~/projects/dev`, and `~/projects/infra`.
 - [ ] Define project type vocabulary, default sections/modules, phase workflows, and default agent selection rules.
 - [ ] Define state machines for project status, task status, agent run status, and review findings.

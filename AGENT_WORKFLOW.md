@@ -47,10 +47,12 @@ Use this loop for OpenCode, a persistent local agent, scheduled runner, or workf
 8. Set `status.yaml` to `working`.
 9. Work only that task.
 10. Run appropriate tests, checks, or builds.
-11. Update `TODO.md`, `MEMORY.md`, and relevant docs.
-12. If blocked, move the task to `Blocked`, add a `Needs Attention` item, set `status.yaml` to `blocked`, and stop.
-13. If complete and validated, move the task to `Done` and return `status.yaml` to `active`.
-14. Commit and push only when the project workflow explicitly calls for it.
+11. Write or update a concise Markdown chat/thinking note in `chats/` using `chats/YYYY-MM-DD-HHMM-<agent>-<topic>.md`.
+12. Review `TODO.md` and add or update tasks for newly discovered work, especially in research/planning, scaffolding, and early implementation.
+13. Update `TODO.md`, `MEMORY.md`, and relevant docs.
+14. If blocked, move the task to `Blocked`, add a `Needs Attention` item, set `status.yaml` to `blocked`, and stop.
+15. If complete and validated, move the task to `Done` and return `status.yaml` to `active`.
+16. Commit and push only when the project workflow explicitly calls for it.
 
 ## Done Criteria
 
@@ -109,6 +111,12 @@ Do not guess current external APIs, pricing, laws, platform rules, account flows
 ## Chat Logs And Agent Output
 
 Full transcripts are not committed. Temporary local transcripts may be kept under `chats/`, but Markdown files there are ignored by Git.
+
+For each meaningful session, add a concise Markdown log under `chats/` so chat reasoning can be cross-referenced if `MEMORY.md` gets out of sync.
+
+- Use `chats/YYYY-MM-DD-HHMM-<agent>-<topic>.md`.
+- Capture objective, task id(s), key decisions, commands/validation, blockers, and next steps.
+- Never include secrets, credentials, tokens, or private keys.
 
 Workflow managers should copy transcripts and task outputs to external storage. Hermes-compatible defaults:
 

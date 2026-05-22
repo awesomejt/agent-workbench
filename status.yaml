@@ -10,8 +10,8 @@
 #   error   - severe repo or automation failure; stop and request recovery
 #   working - agent is actively changing the repo; other agents should skip
 
-status: "paused"
+status: "active"
 phase: "planning"
-reason: "Paused for script adjustments"
+reason: "Workflow documentation updates completed"
 worker: "codex"
 updated: "2026-05-22"

@@ -72,6 +72,7 @@ If the task affects architecture, API shape, data model, deployment, or local/ag
 Prevent drift between docs, API, CLI, scripts, tests, and deployment config.
 
 - Treat public contracts as shared source material: API routes, request/response JSON, CLI commands, script names, config names, environment variables, database schema, state transitions, idempotency behavior, and build outputs.
+- Review `TODO.md` during each session and add or update tasks when new work is discovered, especially during research/planning, scaffolding, and early implementation.
 - Before changing API behavior, read the relevant docs, tests, clients/scripts, and TODO items.
 - When changing a public contract, update all affected surfaces in the same task or leave explicit TODOs if the task is intentionally planning-only.
 - Do not mark a task complete just because code was written. Done requires the relevant validation to pass, or a clearly documented blocker/test gap.
@@ -129,6 +130,13 @@ Before real use, release, or deployment, schedule a cloud-based AI review/refact
 ## Chat Logs And External Agent Logs
 
 Full chat transcripts should not be committed. Use `chats/` only as a local transcript workspace; Markdown transcript files there are ignored by Git.
+
+Agents should write a concise Markdown run note in `chats/` for each meaningful work session so Jason can cross-reference decisions when `MEMORY.md` and task state drift.
+
+- File naming: `chats/YYYY-MM-DD-HHMM-<agent>-<topic>.md`.
+- Include: objective, task id(s), files changed, key reasoning/decision points, validation run, blockers, and follow-up.
+- Keep notes concise and redact secrets, credentials, and private keys.
+- Treat `MEMORY.md` as durable summary and `chats/` as higher-detail local context.
 
 Agent workflow managers should copy or mirror transcripts and runtime logs to external storage. Hermes-compatible defaults are:
 

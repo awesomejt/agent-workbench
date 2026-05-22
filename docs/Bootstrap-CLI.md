@@ -15,6 +15,8 @@ The commands read `TODO.md` and store transient claim/heartbeat state in `.agent
 ./scripts/status-show --json
 ```
 
+**One command per call.** Run each script as its own standalone shell invocation. Do not chain them with `&&`, `;`, or pipe them together. The Claude Code permission rule `Bash(./scripts/*)` matches the full command string — a compound like `./scripts/task-claim … && echo done` will not match and will prompt for approval unnecessarily.
+
 ## Transition Roadmap
 
 The bootstrap commands are intentionally stable even while their implementation changes.

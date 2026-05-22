@@ -109,6 +109,15 @@ If blocked:
 
 Do not guess current external APIs, pricing, laws, platform rules, account flows, production behavior, or security-sensitive behavior.
 
+## Bootstrap Script Rules
+
+Run each `./scripts/` command as its own standalone Bash call — one script per invocation. Do not chain bootstrap commands with `&&`, `;`, or pipes in a single call. The Claude Code permission rule `Bash(./scripts/*)` matches the full command string; a compound like `./scripts/task-claim <id> && echo done` will not match and will prompt for approval.
+
+- Correct: separate calls — `./scripts/task-claim <id>` then `./scripts/task-complete <id>`.
+- Wrong: `./scripts/task-claim <id> && ./scripts/task-complete <id>`.
+
+See `docs/Bootstrap-CLI.md` for the full command reference.
+
 ## Chat Logs And Agent Output
 
 Full transcripts are not committed. Temporary local transcripts may be kept under `chats/`, but Markdown files there are ignored by Git.

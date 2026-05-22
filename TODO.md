@@ -56,8 +56,8 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Decide initial API framework: Python 3.14 latest plus Flask. Completed 2026-05-22 by Jason.
 - [X] Decide initial CLI stack: Go 1.26 with Cobra and Viper. Completed 2026-05-22 by Jason.
 - [X] Decide post-MVP web stack: React with Node.js 24 LTS, latest npm, and Express. Completed 2026-05-22 by Jason.
-- [ ] Decide Flask package layout.
-- [ ] Define initial module boundaries: projects, project_sections, status, tasks, agents, runs, events, reviews.
+- [X] Decide Flask package layout. Completed 2026-05-22 by claude-sonnet-4-6; `src/` layout, application factory, Flask-SQLAlchemy 3.x, pydantic-settings, per-module blueprints inside `api/`.
+- [X] Define initial module boundaries: projects, project_sections, status, tasks, agents, runs, events, reviews. Completed 2026-05-22 by claude-sonnet-4-6; modules scaffolded with models, routes, and service stubs.
 - [ ] Define initial API route style and compatibility policy without URL versioning by default.
 - [ ] Define initial database schema and migration strategy, including task assignee/owner fields.
 - [ ] Define local/dev/stage/prod database target names and stable schema policy in `docs/Database.md`.
@@ -83,30 +83,31 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [ ] Define task claim/lease/heartbeat behavior, including interaction with task assignee/owner.
 - [X] Establish standard API response formats for errors (e.g., 422 Unprocessable Entity for validation) and collection pagination (`page`/`per_page`). Completed 2026-05-22 by Codex in `docs/API-Contracts.md`.
 - [ ] Define in-code API documentation strategy (e.g., OpenAPI auto-generation) to prevent API contract drift.
-- [ ] Evaluate `pydantic-settings` for type-safe configuration validation and failing fast on missing `DATABASE_URL`.
+- [X] Evaluate `pydantic-settings` for type-safe configuration validation and failing fast on missing `DATABASE_URL`. Completed 2026-05-22 by claude-sonnet-4-6; adopted in `api/src/agent_workbench/config.py`.
 - [ ] Define append-only event model, structured logging fallback, and retention expectations.
 - [ ] Define Markdown summary/mirroring strategy for `MEMORY.md`, `TODO.md`, and project status snapshots.
 - [X] Define local/dev/stage/prod environment variable names in `docs/Database.md`. Completed 2026-05-22 by Codex.
-- [ ] Add example environment files for local, dev, stage, and prod without secrets.
+- [X] Add example environment files for local, dev, stage, and prod without secrets. Completed 2026-05-22 by claude-sonnet-4-6; `api/.env.example` added.
 - [ ] Decide whether to split future contract details into generated OpenAPI plus this human-readable contract guide, or keep `docs/API-Contracts.md` as the canonical source through MVP.
 
 ### Scaffolding
 
-- [ ] Add backend project structure after framework decision.
-- [ ] Add Docker Compose with local PostgreSQL 18 container and separate `migrations` service.
-- [ ] Add Docker Compose secret/env-file pattern for non-local deployment without committing secrets.
-- [ ] Add example env files without secrets.
-- [ ] Add database migration tooling (Alembic) configured for semantic revision IDs and downgrade functions.
-- [ ] Add migration commands that require explicit `APP_ENV` for dev/stage/prod targets.
+- [X] Add backend project structure after framework decision. Completed 2026-05-22 by claude-sonnet-4-6; `api/` directory with `src/agent_workbench/`, all 8 domain modules, blueprints, and SQLAlchemy models.
+- [X] Add Docker Compose with local PostgreSQL 18 container and separate `migrations` service. Completed 2026-05-22 by claude-sonnet-4-6; `docker-compose.yml` with db, api (profile), and migrations (profile) services.
+- [X] Add Docker Compose secret/env-file pattern for non-local deployment without committing secrets. Completed 2026-05-22 by claude-sonnet-4-6; env var pattern documented in `api/.env.example` and Makefile.
+- [X] Add example env files without secrets. Completed 2026-05-22 by claude-sonnet-4-6; `api/.env.example`.
+- [X] Add database migration tooling (Alembic) configured for semantic revision IDs and downgrade functions. Completed 2026-05-22 by claude-sonnet-4-6; `api/alembic.ini`, `api/migrations/env.py`, `api/migrations/script.py.mako`.
+- [X] Add migration commands that require explicit `APP_ENV` for dev/stage/prod targets. Completed 2026-05-22 by claude-sonnet-4-6; `make migrate-dev/stage/prod` in Makefile require env vars and prod prompts for confirmation.
 - [X] Add safe database bootstrap docs and SQL template for creating target schemas without embedding secrets. Completed 2026-05-22 by Codex.
 - [ ] Add environment-aware wrapper command for running schema bootstrap against local/dev/stage/prod.
-- [ ] Expand root `Makefile` with setup, lint, test, smoke, integration-test, migration, cleanup, and real CLI build targets.
+- [X] Expand root `Makefile` with setup, lint, test, smoke, integration-test, migration, cleanup, and real CLI build targets. Completed 2026-05-22 by claude-sonnet-4-6; full Makefile with `API_DIR=api` prefix for Python targets.
 - [ ] Configure `pytest` with `autouse` fixtures for per-test PostgreSQL 18 database cleanup.
 - [ ] Add curl smoke checks for API health and basic workflow validation.
 - [ ] Add Python containerized integration-test runner.
 - [X] Add stub CLI/bootstrap commands for OpenCode: task next, claim, heartbeat, complete, block, status show. Completed 2026-05-22 by Codex.
 - [X] Confirm `cli/builds/` is excluded from Git. Completed 2026-05-22 by Codex.
 - [X] Add root `Makefile` with bootstrap `task-next`, `status-show`, `validate`, and placeholder `build-cli` targets. Completed 2026-05-22 by Codex.
+- [X] Establish `api/`, `cli/`, `web/` top-level component directories with stubs for cli and web. Completed 2026-05-22 by claude-sonnet-4-6; `cli/.gitkeep` and `web/.gitkeep` added; Python API lives under `api/`.
 - [ ] Scaffold Go CLI command tree using Cobra and Viper for config/env resolution.
 - [ ] Add post-MVP web scaffold using React + Express on Node.js 24 LTS with npm latest (only if MVP API/CLI queue is unblocked).
 - [ ] Add scheduled OpenCode wrapper that calls bootstrap commands and runs one focused task.

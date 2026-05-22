@@ -8,9 +8,9 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Current Status
 
-- Current phase: planning and bootstrap.
-- Last major milestone: incorporated multi-AI planning review by adding a canonical API contract guide, Mermaid data/claim diagrams, and bootstrap transition roadmap.
-- Next recommended task: decide Flask package layout, then scaffold the backend/API and Alembic migration foundation against the documented contracts.
+- Current phase: scaffolding.
+- Last major milestone: Flask API scaffold complete — `api/` directory with application factory, 8 domain modules (models + blueprint stubs), Alembic configured, Docker Compose, pydantic-settings config, expanded Makefile.
+- Next recommended task: implement core API modules (`projects`, `project_tasks`) starting with the highest-priority Implementation Phase items.
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions
@@ -36,6 +36,16 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Accepted Grok review recommendations: centralize API contracts in `docs/API-Contracts.md`, add human-readable diagrams, clarify bootstrap CLI transition phases, and weight task selection toward high-impact API/CLI MVP unblockers.
 - Deferred Grok review recommendations: separate `CHANGELOG.md` and heavy web/ops/auth work are unnecessary before API/CLI scaffolding; `MEMORY.md` remains the lightweight decision log for now.
 - Project boundary clarified: active work is in `agent-workbench`; `/shared/projects/dev/project-status` is a prototype/reference source only. If future context points at mixed projects, agents should ask before editing.
+
+## Scaffolding Decisions (2026-05-22)
+
+- Flask package layout: `src/` layout inside `api/`, application factory `create_app()` in `app.py`, Flask-SQLAlchemy 3.x, pydantic-settings for typed config that fails fast on missing `DATABASE_URL`.
+- Repository structure: `api/` (Python/Flask), `cli/` (Go, stub), `web/` (React, stub) as top-level component dirs; `docker-compose.yml` and `Makefile` at root to orchestrate all three.
+- Alembic configuration: `api/alembic.ini` with semantic revision IDs (`YYYYMMDD_<rev>_<slug>`); `env.py` reads `APP_ENV` and resolves the matching `AGENT_WORKBENCH_*_DATABASE_URL`; creates schema and pgcrypto extension if absent.
+- Docker Compose workflow: `db` service always available; `api` and `migrations` services behind profiles (`--profile api`, `--profile migrate`) to avoid accidental startup.
+- Primary local dev workflow: Docker Compose for db and migrations; `uv` commands run inside `api/` for lint/test/type-check via Makefile targets.
+- Bootstrap scripts remain at `scripts/` (root level) as interim tools until Go CLI replaces them.
+- Version policy: target major.minor versions; patch versions managed automatically by uv/go modules/npm; no manual patch pinning.
 
 ## Architecture Notes
 
@@ -79,6 +89,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - claude-sonnet-4-6
+
+- Task: Scaffold Flask API backend, Docker Compose, Alembic, and repo structure.
+- Files changed: `api/` directory (entire tree), `cli/.gitkeep`, `web/.gitkeep`, `docker-compose.yml`, `Dockerfile` (moved to `api/`), `Makefile` (full rewrite), `docs/Tech-Stack.md`, `TODO.md`, `MEMORY.md`, `status.yaml`.
+- Validation: `make validate` passed, `make lint` clean (ruff), all 8 domain model imports verified.
+- Result: `api/src/agent_workbench/` package with application factory, pydantic-settings config, Flask-SQLAlchemy DB, 8 domain modules (models + blueprint + service stubs), Alembic configured for schema-aware migrations with APP_ENV-driven URL selection. Monorepo split into `api/`/`cli/`/`web/` per Jason's direction.
+- Blockers or follow-up: confirm dev/stage/prod DB names/users before running non-local migrations; next step is implementing core API modules (projects, tasks).
 
 ### 2026-05-22 - Codex
 

@@ -31,24 +31,38 @@ Document the approved tools, languages, frameworks, libraries, and versions for 
 - Observability: optional Prometheus metrics endpoint, likely `/metrics`, enabled by configuration.
 - Authentication: deferred for private-network MVP; future IDP integration should be researched before broader exposure.
 
+## Repository Structure
+
+The repository is organized as a monorepo with three top-level component directories:
+
+```
+api/        Python/Flask API — package managed by uv, pyproject.toml, alembic.ini, migrations/
+cli/        Go CLI — Cobra/Viper, builds to cli/builds/ (stub until scaffolded)
+web/        React web UI — Node.js 24 LTS, npm, Express (post-MVP stub)
+scripts/    Bootstrap agent scripts (Markdown-backed local state, MVP interim tools)
+db/         Database bootstrap SQL (schema creation templates)
+```
+
+Root-level files (`docker-compose.yml`, `Makefile`) orchestrate all components.
+
 ## Commands
 
-Initial target commands after scaffolding:
+Primary dev workflow uses Docker Compose for services and `make` targets from the repo root:
 
 ```bash
-# Install dependencies
-uv sync
+# Install API Python dependencies (inside api/)
+make setup
 
-# Start local services
-docker compose up -d db
+# Start database container
+make db-up                          # or: docker compose up -d db
 
-# Run migrations
-uv run alembic upgrade head
+# Run Alembic migrations against local db via Docker Compose
+make migrate                        # docker compose --profile migrate run --rm migrations
 
-# Run API locally
-uv run agent-workbench-api
+# Start API server via Docker Compose (api profile)
+docker compose --profile api up api
 
-# Bootstrap agent workflow examples
+# Bootstrap agent workflow (Markdown-backed, interim until CLI is ready)
 make status-show
 make task-next
 ./scripts/task-claim <task-id> --agent opencode
@@ -56,24 +70,26 @@ make task-next
 ./scripts/task-complete <task-id>
 ./scripts/task-block <task-id> --note "blocked reason"
 
-# Build CLI once scaffolded (Go + Cobra/Viper)
+# Code quality (runs inside api/)
+make lint
+make format
+make type-check
+make validate
+
+# Run tests (inside api/)
+make test
+
+# Run curl smoke checks against running API
+make smoke
+
+# Build Go CLI (stub until cli/ is scaffolded)
 make build-cli
 
-# Build and run web once post-MVP web work is scheduled
-make web-install
-make web-dev
-
-# Run tests
-uv run pytest
-
-# Run smoke checks
-./scripts/smoke-curl.sh
-
-# Run containerized integration tests
-docker compose run --rm integration-test
+# Stop everything and clean volumes
+make clean
 ```
 
-Root `Makefile` targets should wrap these once implemented.
+Root `Makefile` wraps all the above with `API_DIR = api` prefix for Python targets.
 
 ## Environment
 
@@ -102,5 +118,7 @@ Root `Makefile` targets should wrap these once implemented.
 
 ## Version Notes
 
-- Verify current Python 3.14 patch, PostgreSQL 18 patch, Flask, SQLAlchemy, Alembic, psycopg, Go 1.26, Cobra, Viper, Node.js 24 LTS, npm latest, Express, and Prometheus client library versions before scaffolding related modules.
+- Target **major.minor** versions (e.g., Flask 3.x, SQLAlchemy 2.x, Go 1.26, Node.js 24 LTS). Patch versions are managed automatically by uv (Python), go modules (CLI), and npm (web).
+- CachyOS/rolling distributions deliver latest packages; use dependency managers rather than pinning patch versions manually.
 - Use stable releases; avoid experimental/canary packages for the coordination core.
+- Known installed package versions from scaffolding run: Flask 3.1, Flask-SQLAlchemy 3.1, SQLAlchemy 2.0, Alembic 1.18, psycopg 3.3, pydantic-settings 2.14, Python 3.14.5.

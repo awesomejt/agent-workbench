@@ -6,7 +6,7 @@ Document the approved tools, languages, frameworks, libraries, and versions for 
 
 - API language/runtime: Python 3.14 latest.
 - Package manager: `uv` preferred.
-- Database runtime: PostgreSQL.
+- Database runtime: PostgreSQL 18. Do not use SQLite.
 - Local orchestration: Docker Engine with Docker Compose v2.
 - Deployment target: Docker Compose VM first; K3s deployment is a future feature.
 

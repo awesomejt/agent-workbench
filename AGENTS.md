@@ -6,7 +6,7 @@ This project is the future source-of-truth service for coordinating AI agents ac
 
 ## Agent Priorities
 
-1. Preserve the product direction: modular monolith, PostgreSQL source of truth, multiple project types, and agent-safe task coordination.
+1. Preserve the product direction: modular monolith, PostgreSQL 18 source of truth, multiple project types, and agent-safe task coordination.
 2. Build the smallest correct change that advances the highest-priority unblocked task.
 3. Keep public contracts aligned across API docs, implementation, CLI/scripts, tests, deployment config, and Markdown handoff docs.
 4. Prefer readable, maintainable code with focused tests and integration checks over broad rewrites.
@@ -47,7 +47,7 @@ If the task affects architecture, API shape, data model, deployment, or local/ag
 ## Source Of Truth Rules
 
 - Git is the source of truth for source code, migrations, docs, and deployment definitions.
-- PostgreSQL is the intended source of truth for project/task/status/agent/run state once bootstrapped.
+- PostgreSQL 18. Do not use SQLite. It is the intended source of truth for project/task/status/agent/run state once bootstrapped.
 - Markdown files are a context bridge for humans and local agents, not the long-term coordination database.
 - Until the API/CLI exists, keep Markdown files accurate and concise; later, prefer generating or mirroring summaries from Postgres.
 - Do not commit secrets, database credentials, private keys, local env files, or raw transcripts.

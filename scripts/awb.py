@@ -150,9 +150,14 @@ def cmd_task_heartbeat(args: argparse.Namespace) -> int:
 
     claim["last_heartbeat_at"] = now_iso()
     claim["status"] = "claimed"
-    if args.note:
-        claim["note"] = args.note
-    state.setdefault("events", []).append({"at": now_iso(), "event": "task_heartbeat", "task_id": args.task_id, "note": args.note})
+    
+    note = getattr(args, "note", "")
+    summary = getattr(args, "summary", "")
+    final_note = summary if summary else note
+    
+    if final_note:
+        claim["note"] = final_note
+    state.setdefault("events", []).append({"at": now_iso(), "event": "task_heartbeat", "task_id": args.task_id, "note": final_note})
     save_state(state)
     output(claim, args.json)
     return 0
@@ -163,8 +168,23 @@ def set_terminal_status(args: argparse.Namespace, status: str, event: str) -> in
     claim = state.setdefault("claims", {}).setdefault(args.task_id, {"task_id": args.task_id})
     claim["status"] = status
     claim["finished_at"] = now_iso()
-    claim["note"] = args.note
-    state.setdefault("events", []).append({"at": now_iso(), "event": event, "task_id": args.task_id, "note": args.note})
+    
+    note = getattr(args, "note", "")
+    summary = getattr(args, "summary", "")
+    final_note = summary if summary else note
+    claim["note"] = final_note
+    
+    agent = getattr(args, "agent", "opencode")
+    if agent:
+        claim["agent"] = agent
+        
+    state.setdefault("events", []).append({
+        "at": now_iso(), 
+        "event": event, 
+        "task_id": args.task_id, 
+        "note": final_note,
+        "agent": agent
+    })
     save_state(state)
     output(claim, args.json)
     return 0
@@ -210,18 +230,24 @@ def build_parser() -> argparse.ArgumentParser:
     add_json_flag(heartbeat)
     heartbeat.add_argument("task_id")
     heartbeat.add_argument("--note", default="")
+    heartbeat.add_argument("--summary", default="")
+    heartbeat.add_argument("--agent", default="opencode")
     heartbeat.set_defaults(func=cmd_task_heartbeat)
 
     complete = sub.add_parser("task-complete", help="mark a task complete in local bootstrap state")
     add_json_flag(complete)
     complete.add_argument("task_id")
     complete.add_argument("--note", default="")
+    complete.add_argument("--summary", default="")
+    complete.add_argument("--agent", default="opencode")
     complete.set_defaults(func=lambda args: set_terminal_status(args, "completed", "task_completed"))
 
     block = sub.add_parser("task-block", help="mark a task blocked in local bootstrap state")
     add_json_flag(block)
     block.add_argument("task_id")
-    block.add_argument("--note", required=True)
+    block.add_argument("--note", default="")
+    block.add_argument("--summary", default="")
+    block.add_argument("--agent", default="opencode")
     block.set_defaults(func=lambda args: set_terminal_status(args, "blocked", "task_blocked"))
 
     status = sub.add_parser("status-show", help="show bootstrap state")

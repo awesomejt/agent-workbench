@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`Agent Workbench` provides an API-driven coordination system for AI agents working across multiple Git-controlled projects. It tracks project metadata, status, tasks, agents, runs, leases, and events in PostgreSQL while preserving concise Markdown handoff files for local-context-reset workflows.
+`Agent Workbench` provides an API-driven coordination system for AI agents working across multiple Git-controlled projects. It tracks project metadata, status, tasks, agents, runs, leases, and events in PostgreSQL 18 (Do not use SQLite) while preserving concise Markdown handoff files for local-context-reset workflows.
 
 ## Users
 

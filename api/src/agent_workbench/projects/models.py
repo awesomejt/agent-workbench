@@ -34,9 +34,9 @@ class Project(db.Model):
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     sections: Mapped[list] = relationship(
-        "ProjectSection", back_populates="project", lazy="dynamic"
+        "ProjectSection", back_populates="project", lazy="select"
     )
-    tasks: Mapped[list] = relationship("Task", back_populates="project", lazy="dynamic")
-    runs: Mapped[list] = relationship("Run", back_populates="project", lazy="dynamic")
-    events: Mapped[list] = relationship("Event", back_populates="project", lazy="dynamic")
-    reviews: Mapped[list] = relationship("Review", back_populates="project", lazy="dynamic")
+    tasks: Mapped[list] = relationship("Task", back_populates="project", lazy="select")
+    runs: Mapped[list] = relationship("Run", back_populates="project", lazy="select")
+    events: Mapped[list] = relationship("Event", back_populates="project", lazy="select")
+    reviews: Mapped[list] = relationship("Review", back_populates="project", lazy="select")

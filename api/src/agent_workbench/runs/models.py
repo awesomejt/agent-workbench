@@ -51,4 +51,4 @@ class Run(db.Model):
 
     project: Mapped[Project] = relationship("Project", back_populates="runs")
     task: Mapped[Task | None] = relationship("Task", back_populates="runs")
-    events: Mapped[list] = relationship("Event", back_populates="run", lazy="dynamic")
+    events: Mapped[list] = relationship("Event", back_populates="run", lazy="select")

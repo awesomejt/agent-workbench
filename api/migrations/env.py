@@ -46,6 +46,12 @@ def get_url() -> str:
     return url
 
 
+def _include_name(name, type_, parent_names):
+    if type_ == "schema":
+        return name == SCHEMA
+    return True
+
+
 def _configure_context(connection, **kwargs):
     context.configure(
         connection=connection,
@@ -53,6 +59,7 @@ def _configure_context(connection, **kwargs):
         version_table="alembic_version",
         version_table_schema=SCHEMA,
         include_schemas=True,
+        include_name=_include_name,
         compare_type=True,
         **kwargs,
     )
@@ -68,6 +75,7 @@ def run_migrations_offline() -> None:
         version_table="alembic_version",
         version_table_schema=SCHEMA,
         include_schemas=True,
+        include_name=_include_name,
         compare_type=True,
     )
     with context.begin_transaction():

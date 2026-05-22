@@ -9,8 +9,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Current Status
 
 - Current phase: implementation.
-- Last major milestone: All 8 core API modules fully implemented — `projects`, `project_sections`, `project_status`, `tasks`, `agents`, `runs`, `events`, `reviews` — each with routes, service layer, and serialization.
-- Next recommended task: generate and run the first Alembic migration (requires local DB up via `make db-up`), then add pytest configuration and smoke tests.
+- Last major milestone: Initial Alembic migration applied to local PostgreSQL 18 (port 5433); pytest fixtures and smoke checks working.
+- Next recommended task: add API contract tests for core modules (projects, tasks, agents), then scaffold Go CLI.
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions
@@ -61,7 +61,12 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 - API: Flask 3.x, Flask-SQLAlchemy 3.x (SQLAlchemy 2.x), Alembic 1.x, psycopg 3.x, pydantic-settings 2.x; Python 3.14; `uv` package manager.
 - Package location: `api/src/agent_workbench/`; entry point `agent-workbench-api = "agent_workbench.app:main"`.
-- Local database: PostgreSQL 18 container via `docker compose up -d db`; schema `agent_workbench` created by Alembic `env.py` on first migration run.
+- Local database: PostgreSQL 18 container via `docker compose up -d db`; schema `agent_workbench` created by Alembic `env.py` on first migration run. Local host port is **5433** (not 5432, which is taken by project-status-db).
+- Docker Compose volume mount: PostgreSQL 18 uses `/var/lib/postgresql` (not `/data` subdirectory — required for pg18+).
+- `make migrate` / `make migrate-generate` use `uv run --env-file .env alembic ...`; `DATABASE_URL` in `api/.env` (gitignored).
+- SQLAlchemy 2.x: `lazy="dynamic"` removed; all back-reference relationships use `lazy="select"` instead.
+- Test database: `agent_workbench_test`; conftest fixtures run Alembic migrations once per session, truncate tables after each test via `TRUNCATE ... CASCADE`.
+- Alembic `include_name` filter in `env.py` scopes autogenerate to `agent_workbench` schema only; prevents spurious `drop_table('alembic_version')` in migrations.
 - Database servers: local container, `postgresql-dev`, `postgresql-stage`, `postgresql`/`postgresql.taylor.lan` for prod.
 - Production database: `postgresql`/`postgresql.taylor.lan` with secrets supplied externally; never committed.
 - Deployment target: Docker Compose VM first; K3s is future work.
@@ -90,6 +95,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - claude-sonnet-4-6 (session 3)
+
+- Task: First Alembic migration, pytest fixtures, curl smoke checks.
+- Files changed: `docker-compose.yml` (port 5433, pg18 volume mount), `api/.env.example`, `api/migrations/env.py` (include_name schema filter), `api/migrations/versions/20260522_eb91537942a2_initial_schema.py`, `api/src/agent_workbench/projects/models.py` + `tasks/models.py` + `runs/models.py` (lazy="select"), `api/tests/conftest.py`, `api/tests/test_health.py`, `scripts/smoke-curl.sh`, `Makefile` (migrate/migrate-generate/test targets use --env-file .env), `TODO.md`, `MEMORY.md`, `status.yaml`.
+- Validation: `make lint` clean, `make test` 1 passed, `make smoke` 6/6 passed.
+- Result: Local PostgreSQL 18 running on port 5433. Initial schema (8 tables) applied via Alembic. pytest session fixture runs migrations against agent_workbench_test; autouse clean_db truncates after each test. Smoke script validates health, projects, agents, events endpoints.
+- Blockers or follow-up: dev/stage/prod database names/users still unconfirmed; next task is API contract tests for core modules.
 
 ### 2026-05-22 - claude-sonnet-4-6 (session 2)
 

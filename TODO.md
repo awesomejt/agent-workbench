@@ -101,8 +101,8 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Add safe database bootstrap docs and SQL template for creating target schemas without embedding secrets. Completed 2026-05-22 by Codex.
 - [ ] Add environment-aware wrapper command for running schema bootstrap against local/dev/stage/prod.
 - [X] Expand root `Makefile` with setup, lint, test, smoke, integration-test, migration, cleanup, and real CLI build targets. Completed 2026-05-22 by claude-sonnet-4-6; full Makefile with `API_DIR=api` prefix for Python targets.
-- [ ] Configure `pytest` with `autouse` fixtures for per-test PostgreSQL 18 database cleanup.
-- [ ] Add curl smoke checks for API health and basic workflow validation.
+- [X] Configure `pytest` with `autouse` fixtures for per-test PostgreSQL 18 database cleanup. Completed 2026-05-22 by claude-sonnet-4-6; `api/tests/conftest.py` with session-scoped app/migration fixtures and autouse clean_db TRUNCATE; `make test` with `--env-file .env`.
+- [X] Add curl smoke checks for API health and basic workflow validation. Completed 2026-05-22 by claude-sonnet-4-6; `scripts/smoke-curl.sh` covers health, projects, agents, events; `make smoke` target.
 - [ ] Add Python containerized integration-test runner.
 - [X] Add stub CLI/bootstrap commands for OpenCode: task next, claim, heartbeat, complete, block, status show. Completed 2026-05-22 by Codex.
 - [X] Confirm `cli/builds/` is excluded from Git. Completed 2026-05-22 by Codex.

@@ -59,5 +59,5 @@ class Task(db.Model):
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
     project: Mapped[Project] = relationship("Project", back_populates="tasks")
-    runs: Mapped[list] = relationship("Run", back_populates="task", lazy="dynamic")
-    events: Mapped[list] = relationship("Event", back_populates="task", lazy="dynamic")
+    runs: Mapped[list] = relationship("Run", back_populates="task", lazy="select")
+    events: Mapped[list] = relationship("Event", back_populates="task", lazy="select")

@@ -14,7 +14,8 @@ help:
 	@echo "    down          Stop and remove containers"
 	@echo "    db-up         Start only the database container"
 	@echo "    db-down       Stop the database container"
-	@echo "    migrate       Run Alembic migrations against local db (APP_ENV=local)"
+	@echo "    migrate             Run Alembic migrations against local db (uses api/.env)"
+	@echo "    migrate-generate    Generate a new migration: make migrate-generate MSG=\"description\""
 	@echo ""
 	@echo "  Non-local migrations (require DATABASE_URL env var to be set externally):"
 	@echo "    migrate-dev   Run migrations against dev (APP_ENV=dev)"
@@ -60,7 +61,10 @@ down:
 # ── Database migrations ───────────────────────────────────────────────────────
 
 migrate:
-	APP_ENV=local docker compose --profile migrate run --rm migrations
+	cd $(API_DIR) && uv run --env-file .env alembic upgrade head
+
+migrate-generate:
+	cd $(API_DIR) && uv run --env-file .env alembic revision --autogenerate -m "$(MSG)"
 
 migrate-dev:
 	@test -n "$(AGENT_WORKBENCH_DEV_DATABASE_URL)" || \
@@ -95,7 +99,7 @@ validate:
 	cd $(API_DIR) && uv run python -c "from agent_workbench.app import create_app; print('imports ok')"
 
 test:
-	cd $(API_DIR) && uv run pytest
+	cd $(API_DIR) && uv run --env-file .env pytest
 
 smoke:
 	@./scripts/smoke-curl.sh 2>/dev/null || echo "smoke-curl.sh not yet implemented"

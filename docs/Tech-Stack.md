@@ -4,36 +4,83 @@ Document the approved tools, languages, frameworks, libraries, and versions for 
 
 ## Runtime And Language
 
-- Language:
-- Runtime:
-- Package manager:
+- API language/runtime: Python 3.14 preferred unless framework decision changes this.
+- Package manager: `uv` preferred.
+- Database runtime: PostgreSQL.
+- Local orchestration: Docker Engine with Docker Compose v2.
+- Deployment target: Docker Compose VM first, possible K3s deployment later.
 
 ## Frameworks And Libraries
 
-- Application framework:
-- UI framework:
-- API framework:
-- Database or storage:
+- API framework: FastAPI or Flask; decision pending.
+- Database access: SQLAlchemy 2.x plus Alembic migrations is the default recommendation unless another stack is chosen.
+- PostgreSQL driver: psycopg 3.x preferred for new Python work.
+- CLI/bootstrap: Python scripts or a small CLI, then a stable CLI package when the API contract is clear.
 - Testing:
+  - Unit tests for state machines and validation.
+  - API tests for route contracts.
+  - PostgreSQL-backed integration tests.
+  - Curl smoke checks for quick human feedback.
+  - Python containerized integration tests for agent workflows.
+- Web UI: defer until API/CLI bootstrap is stable, unless Jason prioritizes it.
 
 ## Commands
 
+Initial target commands after scaffolding:
+
 ```bash
 # Install dependencies
+uv sync
 
-# Start development server
+# Start local services
+docker compose up -d db
+
+# Run migrations
+uv run alembic upgrade head
+
+# Run API locally
+uv run agent-workbench-api
+
+# Bootstrap agent workflow examples
+./scripts/task-next
+./scripts/task-claim <task-id>
+./scripts/task-complete <task-id>
 
 # Run tests
+uv run pytest
 
-# Build
+# Run smoke checks
+./scripts/smoke-curl.sh
+
+# Run containerized integration tests
+docker compose run --rm integration-test
 ```
+
+Root `Makefile` targets should wrap these once implemented.
 
 ## Environment
 
-- Required environment variables:
+- Required API environment variables:
+  - `DATABASE_URL`: active PostgreSQL connection URL.
+  - `APP_ENV`: `local`, `dev`, `stage`, or `prod`.
+  - `API_HOST` and `API_PORT`: optional local bind settings.
+- Optional database URL variables for bootstrap scripts:
+  - `AGENT_WORKBENCH_LOCAL_DATABASE_URL`
+  - `AGENT_WORKBENCH_DEV_DATABASE_URL`
+  - `AGENT_WORKBENCH_STAGE_DATABASE_URL`
+  - `AGENT_WORKBENCH_PROD_DATABASE_URL`
 - Local services:
-- Deployment target:
+  - PostgreSQL container managed by Docker Compose.
+- Dev/stage/production:
+  - Use separate PostgreSQL databases or hosts where available.
+  - Production host is expected to be `postgresql.taylor.lan`.
+  - Use `agent_workbench` as the stable schema name unless Jason confirms separate schema names per environment.
+  - Database credentials must come from deployment secrets, not Git.
+- Ansible:
+  - Secrets may exist on the Ansible host under `~/projects/infra/ansible/vars/common/secrets.yaml`.
+  - Agents must not read or copy secret values into this repo.
 
 ## Version Notes
 
--
+- Verify current Python, PostgreSQL, FastAPI/Flask, SQLAlchemy, Alembic, and psycopg versions before scaffolding.
+- Use stable releases; avoid experimental/canary packages for the coordination core.

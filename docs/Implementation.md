@@ -4,31 +4,74 @@ High-level order of implementation. Keep this aligned with `TODO.md`.
 
 ## Discovery
 
-- Confirm requirements, constraints, and success criteria.
-- Inventory existing source, tests, configs, and docs.
+- Confirm product scope and MVP boundary.
+- Confirm API framework and package layout.
+- Inventory lessons from the `project-status` prototype.
+- Inventory OpenCode automation needs from `/shared/projects/ai/opencode-setup`.
 - Identify blockers and manual validation needs.
 
 ## Planning
 
-- Finalize technical stack.
-- Draft architecture notes where useful.
-- Convert open questions into tasks or blockers.
+- Finalize modular monolith architecture.
+- Define initial API route contract.
+- Define initial database schema and migration approach.
+- Define `project_sections` and nullable section association for project-wide/general status records and tasks.
+- Define phase tracking for status records and tasks.
+- Define local/dev/stage/prod database targets, schema policy, and `APP_ENV` behavior.
+- Define project type metadata and default agent selection behavior.
+- Define task/status/run/review state machines.
+- Define Markdown bridge strategy for context reset.
 
-## MVP
+## Bootstrap MVP
 
-- Scaffold the project.
-- Implement the core workflow.
-- Add focused tests.
-- Document setup and usage.
+- Scaffold backend package and dependency management.
+- Add Docker Compose PostgreSQL local development service.
+- Add Alembic migration baseline.
+- Add environment-aware migration commands for local/dev/stage/prod, with explicit confirmation for prod.
+- Implement project, project section, task, status, agent, run, event, and review schema foundations.
+- Add bootstrap scripts or CLI commands:
+  - `task-next`
+  - `task-claim`
+  - `task-heartbeat`
+  - `task-complete`
+  - `task-block`
+  - `status-show`
+- Add root `Makefile` for setup, validation, smoke, integration, migration, and cleanup.
 
-## Refinement
+## Implementation Phase: API Modules
 
-- Improve edge cases, error states, and developer experience.
-- Add integration or end-to-end coverage where useful.
-- Update documentation and deployment notes.
+- Implement `projects` API and service layer.
+- Implement `project_sections` API and service layer.
+- Implement `project_status` API and service layer, including project-wide and section-scoped status.
+- Implement `project_tasks` API and service layer, including section scope, phase, leases, and idempotency.
+- Implement `agents` API and service layer.
+- Implement `runs` API and heartbeat model.
+- Implement `events` append-only API/service model.
+- Implement `reviews` module for cloud review findings and signoff.
+
+## Validation Phase
+
+- Add unit tests for state transitions and validation.
+- Add API route contract tests.
+- Add PostgreSQL-backed integration tests.
+- Add curl smoke script for quick local feedback.
+- Add Python integration-test container for richer agent workflow checks.
+- Add cloud review/refactor lane before real use.
+
+## Review
+
+Before real use, a cloud-based AI agent should perform a larger-context review and refactor pass.
+
+- Build a current contract map for API routes, request/response JSON, errors, scripts/CLI, database schema, Docker services, environment variables, and generated Markdown bridge files.
+- Compare that contract map against docs, source, tests, Docker/Compose, README, and TODO.
+- Prioritize findings by correctness, data integrity, test reliability, integration behavior, maintainability, security-sensitive assumptions, and production-readiness.
+- Convert review findings into focused TODO items before broad refactoring begins.
+- Refactor by module or contract boundary with validation after each change.
+- Complete or explicitly defer high-risk findings before treating the project as ready for real use.
 
 ## Release
 
-- Run final validation.
-- Confirm deployment or publishing steps.
-- Record release notes and remaining follow-up.
+- Run full validation across API, scripts/CLI, database migrations, smoke checks, and integration tests.
+- Confirm deployment target, runtime environment, PostgreSQL secrets, and network exposure with Jason.
+- Document deployment, rollback, and recovery steps.
+- Record release notes, remaining follow-up, and manual validation findings in `MEMORY.md`.

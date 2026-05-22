@@ -9,6 +9,14 @@ Use this before asking for final review, opening a pull request, or releasing.
 - [ ] Open questions are recorded in `MEMORY.md` or `TODO.md`.
 - [ ] Out-of-scope items are not accidentally implemented.
 
+## Contract Alignment
+
+- [ ] API routes, request/response fields, errors, and state transitions match docs and tests.
+- [ ] Scripts/CLI commands match the documented agent workflow.
+- [ ] Database schema and migrations match the documented data model.
+- [ ] Docker/Compose services and environment variables match setup docs.
+- [ ] Generated or migrated code does not leave stale names, old endpoint paths, or imagined fields behind.
+
 ## Code Quality
 
 - [ ] Code follows the selected stack and local conventions.
@@ -19,17 +27,12 @@ Use this before asking for final review, opening a pull request, or releasing.
 
 ## Tests And Validation
 
-- [ ] Unit tests cover important logic.
+- [ ] Unit tests cover important logic and state transitions.
 - [ ] Integration or end-to-end tests cover critical workflows when appropriate.
 - [ ] Lint, format check, type check, build, and test commands pass when available.
+- [ ] Smoke or integration checks validate cross-module behavior when API, scripts/CLI, or Docker contracts change.
+- [ ] Test fixtures match the real application factory, database backend, route paths, and response shapes.
 - [ ] Manual validation tasks are listed in `TODO.md`.
-
-## Frontend Or UX
-
-- [ ] Main workflows are easy to complete.
-- [ ] Text fits in the UI at supported screen sizes.
-- [ ] Loading, empty, disabled, and error states are clear.
-- [ ] Accessibility basics are addressed.
 
 ## Operations
 
@@ -45,3 +48,10 @@ Use this before asking for final review, opening a pull request, or releasing.
 - [ ] Done items are moved to Done.
 - [ ] Manual validation tasks are not hidden inside AI task lists.
 - [ ] Any commits are small, logical, and clearly named.
+
+## Cloud Review
+
+- [ ] A cloud-based AI review has checked contract alignment across API, database, scripts/CLI, Docker, docs, and tests before real use.
+- [ ] Review findings are captured in `TODO.md` with severity or risk ordering.
+- [ ] Refactors from review are split into focused tasks with validation.
+- [ ] Production-readiness risks, test gaps, and deployment assumptions are documented.

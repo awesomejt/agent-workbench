@@ -1,16 +1,17 @@
 # Instructions for AI Coding Assistants
 
-Start here before doing any work.
+Start here before doing any work in `agent-workbench`.
 
-This project is an agentic AI-ready template for coding projects: frontend, backend, web, CLI, automation, library, and service work.
+This project is the future source-of-truth service for coordinating AI agents across many Git-controlled projects. The repo is intentionally documentation-heavy at first because local agent context resets are lossy; concise Markdown memory remains useful until the database/API workflow can fully replace it.
 
 ## Agent Priorities
 
-1. Build the smallest correct change that advances the highest-priority unblocked task.
-2. Preserve project requirements, architecture, and style decisions.
-3. Prefer readable, maintainable code with focused tests over broad rewrites.
-4. Keep `TODO.md`, `MEMORY.md`, docs, and `status.yaml` current.
-5. Stop and mark blockers clearly when a human decision, credential, external service, or unsafe operation is required.
+1. Preserve the product direction: modular monolith, PostgreSQL source of truth, multiple project types, and agent-safe task coordination.
+2. Build the smallest correct change that advances the highest-priority unblocked task.
+3. Keep public contracts aligned across API docs, implementation, CLI/scripts, tests, deployment config, and Markdown handoff docs.
+4. Prefer readable, maintainable code with focused tests and integration checks over broad rewrites.
+5. Keep `TODO.md`, `MEMORY.md`, docs, and `status.yaml` current until the app can generate or mirror that state from Postgres.
+6. Stop and mark blockers clearly when a human decision, credential, external service, or unsafe operation is required.
 
 ## Required First Reads
 
@@ -24,7 +25,12 @@ Before starting a task, read:
 - `docs/Tech-Stack.md`
 - Any source, test, or config files directly relevant to the task
 
-If the task affects structure or rollout, also read `docs/Architecture.md` and `docs/Implementation.md`.
+If the task affects architecture, API shape, data model, deployment, or local/agent workflow, also read:
+
+- `docs/Architecture.md`
+- `docs/Implementation.md`
+- `AGENT_WORKFLOW.md`
+- `QUALITY_CHECKLIST.md`
 
 ## Root Contract
 
@@ -34,7 +40,18 @@ If the task affects structure or rollout, also read `docs/Architecture.md` and `
 - `MEMORY.md` - persistent project memory, decisions, milestones, and run notes.
 - `status.yaml` - shared workflow state for humans and automation.
 - `PROJECT_BRIEF.md` - product goals, constraints, users, and source material.
-- `.gitmessage` - Conventional Commit template with AI attribution.
+- `AGENT_WORKFLOW.md` - recurring local-agent, cloud-agent, and review workflow.
+- `QUALITY_CHECKLIST.md` - pre-review, pre-PR, and pre-release quality gate.
+- `docs/` - requirements, architecture, implementation plan, technical stack, and development notes.
+
+## Source Of Truth Rules
+
+- Git is the source of truth for source code, migrations, docs, and deployment definitions.
+- PostgreSQL is the intended source of truth for project/task/status/agent/run state once bootstrapped.
+- Markdown files are a context bridge for humans and local agents, not the long-term coordination database.
+- Until the API/CLI exists, keep Markdown files accurate and concise; later, prefer generating or mirroring summaries from Postgres.
+- Do not commit secrets, database credentials, private keys, local env files, or raw transcripts.
+- Ansible secrets may be referenced operationally but must never be copied into this repo.
 
 ## Engineering Rules
 
@@ -42,15 +59,42 @@ If the task affects structure or rollout, also read `docs/Architecture.md` and `
 - Pull latest changes before starting when network and permissions allow.
 - Do not overwrite user changes.
 - Keep edits focused and reviewable.
-- Follow the project's existing stack, formatting, naming, and architecture.
+- Follow the project's selected stack, formatting, naming, and architecture.
 - Add or update tests for meaningful behavior changes.
 - Run the most relevant validation before finishing.
-- Update docs when behavior, setup, deployment, or public interfaces change.
-- Do not commit secrets, credentials, local env files, private keys, or generated transcripts.
+- Update docs when behavior, setup, deployment, database schema, API contracts, or public interfaces change.
+- Prefer migrations over ad hoc schema creation once the database is introduced.
+- Keep local/dev/stage/production configuration environment-driven.
+- Treat `APP_ENV` and `DATABASE_URL` as a safety boundary; never guess or synthesize dev/stage/prod credentials.
+
+## Contract And Validation Discipline
+
+Prevent drift between docs, API, CLI, scripts, tests, and deployment config.
+
+- Treat public contracts as shared source material: API routes, request/response JSON, CLI commands, script names, config names, environment variables, database schema, state transitions, idempotency behavior, and build outputs.
+- Before changing API behavior, read the relevant docs, tests, clients/scripts, and TODO items.
+- When changing a public contract, update all affected surfaces in the same task or leave explicit TODOs if the task is intentionally planning-only.
+- Do not mark a task complete just because code was written. Done requires the relevant validation to pass, or a clearly documented blocker/test gap.
+- Prefer small vertical changes that keep API, scripts/CLI, tests, docs, and deployment config aligned.
+- Search for old names and paths after migrations.
+- Verify tests exercise the actual app shape, not an older or imagined interface.
+
+## Agent Coordination Design Rules
+
+When designing or implementing coordination features:
+
+- Use atomic task claims with leases or expiration.
+- Use heartbeats for long-running agent work.
+- Use optimistic locking or version checks for state changes.
+- Use idempotency keys for agent-submitted actions that may retry.
+- Record append-only events for task/project/status transitions.
+- Make invalid state transitions impossible or explicit.
+- Keep review findings and validation evidence durable.
+- Favor database-backed coordination over repo-file edits as soon as the bootstrap tooling exists.
 
 ## Status Workflow
 
-Use `status.yaml` as the shared state file:
+Use `status.yaml` as the shared state file until the app can manage this state:
 
 - `active` - work may proceed.
 - `paused` - do not perform automated work.
@@ -66,11 +110,21 @@ Automated agents should set `working` only while actively editing, and return to
 Prefer tasks in this order unless `TODO.md` says otherwise:
 
 1. Blocker removal and requirements clarification.
-2. Failing tests, broken builds, and safety/security issues.
-3. Architecture or scaffolding that unlocks later work.
-4. Core implementation tasks.
-5. Tests and validation gaps.
-6. Documentation, deployment notes, and cleanup.
+2. Contract drift across docs, API, scripts/CLI, tests, database, and deployment config.
+3. Failing tests, broken builds, safety issues, or security-sensitive problems.
+4. Architecture/data model/scaffolding that unlocks later work.
+5. Core implementation tasks.
+6. Tests, smoke checks, and integration validation.
+7. Documentation, deployment notes, and cleanup.
+
+## Cloud Review Gate
+
+Before real use, release, or deployment, schedule a cloud-based AI review/refactor pass from `TODO.md`.
+
+- Cloud review should prioritize correctness, contract alignment, test reliability, maintainability, data integrity, security-sensitive assumptions, and production-readiness risks.
+- Review findings should be added to `TODO.md` before broad refactors begin.
+- Refactors should be split by module or contract boundary and validated with the root workflow once it exists.
+- Do not treat local-loop generated code as production-ready until the cloud review/refactor lane and relevant validation have completed.
 
 ## Chat Logs And External Agent Logs
 
@@ -82,7 +136,7 @@ Agent workflow managers should copy or mirror transcripts and runtime logs to ex
 - Mirrored logs: `/mnt/hermes/logs`
 - Project output and transcripts: `/mnt/hermes/output/<project-name>/`
 
-For n8n, OpenClaw, or another orchestrator, use equivalent configured storage.
+For OpenCode, n8n, OpenClaw, or another orchestrator, use equivalent configured storage.
 
 ## Stop Conditions
 

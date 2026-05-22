@@ -4,14 +4,14 @@
 #
 # status values:
 #   active  - agent works normally
-#   paused  - temporary hold; agent logs each wake and waits without doing work
-#   blocked - blocked on a specific decision, resource, credential, or validation
-#   stopped - loop permanently halted; project complete or deliberately shut down
-#   error   - severe repo or automation failure; agent should log details and halt
-#   working - agent is actively working on a task; other agents should skip
+#   paused  - do not perform automated work
+#   blocked - waiting on a human decision, credential, source file, or validation
+#   stopped - project complete or intentionally shut down
+#   error   - severe repo or automation failure; stop and request recovery
+#   working - agent is actively changing the repo; other agents should skip
 
-status: active
-phase: ~
-reason: ~
-worker: ~
-updated: ~
+status: "active"
+phase: "planning"
+reason: "Project sections/modules and phase tracking for status and tasks are documented"
+worker: "codex"
+updated: "2026-05-22"

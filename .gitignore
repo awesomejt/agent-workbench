@@ -81,3 +81,16 @@ build/
 *.tgz
 *.rar
 *.7z
+
+# Agent Workbench local files
+!.env.example.local
+!.env.example.dev
+!.env.example.stage
+!.env.example.production
+*.key
+*.pem
+*.crt
+chats/*.md
+agents/chats/*.md
+working/
+test-output/

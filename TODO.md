@@ -128,7 +128,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 ### Tests And Quality
 
 - [ ] Add unit tests for state transitions and validation.
-- [ ] Add API tests for all module contracts.
+- [X] Add API tests for all module contracts. Completed 2026-05-22 by claude-sonnet-4-6; test_projects.py, test_tasks.py (incl. lease lifecycle), test_agents.py — 50 tests, 50 passed, 0.83s.
 - [ ] Add database integration tests using local PostgreSQL container.
 - [ ] Add smoke script tests for health and minimal task lifecycle.
 - [ ] Add Python containerized integration tests for multi-project workflows and task leases.

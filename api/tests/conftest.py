@@ -2,12 +2,12 @@
 Pytest fixtures for Agent Workbench API tests.
 
 Uses a dedicated `agent_workbench_test` database. Migrations run once per
-session; each test gets a clean slate via TRUNCATE CASCADE after it runs.
+session; each test gets a clean slate via TRUNCATE before it runs.
 """
 from __future__ import annotations
 
 import os
-from typing import Generator
+from typing import Iterator
 
 import pytest
 from flask import Flask
@@ -23,20 +23,15 @@ _TEST_DATABASE_URL = os.environ.get(
     "postgresql+psycopg://agent_workbench:agent_workbench_local@localhost:5433/agent_workbench_test",
 )
 
-_TRUNCATE_ORDER = [
-    "events",
-    "reviews",
-    "runs",
-    "tasks",
-    "project_statuses",
-    "project_sections",
-    "projects",
-    "agents",
-]
+_ALL_TABLES = (
+    "agent_workbench.events, agent_workbench.reviews, agent_workbench.runs, "
+    "agent_workbench.tasks, agent_workbench.project_statuses, "
+    "agent_workbench.project_sections, agent_workbench.projects, agent_workbench.agents"
+)
 
 
 @pytest.fixture(scope="session")
-def app() -> Generator[Flask, None, None]:
+def app() -> Iterator[Flask]:
     """Flask application pointed at the test database."""
     settings = Settings(
         app_env="local",
@@ -57,15 +52,20 @@ def client(app: Flask) -> FlaskClient:
 
 
 @pytest.fixture(autouse=True)
-def clean_db(app: Flask) -> Generator[None, None, None]:
-    """Truncate all tables in dependency order after every test."""
+def clean_db(app: Flask) -> Iterator[None]:  # noqa: ARG001
+    """Truncate all tables before every test.
+
+    Flask-SQLAlchemy 3.x scopes the session to the app context, not per-request.
+    The outer app context (from the session-scoped `app` fixture) is already
+    active here. Calling rollback()+remove() on *that* context's session releases
+    any idle-in-transaction connection before TRUNCATE needs its exclusive lock.
+    """
+    _db.session.rollback()
+    _db.session.remove()
+    with _db.engine.connect() as conn:
+        conn.execute(text(f"TRUNCATE {_ALL_TABLES} CASCADE"))
+        conn.commit()
     yield
-    with app.app_context():
-        for table in _TRUNCATE_ORDER:
-            _db.session.execute(
-                text(f"TRUNCATE agent_workbench.{table} RESTART IDENTITY CASCADE")
-            )
-        _db.session.commit()
 
 
 def _run_migrations() -> None:

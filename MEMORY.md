@@ -9,8 +9,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Current Status
 
 - Current phase: implementation.
-- Last major milestone: Initial Alembic migration applied to local PostgreSQL 18 (port 5433); pytest fixtures and smoke checks working.
-- Next recommended task: add API contract tests for core modules (projects, tasks, agents), then scaffold Go CLI.
+- Last major milestone: 50 API contract tests passing (agents, health, projects, tasks + full lease lifecycle) in 0.83s.
+- Next recommended task: scaffold Go CLI (Cobra + Viper, builds to cli/builds/), then cloud review gate.
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions
@@ -95,6 +95,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-22 - claude-sonnet-4-6 (session 4)
+
+- Task: API contract tests for agents, projects, and tasks modules.
+- Files changed: `api/tests/test_agents.py`, `api/tests/test_projects.py`, `api/tests/test_tasks.py`; `api/tests/conftest.py` (fixed Flask-SQLAlchemy 3.x session scoping hang).
+- Validation: 50 tests, 50 passed, 0.83s; `make lint` clean.
+- Result: Full CRUD + optimistic locking tests for agents and projects; task lease lifecycle tests (claim, heartbeat, complete, block). Fixed critical conftest bug: FSA 3.x scopes session to app context, not per-request — caused idle-in-transaction deadlock on TRUNCATE. Fix: rollback+remove session in outer context, use engine.connect() for TRUNCATE, run cleanup BEFORE each test.
+- Blockers or follow-up: next task is Go CLI scaffold; cloud review gate before real use.
 
 ### 2026-05-22 - claude-sonnet-4-6 (session 3)
 

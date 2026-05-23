@@ -1,8 +1,8 @@
 # API Contracts
 
-Canonical planning contract for the Agent Workbench API/CLI MVP. Keep this file aligned with `docs/Requirements.md`, `docs/Architecture.md`, `docs/Database.md`, `docs/Implementation.md`, `TODO.md`, future OpenAPI output, tests, and CLI command docs.
+Canonical planning contract for the Agent Workbench API/CLI MVP. Keep this file aligned with `docs/Requirements.md`, `docs/Architecture.md`, `docs/Database.md`, `docs/Implementation.md`, tests, and CLI command docs.
 
-This is intentionally OpenAPI-style without becoming a full generated spec yet. Once the Flask app exists, either generate OpenAPI from code or make this document the source used to create tests and examples.
+**Through MVP:** This file is the canonical API contract. Tests enforce it against the live implementation. See [Contract Documentation Strategy](#contract-documentation-strategy) for the post-MVP OpenAPI plan.
 
 ## Contract Principles
 
@@ -13,6 +13,32 @@ This is intentionally OpenAPI-style without becoming a full generated spec yet. 
 - Retryable agent actions accept idempotency keys.
 - Task claims, heartbeats, completions, blocks, and review transitions append durable events.
 - CLI/scripts are thin clients over the same API contract once bootstrap state is replaced.
+
+## In-Code API Documentation Strategy
+
+**Goal:** prevent silent drift between the implementation and the contract doc.
+
+**MVP approach — tests as the contract gate:**
+
+- Route tests in `api/tests/` are written against the actual route shapes defined here.
+- Any route change requires a corresponding test update. A passing test against a wrong shape is a contract violation.
+- Validation constants (`_VALID_PHASES`, `_VALID_ROLES`, etc.) in `routes.py` files are the authoritative enum lists; this doc mirrors them.
+- No docstrings or inline annotations are required on routes during MVP — they add maintenance burden without tooling to enforce them.
+
+**Post-MVP plan — OpenAPI generation:**
+
+Target library: `flask-smorest` (formerly flask-apispec). Requires:
+
+1. Replace `request.get_json()` with Marshmallow schema classes per resource.
+2. Annotate Blueprint routes with `@blp.arguments(InputSchema)` and `@blp.response(200, OutputSchema)`.
+3. Register `Api(app)` in the app factory; OpenAPI JSON served at `/api/openapi.json`.
+4. This file becomes a design guide; the generated spec becomes the authoritative contract.
+
+**Anti-drift rules (enforce now, pre-OpenAPI):**
+
+- Do not add a route without adding it to the Routes section of this file and writing a test.
+- Do not change a field name without a search for all callers (tests, CLI, smoke scripts, docs).
+- Do not add an enum value without updating the `_VALID_*` frozenset in the route file and the Shared Types / Resolved Decisions section here.
 
 ## Shared Types
 

@@ -276,9 +276,20 @@ Bootstrap scripts should keep their current command names while their backend ch
 | `task-block` | `POST /api/tasks/{task_id}/block` |
 | `status-show` | `GET /api/projects/{project_id}/status` plus selected task summary |
 
-## Open Questions
+## Contract Documentation Strategy
 
-- Whether to expose flat convenience routes for the current project in addition to canonical multi-project routes.
-- Whether OpenAPI should be generated from Flask code or maintained as a hand-authored spec during MVP.
-- Exact status enum values for tasks, runs, reviews, and project status records.
-- Whether events are implemented as database rows immediately or structured logs first with a migration path.
+**Through MVP:** `docs/API-Contracts.md` is the canonical human-readable contract. Tests (pytest) are the authoritative drift-detection mechanism — they exercise the actual API shape, not an imagined one. Ruff and mypy enforce code quality but do not verify contract alignment.
+
+**Post-MVP:** Migrate to OpenAPI generation from Flask code using `flask-smorest` (Marshmallow schemas + Blueprints with docstrings). The generated spec replaces this doc as the canonical contract. This file becomes a design guide and decision log.
+
+**Drift prevention through MVP:**
+- Update this file when routes, fields, or status enums change.
+- Keep tests aligned with actual route shapes.
+- Do not merge a route change without updating both the test and this file.
+
+## Resolved Decisions
+
+- **Flat convenience routes:** Not for MVP. All routes are canonical multi-project. Per-project context is passed via URL or env config on the CLI side.
+- **OpenAPI strategy:** Deferred to post-MVP. `docs/API-Contracts.md` is canonical through MVP; `flask-smorest` is the target post-MVP generator.
+- **Status enum values:** Implemented. Tasks: `new`, `pending`, `in_progress`, `blocked`, `completed`, `rejected`, `duplicate`. Runs: `pending`, `running`, `completed`, `failed`. Reviews: `draft`, `published`, `accepted`, `rejected`. Project status uses `status` (e.g., `active`, `paused`, `blocked`) plus `phase` (`discovery`, `design`, `implementation`, `testing`, `review`).
+- **Event storage:** Implemented as database rows immediately (append-only `events` table). Structured logging fallback and retention policy are deferred to post-MVP.

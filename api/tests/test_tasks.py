@@ -122,7 +122,7 @@ class TestUpdateTask:
 
 
 class TestTaskLeaseLifecycle:
-    def test_claim_sets_claimed_by(self, client):
+    def test_claim_sets_claimed_by_and_status_in_progress(self, client):
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
         resp = client.post(
@@ -133,13 +133,15 @@ class TestTaskLeaseLifecycle:
         data = resp.get_json()
         assert data["claimed_by"] == "test-agent"
         assert data["claimed_until"] is not None
+        assert data["status"] == "in_progress"
 
-    def test_double_claim_by_same_agent_succeeds(self, client):
+    def test_double_claim_by_same_agent_conflicts(self, client):
+        # Once claimed, a task is in_progress and cannot be re-claimed; use heartbeat instead
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
         client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
         resp = client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
-        assert resp.status_code == 200
+        assert resp.status_code == 409
 
     def test_claim_by_different_agent_conflicts(self, client):
         p = _make_project(client)
@@ -314,10 +316,25 @@ class TestTaskEnumValidation:
         resp = _make_task(client, p["id"], status="unknown")
         assert resp.status_code == 422
 
-    def test_valid_status_on_create_accepted(self, client):
+    def test_valid_status_new_on_create_accepted(self, client):
+        p = _make_project(client)
+        resp = _make_task(client, p["id"], status="new")
+        assert resp.status_code == 201
+
+    def test_valid_status_pending_on_create_accepted(self, client):
         p = _make_project(client)
         resp = _make_task(client, p["id"], status="pending")
         assert resp.status_code == 201
+
+    def test_in_progress_status_on_create_rejected(self, client):
+        p = _make_project(client)
+        resp = _make_task(client, p["id"], status="in_progress")
+        assert resp.status_code == 422
+
+    def test_completed_status_on_create_rejected(self, client):
+        p = _make_project(client)
+        resp = _make_task(client, p["id"], status="completed")
+        assert resp.status_code == 422
 
     def test_invalid_phase_on_create_rejected(self, client):
         p = _make_project(client)
@@ -415,6 +432,12 @@ class TestAvailableFilter:
         resp = client.get(f"/api/projects/{p['id']}/tasks?available=true")
         assert resp.get_json()["total"] == 1
 
+    def test_available_excludes_new_task(self, client):
+        p = _make_project(client)
+        _make_task(client, p["id"], status="new")
+        resp = client.get(f"/api/projects/{p['id']}/tasks?available=true")
+        assert resp.get_json()["total"] == 0
+
     def test_available_excludes_completed_task(self, client):
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
@@ -422,3 +445,86 @@ class TestAvailableFilter:
         client.post(f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-a"})
         resp = client.get(f"/api/projects/{p['id']}/tasks?available=true")
         assert resp.get_json()["total"] == 0
+
+
+class TestPatchStatusTransitions:
+    """PATCH /tasks/:id enforces the state machine for status changes."""
+
+    def test_new_to_pending_allowed(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"], status="new").get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"status": "pending", "version": task["version"]},
+        )
+        assert resp.status_code == 200
+        assert resp.get_json()["status"] == "pending"
+
+    def test_new_to_rejected_allowed(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"], status="new").get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"status": "rejected", "version": task["version"]},
+        )
+        assert resp.status_code == 200
+        assert resp.get_json()["status"] == "rejected"
+
+    def test_new_to_duplicate_allowed(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"], status="new").get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"status": "duplicate", "version": task["version"]},
+        )
+        assert resp.status_code == 200
+        assert resp.get_json()["status"] == "duplicate"
+
+    def test_blocked_to_pending_allowed(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        # claim → block to reach blocked state
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        blocked = client.post(
+            f"/api/tasks/{task['id']}/block",
+            json={"agent_name": "agent-a", "reason": "dep"},
+        ).get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"status": "pending", "version": blocked["version"]},
+        )
+        assert resp.status_code == 200
+        assert resp.get_json()["status"] == "pending"
+
+    def test_pending_to_in_progress_via_patch_rejected(self, client):
+        # in_progress is only reachable via /claim, not PATCH
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"status": "in_progress", "version": task["version"]},
+        )
+        assert resp.status_code == 409
+
+    def test_completed_to_any_via_patch_rejected(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        completed = client.post(
+            f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-a"}
+        ).get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"status": "pending", "version": completed["version"]},
+        )
+        assert resp.status_code == 409
+
+    def test_no_status_change_patch_succeeds(self, client):
+        # Patching without changing status (same value) should succeed
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"status": "pending", "title": "Updated title", "version": task["version"]},
+        )
+        assert resp.status_code == 200

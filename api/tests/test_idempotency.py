@@ -64,22 +64,24 @@ class TestClaimIdempotency:
 
     def test_different_key_is_independent(self, client):
         p = _make_project(client)
-        t = _make_task(client, p["id"])
+        t1 = _make_task(client, p["id"], title="task one")
+        t2 = _make_task(client, p["id"], title="task two")
 
-        r1 = _claim(client, t["id"], key="key-1")
+        # Two separate claims with different keys are independent — no replay interference
+        r1 = _claim(client, t1["id"], key="key-1")
+        r2 = _claim(client, t2["id"], agent="agent-a", key="key-2")
         assert r1.status_code == 200
-
-        # Renew lease: same agent, different key — re-claims (extend lease)
-        r2 = _claim(client, t["id"], agent="agent-a", key="key-2")
         assert r2.status_code == 200
 
     def test_without_key_always_processes(self, client):
         p = _make_project(client)
-        t = _make_task(client, p["id"])
+        t1 = _make_task(client, p["id"], title="task one")
+        t2 = _make_task(client, p["id"], title="task two")
 
-        r1 = _claim(client, t["id"])
+        # Without a key, requests are never deduplicated — each claim is independent
+        r1 = _claim(client, t1["id"])
+        r2 = _claim(client, t2["id"])
         assert r1.status_code == 200
-        r2 = _claim(client, t["id"])  # no key — re-claims (extends lease)
         assert r2.status_code == 200
 
     def test_different_agent_same_key_is_independent(self, client):

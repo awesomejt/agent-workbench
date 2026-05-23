@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import uuid
+from datetime import UTC, datetime
 
 from flask import Blueprint, Response, abort, jsonify, make_response, request
 from sqlalchemy.exc import IntegrityError
@@ -15,11 +16,28 @@ from . import service
 from .models import Task
 from .service import DEFAULT_LEASE_SECONDS, LeaseConflictError, LeaseOwnershipError
 
-_VALID_STATUSES = frozenset({"pending", "completed", "blocked"})
+_VALID_STATUSES = frozenset(
+    {"new", "pending", "blocked", "in_progress", "completed", "rejected", "duplicate"}
+)
+_VALID_CREATE_STATUSES = frozenset({"new", "pending"})
 _VALID_PHASES = frozenset({"planning", "research", "implementation", "testing", "review"})
 _VALID_STATUSES_STR = ", ".join(sorted(_VALID_STATUSES))
+_VALID_CREATE_STATUSES_STR = ", ".join(sorted(_VALID_CREATE_STATUSES))
 _VALID_PHASES_STR = ", ".join(sorted(_VALID_PHASES))
 _MAX_DURATION_SECONDS = 7 * 24 * 3600  # 1 week hard cap
+
+# Valid status transitions enforced at the API level.
+# Action endpoints (/claim, /complete, /block) handle their own transitions;
+# PATCH may only use transitions listed here.
+_VALID_TRANSITIONS: dict[str, frozenset[str]] = {
+    "new": frozenset({"pending", "rejected", "duplicate"}),
+    "pending": frozenset(),  # pending → in_progress only via /claim
+    "blocked": frozenset({"pending"}),
+    "in_progress": frozenset(),  # in_progress → completed|blocked only via /complete|/block
+    "completed": frozenset(),
+    "rejected": frozenset(),
+    "duplicate": frozenset(),
+}
 
 bp = Blueprint("tasks", __name__, url_prefix="/api")
 
@@ -129,8 +147,11 @@ def create_task(project_id: str):
     if not data.get("title"):
         abort(422, "Missing required field: title")
 
-    if "status" in data and data["status"] not in _VALID_STATUSES:
-        abort(422, f"Invalid status '{data['status']}'; valid: {_VALID_STATUSES_STR}")
+    if "status" in data and data["status"] not in _VALID_CREATE_STATUSES:
+        abort(
+            422,
+            f"Invalid status for new task '{data['status']}'; valid: {_VALID_CREATE_STATUSES_STR}",
+        )
 
     if "phase" in data and data["phase"] not in _VALID_PHASES:
         abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
@@ -184,8 +205,17 @@ def update_task(task_id: str):
     if data["version"] != task.version:
         abort(409, f"Version conflict: expected {task.version}, got {data['version']}")
 
-    if "status" in data and data["status"] not in _VALID_STATUSES:
-        abort(422, f"Invalid status '{data['status']}'; valid: {_VALID_STATUSES_STR}")
+    if "status" in data:
+        new_status = data["status"]
+        if new_status not in _VALID_STATUSES:
+            abort(422, f"Invalid status '{new_status}'; valid: {_VALID_STATUSES_STR}")
+        if new_status != task.status:
+            allowed = _VALID_TRANSITIONS.get(task.status, frozenset())
+            if new_status not in allowed:
+                abort(
+                    409,
+                    f"Invalid transition: {task.status} → {new_status}",
+                )
 
     if "phase" in data and data["phase"] not in _VALID_PHASES:
         abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
@@ -224,6 +254,10 @@ def claim_task(task_id: str):
     task_obj = service.get_task(tid)
     if task_obj is None:
         abort(404, f"Task {task_id} not found")
+    now = datetime.now(UTC)
+    lease_expired = task_obj.claimed_until is not None and task_obj.claimed_until < now
+    if not (task_obj.status == "pending" or (task_obj.status == "in_progress" and lease_expired)):
+        abort(409, f"Invalid transition: cannot claim task in status '{task_obj.status}'")
     if "duration_seconds" in data:
         try:
             req_duration = int(data["duration_seconds"])
@@ -299,7 +333,8 @@ def complete_task(task_id: str):
     except ValueError:
         abort(400, "task_id must be a valid UUID")
 
-    if service.get_task(tid) is None:
+    task_obj = service.get_task(tid)
+    if task_obj is None:
         abort(404, f"Task {task_id} not found")
 
     data = request.get_json(silent=True) or {}
@@ -307,9 +342,13 @@ def complete_task(task_id: str):
     if not agent_name:
         abort(422, "agent_name is required")
 
+    # Idempotency check before status validation: replays succeed regardless of current state
     idem_key, cached_resp = _check_idempotency("task.complete", agent_name)
     if cached_resp is not None:
         return cached_resp
+
+    if task_obj.status != "in_progress":
+        abort(409, f"Invalid transition: cannot complete task in status '{task_obj.status}'")
 
     try:
         task = service.complete_task(tid, agent_name, evidence=data.get("evidence"))
@@ -330,7 +369,8 @@ def block_task(task_id: str):
     except ValueError:
         abort(400, "task_id must be a valid UUID")
 
-    if service.get_task(tid) is None:
+    task_obj = service.get_task(tid)
+    if task_obj is None:
         abort(404, f"Task {task_id} not found")
 
     data = request.get_json(silent=True) or {}
@@ -338,9 +378,13 @@ def block_task(task_id: str):
     if not agent_name:
         abort(422, "agent_name is required")
 
+    # Idempotency check before status validation: replays succeed regardless of current state
     idem_key, cached_resp = _check_idempotency("task.block", agent_name)
     if cached_resp is not None:
         return cached_resp
+
+    if task_obj.status != "in_progress":
+        abort(409, f"Invalid transition: cannot block task in status '{task_obj.status}'")
 
     try:
         task = service.block_task(tid, agent_name, reason=data.get("reason"))

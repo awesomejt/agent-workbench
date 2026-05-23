@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import and_, func, or_, select, update
 
 from ..database import db
 from ..events import service as events_service
@@ -17,6 +17,10 @@ class LeaseConflictError(Exception):
 
 
 class LeaseOwnershipError(Exception):
+    pass
+
+
+class InvalidTransitionError(Exception):
     pass
 
 
@@ -36,10 +40,16 @@ def list_tasks(
     if phase:
         base = base.where(Task.phase == phase)
     if available:
-        # "available" means pending and not held by an unexpired lease
+        # "available" = pending (unclaimed or expired lease) OR in_progress with expired lease
         now = datetime.now(UTC)
-        base = base.where(Task.status == "pending").where(
-            or_(Task.claimed_until.is_(None), Task.claimed_until < now)
+        base = base.where(
+            or_(
+                and_(
+                    Task.status == "pending",
+                    or_(Task.claimed_until.is_(None), Task.claimed_until < now),
+                ),
+                and_(Task.status == "in_progress", Task.claimed_until < now),
+            )
         )
     total = db.session.scalar(select(func.count()).select_from(base.subquery())) or 0
     items = db.session.scalars(
@@ -106,19 +116,21 @@ def claim_task(
     now = datetime.now(UTC)
     new_until = now + timedelta(seconds=duration)
 
-    # Atomic update: only succeeds if no unexpired lease from another agent
+    # Succeed if task is pending (normal) or in_progress with an expired lease (recovery)
     result = db.session.execute(
         update(Task)
         .where(Task.id == task_id)
-        .where(Task.status == "pending")
         .where(
             or_(
-                Task.claimed_until.is_(None),
-                Task.claimed_until < now,
-                Task.claimed_by == agent_name,
+                and_(
+                    Task.status == "pending",
+                    or_(Task.claimed_until.is_(None), Task.claimed_until < now),
+                ),
+                and_(Task.status == "in_progress", Task.claimed_until < now),
             )
         )
         .values(
+            status="in_progress",
             claimed_by=agent_name,
             claimed_until=new_until,
             lease_version=Task.lease_version + 1,
@@ -154,6 +166,7 @@ def heartbeat_task(
     result = db.session.execute(
         update(Task)
         .where(Task.id == task_id)
+        .where(Task.status == "in_progress")
         .where(Task.claimed_by == agent_name)
         .where(Task.claimed_until >= now)
         .values(claimed_until=new_until, version=Task.version + 1)
@@ -184,6 +197,7 @@ def complete_task(
     result = db.session.execute(
         update(Task)
         .where(Task.id == task_id)
+        .where(Task.status == "in_progress")
         .where(Task.claimed_by == agent_name)
         .values(
             status="completed",
@@ -195,7 +209,7 @@ def complete_task(
         .execution_options(synchronize_session="fetch")
     )
     if result.rowcount == 0:  # type: ignore[attr-defined]
-        raise LeaseOwnershipError("Task not claimed by this agent")
+        raise LeaseOwnershipError("Task not claimed by this agent or not in_progress")
 
     db.session.flush()
     task = db.session.get(Task, task_id)
@@ -219,6 +233,7 @@ def block_task(
     result = db.session.execute(
         update(Task)
         .where(Task.id == task_id)
+        .where(Task.status == "in_progress")
         .where(Task.claimed_by == agent_name)
         .values(
             status="blocked",
@@ -230,7 +245,7 @@ def block_task(
         .execution_options(synchronize_session="fetch")
     )
     if result.rowcount == 0:  # type: ignore[attr-defined]
-        raise LeaseOwnershipError("Task not claimed by this agent")
+        raise LeaseOwnershipError("Task not claimed by this agent or not in_progress")
 
     db.session.flush()
     task = db.session.get(Task, task_id)

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"agent-workbench/cli/internal/output"
+	"agent-workbench/cli/internal/render"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -25,16 +25,16 @@ var statusShowCmd = &cobra.Command{
 		client := newClient()
 		project, err := client.ProjectBySlug(slug)
 		if err != nil {
-			return output.Err("resolve project: %v", err)
+			return render.Err("resolve project: %v", err)
 		}
 
 		statuses, err := client.ListProjectStatus(project.ID)
 		if err != nil {
-			return output.Err("get status: %v", err)
+			return render.Err("get status: %v", err)
 		}
 
 		if viper.GetString("output") == "json" {
-			return output.JSON(statuses)
+			return render.JSON(statuses)
 		}
 
 		if len(statuses.Items) == 0 {
@@ -47,12 +47,12 @@ var statusShowCmd = &cobra.Command{
 			rows[i] = []string{
 				s.Status,
 				s.Phase,
-				output.Str(s.Summary, "-"),
-				output.Str(s.Reason, "-"),
+				render.Str(s.Summary, "-"),
+				render.Str(s.Reason, "-"),
 				s.UpdatedAt,
 			}
 		}
-		output.Table([]string{"STATUS", "PHASE", "SUMMARY", "REASON", "UPDATED"}, rows)
+		render.Table([]string{"STATUS", "PHASE", "SUMMARY", "REASON", "UPDATED"}, rows)
 		return nil
 	},
 }

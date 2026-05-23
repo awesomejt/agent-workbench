@@ -33,7 +33,6 @@ working/
 build/
 dist/
 out/
-output/
 cache/
 .cache/
 coverage/

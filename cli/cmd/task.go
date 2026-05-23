@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"agent-workbench/cli/internal/api"
-	"agent-workbench/cli/internal/output"
+	"agent-workbench/cli/internal/render"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -28,7 +28,7 @@ var taskListCmd = &cobra.Command{
 		client := newClient()
 		project, err := client.ProjectBySlug(slug)
 		if err != nil {
-			return output.Err("resolve project: %v", err)
+			return render.Err("resolve project: %v", err)
 		}
 
 		list, err := client.ListTasks(project.ID, api.TaskListOpts{
@@ -37,11 +37,11 @@ var taskListCmd = &cobra.Command{
 			Phase:  phaseFilter,
 		})
 		if err != nil {
-			return output.Err("list tasks: %v", err)
+			return render.Err("list tasks: %v", err)
 		}
 
 		if viper.GetString("output") == "json" {
-			return output.JSON(list)
+			return render.JSON(list)
 		}
 
 		if len(list.Items) == 0 {
@@ -56,12 +56,12 @@ var taskListCmd = &cobra.Command{
 				t.Status,
 				fmt.Sprintf("%d", t.Priority),
 				t.Phase,
-				output.Str(t.ClaimedBy, "-"),
+				render.Str(t.ClaimedBy, "-"),
 				t.Title,
 			}
 		}
-		output.Table([]string{"ID", "STATUS", "PRI", "PHASE", "CLAIMED BY", "TITLE"}, rows)
-		output.Line("\n%d task(s) — page %d of %d", list.Total, list.Page, list.Pages)
+		render.Table([]string{"ID", "STATUS", "PRI", "PHASE", "CLAIMED BY", "TITLE"}, rows)
+		render.Line("\n%d task(s) — page %d of %d", list.Total, list.Page, list.Pages)
 		return nil
 	},
 }
@@ -74,11 +74,11 @@ var taskGetCmd = &cobra.Command{
 		client := newClient()
 		task, err := client.GetTask(args[0])
 		if err != nil {
-			return output.Err("get task: %v", err)
+			return render.Err("get task: %v", err)
 		}
 
 		if viper.GetString("output") == "json" {
-			return output.JSON(task)
+			return render.JSON(task)
 		}
 
 		printTask(task)
@@ -98,14 +98,14 @@ var taskNextCmd = &cobra.Command{
 		client := newClient()
 		project, err := client.ProjectBySlug(slug)
 		if err != nil {
-			return output.Err("resolve project: %v", err)
+			return render.Err("resolve project: %v", err)
 		}
 
 		list, err := client.ListTasks(project.ID, api.TaskListOpts{
 			Page: 1, PerPage: 1, Status: "pending",
 		})
 		if err != nil {
-			return output.Err("list tasks: %v", err)
+			return render.Err("list tasks: %v", err)
 		}
 
 		if len(list.Items) == 0 {
@@ -114,7 +114,7 @@ var taskNextCmd = &cobra.Command{
 		}
 
 		if viper.GetString("output") == "json" {
-			return output.JSON(list.Items[0])
+			return render.JSON(list.Items[0])
 		}
 
 		printTask(list.Items[0])
@@ -124,24 +124,24 @@ var taskNextCmd = &cobra.Command{
 
 // printTask writes a human-readable task detail block.
 func printTask(t api.Task) {
-	output.Line("ID:          %s", t.ID)
-	output.Line("Title:       %s", t.Title)
-	output.Line("Status:      %s", t.Status)
-	output.Line("Priority:    %d", t.Priority)
-	output.Line("Phase:       %s", t.Phase)
-	output.Line("Claimed by:  %s", output.Str(t.ClaimedBy, "-"))
-	output.Line("Claimed until: %s", output.Str(t.ClaimedUntil, "-"))
+	render.Line("ID:          %s", t.ID)
+	render.Line("Title:       %s", t.Title)
+	render.Line("Status:      %s", t.Status)
+	render.Line("Priority:    %d", t.Priority)
+	render.Line("Phase:       %s", t.Phase)
+	render.Line("Claimed by:  %s", render.Str(t.ClaimedBy, "-"))
+	render.Line("Claimed until: %s", render.Str(t.ClaimedUntil, "-"))
 	if t.EstimatedDurationSeconds != nil {
-		output.Line("Est. duration: %ds", *t.EstimatedDurationSeconds)
+		render.Line("Est. duration: %ds", *t.EstimatedDurationSeconds)
 	}
 	if t.Description != nil {
-		output.Line("Description: %s", *t.Description)
+		render.Line("Description: %s", *t.Description)
 	}
 	if t.CompletionEvidence != nil {
-		output.Line("Evidence:    %s", *t.CompletionEvidence)
+		render.Line("Evidence:    %s", *t.CompletionEvidence)
 	}
-	output.Line("Version:     %d", t.Version)
-	output.Line("Updated:     %s", t.UpdatedAt)
+	render.Line("Version:     %d", t.Version)
+	render.Line("Updated:     %s", t.UpdatedAt)
 }
 
 func init() {

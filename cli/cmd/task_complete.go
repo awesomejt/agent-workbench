@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"agent-workbench/cli/internal/output"
+	"agent-workbench/cli/internal/render"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,14 +21,14 @@ var taskCompleteCmd = &cobra.Command{
 		client := newClient()
 		task, err := client.CompleteTask(args[0], agentName, evidence)
 		if err != nil {
-			return output.Err("complete task: %v", err)
+			return render.Err("complete task: %v", err)
 		}
 
 		if viper.GetString("output") == "json" {
-			return output.JSON(task)
+			return render.JSON(task)
 		}
 
-		output.Line("completed: %s (version %d)", task.ID, task.Version)
+		render.Line("completed: %s (version %d)", task.ID, task.Version)
 		return nil
 	},
 }

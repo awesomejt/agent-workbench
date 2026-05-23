@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"agent-workbench/cli/internal/output"
+	"agent-workbench/cli/internal/render"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -21,16 +21,16 @@ var taskBlockCmd = &cobra.Command{
 		client := newClient()
 		task, err := client.BlockTask(args[0], agentName, reason)
 		if err != nil {
-			return output.Err("block task: %v", err)
+			return render.Err("block task: %v", err)
 		}
 
 		if viper.GetString("output") == "json" {
-			return output.JSON(task)
+			return render.JSON(task)
 		}
 
-		output.Line("blocked: %s", task.ID)
+		render.Line("blocked: %s", task.ID)
 		if reason != "" {
-			output.Line("reason:  %s", reason)
+			render.Line("reason:  %s", reason)
 		}
 		return nil
 	},

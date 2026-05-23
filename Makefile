@@ -1,6 +1,6 @@
 .PHONY: help setup up down db-up db-down migrate migrate-dev migrate-stage migrate-prod \
         lint format type-check test smoke validate build-cli cli-tidy cli-vet install-cli \
-        task-next status-show clean
+        cli-test cli-clean-build-check task-next status-show clean
 
 API_DIR = api
 
@@ -35,6 +35,8 @@ help:
 	@echo "    cli-tidy      Run go mod tidy for the CLI module"
 	@echo "    cli-vet       Run go vet on the CLI"
 	@echo "    install-cli   Build and install awb to ~/.local/bin or ~/bin"
+	@echo "    cli-test      Run Go CLI tests"
+	@echo "    cli-clean-build-check  Build CLI from git archive to catch gitignore issues"
 	@echo ""
 	@echo "  Bootstrap scripts (local Markdown-backed state):"
 	@echo "    task-next     Show next available AI Agent Work task"
@@ -126,6 +128,17 @@ cli-vet:
 
 install-cli: build-cli
 	@./scripts/install-awb.sh
+
+cli-test:
+	cd $(CLI_DIR) && go test ./...
+
+cli-clean-build-check:
+	@echo "Checking clean-clone build from git archive..."
+	@tmp=$$(mktemp -d) && \
+	  git archive HEAD cli/ | tar -x -C $$tmp && \
+	  cd $$tmp/cli && go build ./... && \
+	  echo "clean-clone build: ok" && \
+	  rm -rf $$tmp
 
 # ── Bootstrap scripts (local Markdown state) ──────────────────────────────────
 

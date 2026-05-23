@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"agent-workbench/cli/internal/output"
+	"agent-workbench/cli/internal/render"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -20,14 +20,14 @@ var taskHeartbeatCmd = &cobra.Command{
 		client := newClient()
 		task, err := client.HeartbeatTask(args[0], agentName)
 		if err != nil {
-			return output.Err("heartbeat: %v", err)
+			return render.Err("heartbeat: %v", err)
 		}
 
 		if viper.GetString("output") == "json" {
-			return output.JSON(task)
+			return render.JSON(task)
 		}
 
-		output.Line("heartbeat ok: lease extended until %s", output.Str(task.ClaimedUntil, "-"))
+		render.Line("heartbeat ok: lease extended until %s", render.Str(task.ClaimedUntil, "-"))
 		return nil
 	},
 }

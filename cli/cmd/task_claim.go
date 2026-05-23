@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"agent-workbench/cli/internal/output"
+	"agent-workbench/cli/internal/render"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -22,16 +22,16 @@ var taskClaimCmd = &cobra.Command{
 		client := newClient()
 		task, err := client.ClaimTask(args[0], agentName, duration)
 		if err != nil {
-			return output.Err("claim task: %v", err)
+			return render.Err("claim task: %v", err)
 		}
 
 		if viper.GetString("output") == "json" {
-			return output.JSON(task)
+			return render.JSON(task)
 		}
 
-		output.Line("claimed: %s", task.ID)
-		output.Line("agent:   %s", *task.ClaimedBy)
-		output.Line("until:   %s", output.Str(task.ClaimedUntil, "-"))
+		render.Line("claimed: %s", task.ID)
+		render.Line("agent:   %s", render.Str(task.ClaimedBy, "-"))
+		render.Line("until:   %s", render.Str(task.ClaimedUntil, "-"))
 		return nil
 	},
 }

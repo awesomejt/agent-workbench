@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"agent-workbench/cli/internal/output"
+	"agent-workbench/cli/internal/render"
 	"fmt"
 
 	"github.com/spf13/cobra"
@@ -20,11 +20,11 @@ var projectListCmd = &cobra.Command{
 		client := newClient()
 		list, err := client.ListProjects(1, 100)
 		if err != nil {
-			return output.Err("list projects: %v", err)
+			return render.Err("list projects: %v", err)
 		}
 
 		if viper.GetString("output") == "json" {
-			return output.JSON(list)
+			return render.JSON(list)
 		}
 
 		if len(list.Items) == 0 {
@@ -39,10 +39,10 @@ var projectListCmd = &cobra.Command{
 				p.Name,
 				p.ProjectType,
 				p.Environment,
-				output.Str(p.LocalPath, "-"),
+				render.Str(p.LocalPath, "-"),
 			}
 		}
-		output.Table([]string{"SLUG", "NAME", "TYPE", "ENV", "LOCAL PATH"}, rows)
+		render.Table([]string{"SLUG", "NAME", "TYPE", "ENV", "LOCAL PATH"}, rows)
 		return nil
 	},
 }

@@ -9,6 +9,15 @@ from ..database import db
 from ..events import service as events_service
 from .models import Run
 
+_METRICS_KEYS = frozenset(
+    {"model_id", "prompt_tokens", "completion_tokens", "latency_ms", "prompt_category"}
+)
+
+
+def _metrics(data: dict) -> dict:
+    """Return only the runtime metrics keys that are present in data."""
+    return {k: data[k] for k in _METRICS_KEYS if k in data}
+
 
 class RunStateError(Exception):
     pass
@@ -27,6 +36,11 @@ def create_run(data: dict) -> Run:
         status="running",
         validation_commands=data.get("validation_commands"),
         summary=data.get("summary"),
+        model_id=data.get("model_id"),
+        prompt_tokens=data.get("prompt_tokens"),
+        completion_tokens=data.get("completion_tokens"),
+        latency_ms=data.get("latency_ms"),
+        prompt_category=data.get("prompt_category"),
     )
     db.session.add(run)
     db.session.flush()
@@ -68,6 +82,7 @@ def complete_run(run_id: uuid.UUID, data: dict) -> Run:
             completed_at=now,
             validation_result=data.get("validation_result"),
             summary=data.get("summary"),
+            **_metrics(data),
             version=Run.version + 1,
         )
         .execution_options(synchronize_session="fetch")
@@ -99,6 +114,7 @@ def fail_run(run_id: uuid.UUID, data: dict) -> Run:
             completed_at=now,
             validation_result=data.get("validation_result"),
             summary=data.get("summary"),
+            **_metrics(data),
             version=Run.version + 1,
         )
         .execution_options(synchronize_session="fetch")

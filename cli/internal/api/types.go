@@ -92,6 +92,11 @@ type Run struct {
 	ValidationCommands []string `json:"validation_commands"`
 	ValidationResult   *string  `json:"validation_result"`
 	Summary            *string  `json:"summary"`
+	ModelID            *string  `json:"model_id"`
+	PromptTokens       *int     `json:"prompt_tokens"`
+	CompletionTokens   *int     `json:"completion_tokens"`
+	LatencyMs          *int     `json:"latency_ms"`
+	PromptCategory     *string  `json:"prompt_category"`
 	Version            int      `json:"version"`
 }
 

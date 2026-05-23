@@ -27,6 +27,11 @@ def _serialize(r: Run) -> dict:
         "validation_commands": r.validation_commands,
         "validation_result": r.validation_result,
         "summary": r.summary,
+        "model_id": r.model_id,
+        "prompt_tokens": r.prompt_tokens,
+        "completion_tokens": r.completion_tokens,
+        "latency_ms": r.latency_ms,
+        "prompt_category": r.prompt_category,
         "version": r.version,
     }
 

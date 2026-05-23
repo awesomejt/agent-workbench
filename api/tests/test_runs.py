@@ -150,3 +150,79 @@ class TestRunEventAutoAppend:
         events = _events(client, p["id"])
         ev = next(e for e in events if e["event_type"] == "run.completed")
         assert ev["actor_name"] == "my-runner"
+
+
+class TestRuntimeMetrics:
+    """Runtime metrics (model_id, tokens, latency, category) can be set on create or complete."""
+
+    def test_metrics_null_by_default(self, client):
+        p = _make_project(client)
+        data = _make_run(client, p["id"]).get_json()
+        assert data["model_id"] is None
+        assert data["prompt_tokens"] is None
+        assert data["completion_tokens"] is None
+        assert data["latency_ms"] is None
+        assert data["prompt_category"] is None
+
+    def test_metrics_stored_on_create(self, client):
+        p = _make_project(client)
+        resp = _make_run(
+            client,
+            p["id"],
+            model_id="claude-sonnet-4-6",
+            prompt_tokens=1200,
+            completion_tokens=450,
+            latency_ms=3200,
+            prompt_category="code",
+        )
+        data = resp.get_json()
+        assert data["model_id"] == "claude-sonnet-4-6"
+        assert data["prompt_tokens"] == 1200
+        assert data["completion_tokens"] == 450
+        assert data["latency_ms"] == 3200
+        assert data["prompt_category"] == "code"
+
+    def test_metrics_stored_on_complete(self, client):
+        p = _make_project(client)
+        run = _make_run(client, p["id"]).get_json()
+        resp = client.post(
+            f"/api/runs/{run['id']}/complete",
+            json={
+                "model_id": "claude-sonnet-4-6",
+                "prompt_tokens": 800,
+                "completion_tokens": 300,
+                "latency_ms": 1500,
+                "prompt_category": "review",
+            },
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["model_id"] == "claude-sonnet-4-6"
+        assert data["prompt_tokens"] == 800
+        assert data["completion_tokens"] == 300
+        assert data["latency_ms"] == 1500
+        assert data["prompt_category"] == "review"
+
+    def test_metrics_stored_on_fail(self, client):
+        p = _make_project(client)
+        run = _make_run(client, p["id"]).get_json()
+        resp = client.post(
+            f"/api/runs/{run['id']}/fail",
+            json={"model_id": "claude-haiku-4-5", "prompt_tokens": 200},
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["model_id"] == "claude-haiku-4-5"
+        assert data["prompt_tokens"] == 200
+        assert data["completion_tokens"] is None
+
+    def test_complete_overwrites_metrics_set_at_create(self, client):
+        p = _make_project(client)
+        run = _make_run(client, p["id"], model_id="claude-haiku-4-5", prompt_tokens=100).get_json()
+        resp = client.post(
+            f"/api/runs/{run['id']}/complete",
+            json={"model_id": "claude-sonnet-4-6", "prompt_tokens": 900},
+        )
+        data = resp.get_json()
+        assert data["model_id"] == "claude-sonnet-4-6"
+        assert data["prompt_tokens"] == 900

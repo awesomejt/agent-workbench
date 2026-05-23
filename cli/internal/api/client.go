@@ -351,8 +351,35 @@ func (c *Client) UpdateAgent(agentID string, body map[string]any) (Agent, error)
 
 // ── runs ──────────────────────────────────────────────────────────────────────
 
+// RunMetrics holds optional runtime metrics for a run.
+type RunMetrics struct {
+	ModelID          string
+	PromptTokens     int
+	CompletionTokens int
+	LatencyMs        int
+	PromptCategory   string
+}
+
+func applyMetrics(body map[string]any, m RunMetrics) {
+	if m.ModelID != "" {
+		body["model_id"] = m.ModelID
+	}
+	if m.PromptTokens > 0 {
+		body["prompt_tokens"] = m.PromptTokens
+	}
+	if m.CompletionTokens > 0 {
+		body["completion_tokens"] = m.CompletionTokens
+	}
+	if m.LatencyMs > 0 {
+		body["latency_ms"] = m.LatencyMs
+	}
+	if m.PromptCategory != "" {
+		body["prompt_category"] = m.PromptCategory
+	}
+}
+
 // CreateRun starts a new run. projectID and agentName are required; taskID may be empty.
-func (c *Client) CreateRun(projectID, agentName, taskID, summary string) (Run, error) {
+func (c *Client) CreateRun(projectID, agentName, taskID, summary string, metrics RunMetrics) (Run, error) {
 	body := map[string]any{
 		"project_id": projectID,
 		"agent_name": agentName,
@@ -363,6 +390,7 @@ func (c *Client) CreateRun(projectID, agentName, taskID, summary string) (Run, e
 	if summary != "" {
 		body["summary"] = summary
 	}
+	applyMetrics(body, metrics)
 	data, _, err := c.do("POST", "/api/runs", body)
 	if err != nil {
 		return Run{}, err
@@ -386,7 +414,7 @@ func (c *Client) HeartbeatRun(runID string) (Run, error) {
 	return decode[Run](data)
 }
 
-func (c *Client) CompleteRun(runID, summary, validationResult string) (Run, error) {
+func (c *Client) CompleteRun(runID, summary, validationResult string, metrics RunMetrics) (Run, error) {
 	body := map[string]any{}
 	if summary != "" {
 		body["summary"] = summary
@@ -394,6 +422,7 @@ func (c *Client) CompleteRun(runID, summary, validationResult string) (Run, erro
 	if validationResult != "" {
 		body["validation_result"] = validationResult
 	}
+	applyMetrics(body, metrics)
 	data, _, err := c.do("POST", "/api/runs/"+runID+"/complete", body)
 	if err != nil {
 		return Run{}, err
@@ -401,11 +430,12 @@ func (c *Client) CompleteRun(runID, summary, validationResult string) (Run, erro
 	return decode[Run](data)
 }
 
-func (c *Client) FailRun(runID, summary string) (Run, error) {
+func (c *Client) FailRun(runID, summary string, metrics RunMetrics) (Run, error) {
 	body := map[string]any{}
 	if summary != "" {
 		body["summary"] = summary
 	}
+	applyMetrics(body, metrics)
 	data, _, err := c.do("POST", "/api/runs/"+runID+"/fail", body)
 	if err != nil {
 		return Run{}, err

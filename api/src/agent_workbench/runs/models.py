@@ -46,6 +46,11 @@ class Run(db.Model):  # type: ignore[name-defined]
     validation_commands: Mapped[list | None] = mapped_column(JSON, nullable=True)
     validation_result: Mapped[str | None] = mapped_column(Text, nullable=True)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    model_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    prompt_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    completion_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    latency_ms: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    prompt_category: Mapped[str | None] = mapped_column(String(64), nullable=True)
     # Implicit version not needed — runs complete and are not updated concurrently
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 

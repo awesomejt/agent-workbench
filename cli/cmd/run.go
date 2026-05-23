@@ -28,6 +28,11 @@ var runStartCmd = &cobra.Command{
 
 		taskID, _ := cmd.Flags().GetString("task")
 		summary, _ := cmd.Flags().GetString("summary")
+		modelID, _ := cmd.Flags().GetString("model")
+		promptCategory, _ := cmd.Flags().GetString("prompt-category")
+		promptTokens, _ := cmd.Flags().GetInt("prompt-tokens")
+		completionTokens, _ := cmd.Flags().GetInt("completion-tokens")
+		latencyMs, _ := cmd.Flags().GetInt("latency-ms")
 
 		client := newClient()
 		project, err := client.ProjectBySlug(slug)
@@ -35,7 +40,14 @@ var runStartCmd = &cobra.Command{
 			return render.Err("resolve project: %v", err)
 		}
 
-		run, err := client.CreateRun(project.ID, agentName, taskID, summary)
+		metrics := api.RunMetrics{
+			ModelID:          modelID,
+			PromptCategory:   promptCategory,
+			PromptTokens:     promptTokens,
+			CompletionTokens: completionTokens,
+			LatencyMs:        latencyMs,
+		}
+		run, err := client.CreateRun(project.ID, agentName, taskID, summary, metrics)
 		if err != nil {
 			return render.Err("start run: %v", err)
 		}
@@ -93,9 +105,21 @@ var runCompleteCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		summary, _ := cmd.Flags().GetString("summary")
 		validationResult, _ := cmd.Flags().GetString("validation-result")
+		modelID, _ := cmd.Flags().GetString("model")
+		promptCategory, _ := cmd.Flags().GetString("prompt-category")
+		promptTokens, _ := cmd.Flags().GetInt("prompt-tokens")
+		completionTokens, _ := cmd.Flags().GetInt("completion-tokens")
+		latencyMs, _ := cmd.Flags().GetInt("latency-ms")
 
 		client := newClient()
-		run, err := client.CompleteRun(args[0], summary, validationResult)
+		metrics := api.RunMetrics{
+			ModelID:          modelID,
+			PromptCategory:   promptCategory,
+			PromptTokens:     promptTokens,
+			CompletionTokens: completionTokens,
+			LatencyMs:        latencyMs,
+		}
+		run, err := client.CompleteRun(args[0], summary, validationResult, metrics)
 		if err != nil {
 			return render.Err("complete run: %v", err)
 		}
@@ -114,9 +138,21 @@ var runFailCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		summary, _ := cmd.Flags().GetString("summary")
+		modelID, _ := cmd.Flags().GetString("model")
+		promptCategory, _ := cmd.Flags().GetString("prompt-category")
+		promptTokens, _ := cmd.Flags().GetInt("prompt-tokens")
+		completionTokens, _ := cmd.Flags().GetInt("completion-tokens")
+		latencyMs, _ := cmd.Flags().GetInt("latency-ms")
 
 		client := newClient()
-		run, err := client.FailRun(args[0], summary)
+		metrics := api.RunMetrics{
+			ModelID:          modelID,
+			PromptCategory:   promptCategory,
+			PromptTokens:     promptTokens,
+			CompletionTokens: completionTokens,
+			LatencyMs:        latencyMs,
+		}
+		run, err := client.FailRun(args[0], summary, metrics)
 		if err != nil {
 			return render.Err("fail run: %v", err)
 		}
@@ -143,6 +179,22 @@ func printRun(r api.Run) {
 	if r.Summary != nil {
 		render.Line("Summary:      %s", *r.Summary)
 	}
+	if r.ModelID != nil {
+		render.Line("Model:        %s", *r.ModelID)
+	}
+	if r.PromptCategory != nil {
+		render.Line("Category:     %s", *r.PromptCategory)
+	}
+	if r.PromptTokens != nil {
+		out := 0
+		if r.CompletionTokens != nil {
+			out = *r.CompletionTokens
+		}
+		render.Line("Tokens:       in=%d out=%d", *r.PromptTokens, out)
+	}
+	if r.LatencyMs != nil {
+		render.Line("Latency:      %dms", *r.LatencyMs)
+	}
 	render.Line("Version:      %d", r.Version)
 }
 
@@ -156,9 +208,24 @@ func init() {
 
 	runStartCmd.Flags().String("task", "", "Task ID to associate with this run")
 	runStartCmd.Flags().String("summary", "", "Initial summary or context")
+	runStartCmd.Flags().String("model", "", "Model ID used for this run (e.g. claude-sonnet-4-6)")
+	runStartCmd.Flags().String("prompt-category", "", "Prompt category (e.g. code, research, review)")
+	runStartCmd.Flags().Int("prompt-tokens", 0, "Input token count")
+	runStartCmd.Flags().Int("completion-tokens", 0, "Output token count")
+	runStartCmd.Flags().Int("latency-ms", 0, "Total latency in milliseconds")
 
 	runCompleteCmd.Flags().String("summary", "", "Completion summary")
 	runCompleteCmd.Flags().String("validation-result", "", "Validation command output")
+	runCompleteCmd.Flags().String("model", "", "Model ID used for this run")
+	runCompleteCmd.Flags().String("prompt-category", "", "Prompt category")
+	runCompleteCmd.Flags().Int("prompt-tokens", 0, "Input token count")
+	runCompleteCmd.Flags().Int("completion-tokens", 0, "Output token count")
+	runCompleteCmd.Flags().Int("latency-ms", 0, "Total latency in milliseconds")
 
 	runFailCmd.Flags().String("summary", "", "Failure summary or error description")
+	runFailCmd.Flags().String("model", "", "Model ID used for this run")
+	runFailCmd.Flags().String("prompt-category", "", "Prompt category")
+	runFailCmd.Flags().Int("prompt-tokens", 0, "Input token count")
+	runFailCmd.Flags().Int("completion-tokens", 0, "Output token count")
+	runFailCmd.Flags().Int("latency-ms", 0, "Total latency in milliseconds")
 }

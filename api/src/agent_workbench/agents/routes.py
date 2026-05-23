@@ -10,6 +10,9 @@ from ..database import db
 from . import service
 from .models import Agent
 
+_VALID_MODEL_TIERS = frozenset({"local", "cloud"})
+_VALID_MODEL_TIERS_STR = ", ".join(sorted(_VALID_MODEL_TIERS))
+
 bp = Blueprint("agents", __name__, url_prefix="/api/agents")
 
 
@@ -20,6 +23,7 @@ def _serialize(a: Agent) -> dict:
         "agent_type": a.agent_type,
         "capabilities": a.capabilities,
         "default_model": a.default_model,
+        "model_tier": a.model_tier,
         "runtime_notes": a.runtime_notes,
         "created_at": a.created_at.isoformat(),
         "updated_at": a.updated_at.isoformat(),
@@ -56,6 +60,13 @@ def create_agent():
 
     if not data.get("name"):
         abort(422, "Missing required field: name")
+
+    if "model_tier" in data and data["model_tier"] is not None:
+        if data["model_tier"] not in _VALID_MODEL_TIERS:
+            abort(
+                422,
+                f"Invalid model_tier '{data['model_tier']}'; valid: {_VALID_MODEL_TIERS_STR}",
+            )
 
     try:
         agent = service.create_agent(data)
@@ -100,6 +111,13 @@ def update_agent(agent_id: str):
 
     if data["version"] != agent.version:
         abort(409, f"Version conflict: expected {agent.version}, got {data['version']}")
+
+    if "model_tier" in data and data["model_tier"] is not None:
+        if data["model_tier"] not in _VALID_MODEL_TIERS:
+            abort(
+                422,
+                f"Invalid model_tier '{data['model_tier']}'; valid: {_VALID_MODEL_TIERS_STR}",
+            )
 
     try:
         agent = service.update_agent(agent, data)

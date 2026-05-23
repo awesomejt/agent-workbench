@@ -97,3 +97,64 @@ class TestUpdateAgent:
             json={"runtime_notes": "x", "version": agent["version"] + 1},
         )
         assert resp.status_code == 409
+
+
+class TestAgentModelTier:
+    """model_tier field on agents."""
+
+    def test_model_tier_defaults_to_null(self, client):
+        agent = _create(client).get_json()
+        assert agent["model_tier"] is None
+
+    def test_create_with_model_tier(self, client):
+        resp = client.post(
+            "/api/agents",
+            json={"name": "tier-agent", "model_tier": "cloud"},
+        )
+        assert resp.status_code == 201
+        assert resp.get_json()["model_tier"] == "cloud"
+
+    def test_both_valid_tiers_accepted(self, client):
+        for i, tier in enumerate(["local", "cloud"]):
+            resp = client.post(
+                "/api/agents",
+                json={"name": f"agent-{tier}", "model_tier": tier},
+            )
+            assert resp.status_code == 201, f"model_tier {tier!r} rejected"
+
+    def test_invalid_model_tier_rejected(self, client):
+        resp = client.post(
+            "/api/agents",
+            json={"name": "bad-tier", "model_tier": "ultra"},
+        )
+        assert resp.status_code == 422
+
+    def test_patch_sets_model_tier(self, client):
+        agent = _create(client).get_json()
+        resp = client.patch(
+            f"/api/agents/{agent['id']}",
+            json={"model_tier": "local", "version": agent["version"]},
+        )
+        assert resp.status_code == 200
+        assert resp.get_json()["model_tier"] == "local"
+
+    def test_patch_invalid_model_tier_rejected(self, client):
+        agent = _create(client).get_json()
+        resp = client.patch(
+            f"/api/agents/{agent['id']}",
+            json={"model_tier": "badvalue", "version": agent["version"]},
+        )
+        assert resp.status_code == 422
+
+    def test_patch_clears_model_tier_to_null(self, client):
+        resp = client.post(
+            "/api/agents",
+            json={"name": "tiered-agent", "model_tier": "cloud"},
+        )
+        agent = resp.get_json()
+        resp2 = client.patch(
+            f"/api/agents/{agent['id']}",
+            json={"model_tier": None, "version": agent["version"]},
+        )
+        assert resp2.status_code == 200
+        assert resp2.get_json()["model_tier"] is None

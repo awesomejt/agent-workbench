@@ -21,6 +21,7 @@ class Agent(db.Model):  # type: ignore[name-defined]
     agent_type: Mapped[str] = mapped_column(String(64), nullable=False, default="local")
     capabilities: Mapped[list | None] = mapped_column(JSON, nullable=True)
     default_model: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    model_tier: Mapped[str | None] = mapped_column(String(32), nullable=True)
     runtime_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=_now

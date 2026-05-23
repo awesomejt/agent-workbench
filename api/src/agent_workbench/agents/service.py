@@ -28,6 +28,7 @@ def create_agent(data: dict) -> Agent:
         agent_type=data.get("agent_type", "local"),
         capabilities=data.get("capabilities"),
         default_model=data.get("default_model"),
+        model_tier=data.get("model_tier"),
         runtime_notes=data.get("runtime_notes"),
     )
     db.session.add(agent)
@@ -36,7 +37,7 @@ def create_agent(data: dict) -> Agent:
 
 
 def update_agent(agent: Agent, data: dict) -> Agent:
-    mutable = ("name", "agent_type", "capabilities", "default_model", "runtime_notes")
+    mutable = ("name", "agent_type", "capabilities", "default_model", "model_tier", "runtime_notes")
     for field in mutable:
         if field in data:
             setattr(agent, field, data[field])

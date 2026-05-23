@@ -9,6 +9,7 @@ Thumbs.db
 
 # Agent and tool config
 .agent/
+.agents/
 .claude/
 .codex/
 .cursor/

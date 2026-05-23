@@ -4,7 +4,7 @@ Persistent project memory for `Agent Workbench`.
 
 Agents should update this file after meaningful decisions, milestones, blockers, research findings, or implementation runs.
 
-Keep this file concise and durable. Do not paste full chat transcripts here; store temporary transcripts under `chats/` and mirror workflow-manager logs to external storage.
+Keep this file concise and durable. Do not paste full chat transcripts here; store session logs under `.agents/chat/` (gitignored, local-only) and formal review outputs under `docs/reviews/` (committed).
 
 ## Current Status
 

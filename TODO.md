@@ -44,7 +44,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Cloud review: inspect bootstrap CLI/scripts for safe task claiming, useful diagnostics, and stable agent-facing output. Completed 2026-05-22 by Codex.
 - [X] Cloud review: inspect Docker/Compose and deployment docs for repeatability and secret handling. Completed 2026-05-22 by Codex.
 - [X] Cloud review: run or specify the closest available validation commands and record failures, skipped checks, and missing tooling. Completed 2026-05-22 by Codex; ruff lint passes, ruff format fails (15 files), mypy fails (17 errors), pytest passes (54 tests), go vet passes, clean-clone build fails due to gitignore issue.
-- [X] Cloud review: convert findings into prioritized TODO items before broad refactoring begins. Completed 2026-05-22 by Codex; findings recorded in `chats/2026-05-22-1741-codex-cli-repo-recommendations.md` and added to pre-dogfood fix list below.
+- [X] Cloud review: convert findings into prioritized TODO items before broad refactoring begins. Completed 2026-05-22 by Codex; findings recorded in `docs/reviews/2026-05-22-1741-codex-cli-repo-recommendations.md` and added to pre-dogfood fix list below.
 - [ ] Cloud review signoff: confirm all high-risk findings are resolved or explicitly deferred before real use.
 
 ### Codex Review: Pre-Dogfood Fixes

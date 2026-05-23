@@ -47,7 +47,7 @@ Use this loop for OpenCode, a persistent local agent, scheduled runner, or workf
 8. Set `status.yaml` to `working`.
 9. Work only that task.
 10. Run appropriate tests, checks, or builds.
-11. Write or update a concise Markdown chat/thinking note in `chats/` using `chats/YYYY-MM-DD-HHMM-<agent>-<topic>.md`.
+11. Write or update a concise Markdown session log in `.agents/chat/` using `.agents/chat/YYYY-MM-DD-HHMM-<agent>-<topic>.md` (gitignored; local context only).
 12. Review `TODO.md` and add or update tasks for newly discovered work, especially in research/planning, scaffolding, and early implementation.
 13. Update `TODO.md`, `MEMORY.md`, and relevant docs.
 14. If blocked, move the task to `Blocked`, add a `Needs Attention` item, set `status.yaml` to `blocked`, and stop.
@@ -120,13 +120,14 @@ See `docs/Bootstrap-CLI.md` for the full command reference.
 
 ## Chat Logs And Agent Output
 
-Full transcripts are not committed. Temporary local transcripts may be kept under `chats/`, but Markdown files there are ignored by Git.
+Session logs are local-only — write to `.agents/chat/` (gitignored). Formal review documents go in `docs/reviews/` and are committed.
 
-For each meaningful session, add a concise Markdown log under `chats/` so chat reasoning can be cross-referenced if `MEMORY.md` gets out of sync.
+For each meaningful session, add a concise Markdown log under `.agents/chat/` so chat reasoning can be cross-referenced if `MEMORY.md` gets out of sync.
 
-- Use `chats/YYYY-MM-DD-HHMM-<agent>-<topic>.md`.
+- Use `.agents/chat/YYYY-MM-DD-HHMM-<agent>-<topic>.md`.
 - Capture objective, task id(s), key decisions, commands/validation, blockers, and next steps.
 - Never include secrets, credentials, tokens, or private keys.
+- Cloud or human review outputs: commit to `docs/reviews/` so they are accessible on fresh clones.
 
 Workflow managers should copy transcripts and task outputs to external storage. Hermes-compatible defaults:
 

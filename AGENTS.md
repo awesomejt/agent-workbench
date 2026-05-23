@@ -135,14 +135,15 @@ Before real use, release, or deployment, schedule a cloud-based AI review/refact
 
 ## Chat Logs And External Agent Logs
 
-Full chat transcripts should not be committed. Use `chats/` only as a local transcript workspace; Markdown transcript files there are ignored by Git.
+Session logs are local-only — write them to `.agents/chat/` which is gitignored. Formal review documents (cloud or human review artifacts) belong in `docs/reviews/` and are committed.
 
-Agents should write a concise Markdown run note in `chats/` for each meaningful work session so Jason can cross-reference decisions when `MEMORY.md` and task state drift.
+Agents should write a concise Markdown run note in `.agents/chat/` for each meaningful work session so Jason can cross-reference decisions when `MEMORY.md` and task state drift.
 
-- File naming: `chats/YYYY-MM-DD-HHMM-<agent>-<topic>.md`.
+- File naming: `.agents/chat/YYYY-MM-DD-HHMM-<agent>-<topic>.md`.
 - Include: objective, task id(s), files changed, key reasoning/decision points, validation run, blockers, and follow-up.
 - Keep notes concise and redact secrets, credentials, and private keys.
-- Treat `MEMORY.md` as durable summary and `chats/` as higher-detail local context.
+- Treat `MEMORY.md` as durable summary and `.agents/chat/` as higher-detail local context.
+- Review documents (Grok, Codex, human review): commit to `docs/reviews/` so findings stay accessible across clones.
 
 Agent workflow managers should copy or mirror transcripts and runtime logs to external storage. Hermes-compatible defaults are:
 

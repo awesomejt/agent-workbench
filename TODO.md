@@ -37,15 +37,55 @@ These items are good candidates for a local model or cloud agent.
 
 Use this section for a cloud-based AI agent or larger-context reviewer before real use, release, or deployment.
 
-- [ ] Cloud review: build a current contract map for API routes, request/response JSON, error shapes, CLI/script commands, database schema, Docker services, environment variables, and build outputs.
-- [ ] Cloud review: compare docs, source, tests, Docker/Compose, README, and TODO for stale or conflicting contracts.
-- [ ] Cloud review: inspect data model for task leases, heartbeats, idempotency, optimistic locking, event history, and multi-project support.
-- [ ] Cloud review: inspect API implementation for correctness, validation gaps, transaction/session lifecycle, error consistency, and PostgreSQL assumptions.
-- [ ] Cloud review: inspect bootstrap CLI/scripts for safe task claiming, useful diagnostics, and stable agent-facing output.
-- [ ] Cloud review: inspect Docker/Compose and deployment docs for repeatability and secret handling.
-- [ ] Cloud review: run or specify the closest available validation commands and record failures, skipped checks, and missing tooling.
-- [ ] Cloud review: convert findings into prioritized TODO items before broad refactoring begins.
+- [X] Cloud review: build a current contract map for API routes, request/response JSON, error shapes, CLI/script commands, database schema, Docker services, environment variables, and build outputs. Completed 2026-05-22 by Codex.
+- [X] Cloud review: compare docs, source, tests, Docker/Compose, README, and TODO for stale or conflicting contracts. Completed 2026-05-22 by Codex.
+- [X] Cloud review: inspect data model for task leases, heartbeats, idempotency, optimistic locking, event history, and multi-project support. Completed 2026-05-22 by Codex.
+- [X] Cloud review: inspect API implementation for correctness, validation gaps, transaction/session lifecycle, error consistency, and PostgreSQL assumptions. Completed 2026-05-22 by Codex.
+- [X] Cloud review: inspect bootstrap CLI/scripts for safe task claiming, useful diagnostics, and stable agent-facing output. Completed 2026-05-22 by Codex.
+- [X] Cloud review: inspect Docker/Compose and deployment docs for repeatability and secret handling. Completed 2026-05-22 by Codex.
+- [X] Cloud review: run or specify the closest available validation commands and record failures, skipped checks, and missing tooling. Completed 2026-05-22 by Codex; ruff lint passes, ruff format fails (15 files), mypy fails (17 errors), pytest passes (54 tests), go vet passes, clean-clone build fails due to gitignore issue.
+- [X] Cloud review: convert findings into prioritized TODO items before broad refactoring begins. Completed 2026-05-22 by Codex; findings recorded in `chats/2026-05-22-1741-codex-cli-repo-recommendations.md` and added to pre-dogfood fix list below.
 - [ ] Cloud review signoff: confirm all high-risk findings are resolved or explicitly deferred before real use.
+
+### Codex Review: Pre-Dogfood Fixes
+
+Items required before using agent-workbench to manage its own development. Ordered by priority.
+
+**P0 — Build-breaking and crash risks**
+
+- [ ] Fix `.gitignore` global `output/` rule silently ignoring `cli/internal/output/output.go`; rename directory to `cli/internal/render` and update all import paths. A clean Git clone cannot build the CLI today.
+- [ ] Fix CLI nil pointer dereference: `task_claim.go` dereferences `*task.ClaimedBy` without a nil check; crashes on any unassigned task.
+- [ ] Fix CLI double-error printing: commands return `err` to Cobra while also calling `output.Err`; results in duplicate error messages on stderr.
+- [ ] Trim trailing slashes from `--api-url` in the API client to prevent malformed URLs like `http://host//api/...`.
+
+**P1 — Quality gate and product correctness**
+
+- [ ] Run `ruff format` across all Python source files (15 files currently fail format check); add format check to `make validate`.
+- [ ] Fix 17 mypy errors; decide and document mypy strictness policy for Flask-SQLAlchemy and rowcount typing patterns; add `make type-check` to `make validate`.
+- [ ] Make `awb task next` and `awb task list` lease-aware: add `available=true` API filter meaning `status=pending AND (claimed_until IS NULL OR claimed_until < now())`; update CLI flags accordingly.
+- [ ] Fix `root/.env.example.local` to use port 5433 and password `agent_workbench_local` to match `api/.env.example` and Docker Compose.
+
+**P2 — Audit trail, reliability, and API correctness**
+
+- [ ] Auto-append events on task lifecycle transitions (claim, heartbeat, complete, block) within the same DB transaction as the state change; add tests verifying both state change and event creation.
+- [ ] Auto-append events on run transitions (heartbeat, complete, fail) within the same DB transaction; add tests.
+- [ ] Define and implement idempotency behavior: scope to endpoint + actor + key rather than a single task column; update API and CLI to send and replay idempotency keys on claim/heartbeat/complete/block.
+- [ ] Add API validation: `duration_seconds` must be a positive integer within a reasonable range; return 422 on invalid input.
+- [ ] Add API validation: `project_section_id` on tasks and status records must belong to the same project; return 422 on mismatch.
+- [ ] Add API validation: `task_id` on run creation must belong to the provided project; return 422 on mismatch.
+- [ ] Add enum validation for task status, run status, review status/severity, phase, and environment fields across all routes; return 422 with field-level error details.
+- [ ] Decide and document whether `task block` should clear the lease like `task complete` does, or hold it intentionally; implement and test the chosen behavior.
+- [ ] Add `make cli-test` target (`cd cli && go test ./...`); add `make cli-clean-build-check` target that builds from a `git archive` to catch future gitignore issues.
+- [ ] Add a friendly hint to `make test` when the local PostgreSQL container is not reachable.
+
+**P3 — CLI expansion for full agent session coverage**
+
+- [ ] Add `awb run start/get/heartbeat/complete/fail` commands so every agent session can create a durable run record and heartbeat through it.
+- [ ] Add `awb event list/append` commands for debugging and audit trail inspection.
+- [ ] Add `awb agent list/create/get/update` commands for agent registry management.
+- [ ] Add `awb project create/get/update` and `awb section list/create/get/update` commands for project and section administration.
+- [ ] Add `awb status create/update` commands for project/section status management from the CLI.
+- [ ] Add shell completion (`awb completion bash/zsh/fish`) as the final CLI polish step after correctness fixes.
 
 ### Discovery And Planning
 
@@ -61,6 +101,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Define initial API route style and compatibility policy without URL versioning by default. Completed 2026-05-22 by claude-sonnet-4-6; documented in `docs/API-Contracts.md` (no URL versioning, canonical routes, pagination, error shape).
 - [X] Define initial database schema and migration strategy, including task assignee/owner fields. Completed 2026-05-22 by claude-sonnet-4-6; 8 SQLAlchemy models with UUID PKs, optimistic locking, lease fields on tasks, append-only events; Alembic configured in `api/`.
 - [X] Define local/dev/stage/prod database target names and stable schema policy in `docs/Database.md`. Completed 2026-05-22 by claude-sonnet-4-6; DB targets, schema `agent_workbench`, and env var names documented in `docs/Database.md`.
+- [ ] Dogfood: register agent-workbench as its own project in the workbench once pre-dogfood fixes are done; use `awb` to manage all remaining implementation tasks instead of editing TODO.md directly.
 - [ ] Define project discovery config for `~/projects/ai`, `~/projects/courses`, `~/projects/dev`, and `~/projects/infra`.
 - [ ] Define project type vocabulary, default sections/modules, phase workflows, and default agent selection rules.
 - [ ] Define state machines for project status, task status, agent run status, and review findings.

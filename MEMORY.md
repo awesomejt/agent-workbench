@@ -9,8 +9,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Current Status
 
 - Current phase: implementation.
-- Last major milestone: 54 API contract tests passing; task duration per-task config added; Grok security fixes applied.
-- Next recommended task: cloud review gate (all 9 review items in TODO), then CLI shell completion.
+- Last major milestone: Codex cloud review completed; findings triaged and added to pre-dogfood fix list in TODO.md. CLI install script and config path improvements committed.
+- Next recommended task: Codex pre-dogfood fixes in priority order (P0 gitignore/crash fixes → P1 ruff format + mypy + lease-aware task next → P2 audit trail + validation → P3 CLI expansion); then register agent-workbench as its own project and dogfood `awb` for remaining work.
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions

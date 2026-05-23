@@ -12,6 +12,6 @@
 
 status: "active"
 phase: "implementation"
-reason: "CLI install script added (make install-cli); config paths ~/.config/awb + ~/.config/agent-workbench with yaml/json support; next: cloud review gate"
+reason: "Codex cloud review complete; pre-dogfood fixes triaged into TODO; next: P0 fixes (gitignore/cli-internal/render rename, nil deref, double-error, api-url trim)"
 worker: "claude-sonnet-4-6"
-updated: "2026-05-22T23:55:00-06:00"
+updated: "2026-05-23T00:10:00-06:00"

@@ -2,6 +2,42 @@
 
 Authoritative reference for all status and phase state machines in Agent Workbench. These reflect the implemented behavior in `api/src/agent_workbench/`.
 
+## Task Assignment and Claiming
+
+Tasks have two distinct concepts of "who is working on this":
+
+### Assignment (`assignee_type`, `assignee_name`)
+
+- Set by an orchestrator or human on task creation or via PATCH.
+- A *routing hint* — indicates who is expected or intended to work on the task.
+- Not enforced at the coordination level; any available agent may still claim the task.
+- `assignee_type`: `agent` or `human`.
+- `assignee_name`: stable identifier such as `opencode`, `claude-local`, `jason`.
+- `null` means unassigned; open to any available agent.
+
+**Human-assigned tasks** (`assignee_type=human`) signal that a person needs to review, validate, or take an action. Humans do not use the claim/heartbeat mechanism. An agent may complete a human-assigned task when acting on the human's documented behalf.
+
+### Claiming (`claimed_by`, `claimed_until`, `lease_version`)
+
+- Set **atomically** by `POST /api/tasks/{id}/claim`; enforced by targeted UPDATE with rowcount check.
+- Only one agent may hold a live lease at a time.
+- The lease holder must heartbeat before `claimed_until` or the lease expires and the task becomes available again.
+- Claiming does not validate against `assignee_name` — assignment is informational only.
+
+### Why two concepts?
+
+Assignment supports planning and routing (orchestrators can pre-assign work to specific agents or mark tasks for human attention) without coupling it to the coordination-critical lease mechanism. The lease is the authoritative concurrency primitive; assignment is metadata.
+
+### Fields summary
+
+| Field | Purpose | Set by |
+|---|---|---|
+| `assignee_type` | Agent or human responsibility | orchestrator, PATCH |
+| `assignee_name` | Intended worker identity | orchestrator, PATCH |
+| `claimed_by` | Active lease holder | `/claim` endpoint only |
+| `claimed_until` | Lease expiry timestamp | `/claim`, `/heartbeat` |
+| `lease_version` | Monotonic claim counter | `/claim` (increments) |
+
 ## Task Status
 
 **States:** `new`, `pending`, `in_progress`, `blocked`, `completed`, `rejected`, `duplicate`

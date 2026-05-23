@@ -40,8 +40,13 @@ def create_project(data: dict) -> Project:
 
 def update_project(project: Project, data: dict) -> Project:
     mutable = (
-        "name", "project_type", "git_remote_url", "local_path",
-        "environment", "default_agent", "slug",
+        "name",
+        "project_type",
+        "git_remote_url",
+        "local_path",
+        "environment",
+        "default_agent",
+        "slug",
     )
     for field in mutable:
         if field in data:

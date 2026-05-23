@@ -40,18 +40,20 @@ def list_events(project_id: str):
     try:
         page = max(1, int(request.args.get("page", 1)))
         per_page = min(200, max(1, int(request.args.get("per_page", 50))))
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         abort(400, "page and per_page must be integers")
 
     items, total = service.list_events(pid, page=page, per_page=per_page)
     pages = math.ceil(total / per_page) if total > 0 else 1
-    return jsonify({
-        "items": [_serialize(e) for e in items],
-        "page": page,
-        "per_page": per_page,
-        "total": total,
-        "pages": pages,
-    })
+    return jsonify(
+        {
+            "items": [_serialize(e) for e in items],
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+        }
+    )
 
 
 @bp.post("/events")

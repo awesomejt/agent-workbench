@@ -1,4 +1,5 @@
 """API contract tests for the tasks module — CRUD and lease lifecycle."""
+
 from __future__ import annotations
 
 
@@ -58,7 +59,8 @@ class TestCreateTask:
     def test_stores_optional_fields(self, client):
         p = _make_project(client)
         resp = _make_task(
-            client, p["id"],
+            client,
+            p["id"],
             description="details",
             priority=5,
             phase="implementation",
@@ -136,36 +138,28 @@ class TestTaskLeaseLifecycle:
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
         client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
-        resp = client.post(
-            f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"}
-        )
+        resp = client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
         assert resp.status_code == 200
 
     def test_claim_by_different_agent_conflicts(self, client):
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
         client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
-        resp = client.post(
-            f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-b"}
-        )
+        resp = client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-b"})
         assert resp.status_code == 409
 
     def test_heartbeat_extends_lease(self, client):
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
         client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
-        resp = client.post(
-            f"/api/tasks/{task['id']}/heartbeat", json={"agent_name": "agent-a"}
-        )
+        resp = client.post(f"/api/tasks/{task['id']}/heartbeat", json={"agent_name": "agent-a"})
         assert resp.status_code == 200
 
     def test_heartbeat_wrong_agent_conflicts(self, client):
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
         client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
-        resp = client.post(
-            f"/api/tasks/{task['id']}/heartbeat", json={"agent_name": "agent-b"}
-        )
+        resp = client.post(f"/api/tasks/{task['id']}/heartbeat", json={"agent_name": "agent-b"})
         assert resp.status_code == 409
 
     def test_complete_clears_lease(self, client):
@@ -185,9 +179,7 @@ class TestTaskLeaseLifecycle:
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
         client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
-        resp = client.post(
-            f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-b"}
-        )
+        resp = client.post(f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-b"})
         assert resp.status_code == 409
 
     def test_block_sets_status(self, client):
@@ -211,6 +203,7 @@ class TestTaskLeaseLifecycle:
         assert resp.status_code == 200
         # claimed_until should be ~2 hours from now (not the 30-min default)
         from datetime import UTC, datetime, timedelta
+
         claimed_until = datetime.fromisoformat(resp.get_json()["claimed_until"])
         delta = claimed_until - datetime.now(UTC)
         assert timedelta(hours=1, minutes=50) < delta < timedelta(hours=2, minutes=10)
@@ -224,6 +217,7 @@ class TestTaskLeaseLifecycle:
         )
         assert resp.status_code == 200
         from datetime import UTC, datetime, timedelta
+
         claimed_until = datetime.fromisoformat(resp.get_json()["claimed_until"])
         delta = claimed_until - datetime.now(UTC)
         assert timedelta(minutes=4) < delta < timedelta(minutes=6)
@@ -232,4 +226,114 @@ class TestTaskLeaseLifecycle:
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
         resp = client.post(f"/api/tasks/{task['id']}/claim", json={})
+        assert resp.status_code == 422
+
+    def test_block_clears_lease(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        resp = client.post(
+            f"/api/tasks/{task['id']}/block",
+            json={"agent_name": "agent-a", "reason": "blocked"},
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["status"] == "blocked"
+        assert data["claimed_by"] is None
+        assert data["claimed_until"] is None
+
+    def test_duration_seconds_zero_rejected(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.post(
+            f"/api/tasks/{task['id']}/claim",
+            json={"agent_name": "agent-a", "duration_seconds": 0},
+        )
+        assert resp.status_code == 422
+
+    def test_duration_seconds_negative_rejected(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.post(
+            f"/api/tasks/{task['id']}/claim",
+            json={"agent_name": "agent-a", "duration_seconds": -60},
+        )
+        assert resp.status_code == 422
+
+
+class TestTaskEventAutoAppend:
+    def _events(self, client, project_id: str) -> list:
+        return client.get(f"/api/projects/{project_id}/events").get_json()["items"]
+
+    def test_claim_creates_event(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        events = self._events(client, p["id"])
+        assert any(e["event_type"] == "task.claimed" for e in events)
+
+    def test_heartbeat_creates_event(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        client.post(f"/api/tasks/{task['id']}/heartbeat", json={"agent_name": "agent-a"})
+        events = self._events(client, p["id"])
+        assert any(e["event_type"] == "task.heartbeat" for e in events)
+
+    def test_complete_creates_event(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        client.post(f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-a"})
+        events = self._events(client, p["id"])
+        assert any(e["event_type"] == "task.completed" for e in events)
+
+    def test_block_creates_event(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        client.post(
+            f"/api/tasks/{task['id']}/block",
+            json={"agent_name": "agent-a", "reason": "waiting"},
+        )
+        events = self._events(client, p["id"])
+        assert any(e["event_type"] == "task.blocked" for e in events)
+
+    def test_event_actor_name_matches_agent(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "my-bot"})
+        events = self._events(client, p["id"])
+        claimed = next(e for e in events if e["event_type"] == "task.claimed")
+        assert claimed["actor_name"] == "my-bot"
+
+
+class TestTaskEnumValidation:
+    def test_invalid_status_on_create_rejected(self, client):
+        p = _make_project(client)
+        resp = _make_task(client, p["id"], status="unknown")
+        assert resp.status_code == 422
+
+    def test_valid_status_on_create_accepted(self, client):
+        p = _make_project(client)
+        resp = _make_task(client, p["id"], status="pending")
+        assert resp.status_code == 201
+
+    def test_invalid_phase_on_create_rejected(self, client):
+        p = _make_project(client)
+        resp = _make_task(client, p["id"], phase="unknown")
+        assert resp.status_code == 422
+
+    def test_valid_phase_on_create_accepted(self, client):
+        p = _make_project(client)
+        resp = _make_task(client, p["id"], phase="implementation")
+        assert resp.status_code == 201
+
+    def test_invalid_status_on_update_rejected(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"status": "bogus", "version": task["version"]},
+        )
         assert resp.status_code == 422

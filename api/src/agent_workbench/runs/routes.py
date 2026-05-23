@@ -5,6 +5,8 @@ import uuid
 from flask import Blueprint, abort, jsonify, request
 
 from ..database import db
+from ..projects import service as projects_service
+from ..tasks import service as tasks_service
 from . import service
 from .models import Run
 from .service import RunStateError
@@ -40,16 +42,22 @@ def create_run():
         abort(422, f"Missing required fields: {', '.join(missing)}")
 
     try:
-        uuid.UUID(data["project_id"])
+        project_uuid = uuid.UUID(data["project_id"])
     except ValueError:
         abort(400, "project_id must be a valid UUID")
+
+    if projects_service.get_project(project_uuid) is None:
+        abort(422, f"Project {data['project_id']} not found")
 
     task_id = data.get("task_id")
     if task_id:
         try:
-            uuid.UUID(task_id)
+            task_uuid = uuid.UUID(task_id)
         except ValueError:
             abort(400, "task_id must be a valid UUID")
+        task = tasks_service.get_task(task_uuid)
+        if task is None or task.project_id != project_uuid:
+            abort(422, "task_id does not belong to the provided project")
 
     run = service.create_run(data)
     db.session.commit()

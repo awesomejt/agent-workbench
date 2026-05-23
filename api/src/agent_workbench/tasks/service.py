@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import func, or_, select, update
 
 from ..database import db
+from ..events import service as events_service
 from .models import Task
 
 DEFAULT_LEASE_SECONDS = 1800  # 30 minutes — generous default for local AI agents
@@ -132,7 +133,16 @@ def claim_task(
 
     db.session.flush()
     task = db.session.get(Task, task_id)
-    return task  # type: ignore[return-value]
+    assert task is not None
+    events_service._record(
+        event_type="task.claimed",
+        project_id=task.project_id,
+        task_id=task_id,
+        actor_type="agent",
+        actor_name=agent_name,
+        payload={"duration_seconds": duration, "claimed_until": new_until.isoformat()},
+    )
+    return task
 
 
 def heartbeat_task(
@@ -156,7 +166,16 @@ def heartbeat_task(
 
     db.session.flush()
     task = db.session.get(Task, task_id)
-    return task  # type: ignore[return-value]
+    assert task is not None
+    events_service._record(
+        event_type="task.heartbeat",
+        project_id=task.project_id,
+        task_id=task_id,
+        actor_type="agent",
+        actor_name=agent_name,
+        payload={"claimed_until": new_until.isoformat()},
+    )
+    return task
 
 
 def complete_task(
@@ -182,7 +201,16 @@ def complete_task(
 
     db.session.flush()
     task = db.session.get(Task, task_id)
-    return task  # type: ignore[return-value]
+    assert task is not None
+    events_service._record(
+        event_type="task.completed",
+        project_id=task.project_id,
+        task_id=task_id,
+        actor_type="agent",
+        actor_name=agent_name,
+        payload={"evidence": evidence},
+    )
+    return task
 
 
 def block_task(
@@ -197,6 +225,8 @@ def block_task(
         .values(
             status="blocked",
             completion_evidence=reason,
+            claimed_by=None,
+            claimed_until=None,
             version=Task.version + 1,
         )
         .execution_options(synchronize_session="fetch")
@@ -206,4 +236,13 @@ def block_task(
 
     db.session.flush()
     task = db.session.get(Task, task_id)
-    return task  # type: ignore[return-value]
+    assert task is not None
+    events_service._record(
+        event_type="task.blocked",
+        project_id=task.project_id,
+        task_id=task_id,
+        actor_type="agent",
+        actor_name=agent_name,
+        payload={"reason": reason},
+    )
+    return task

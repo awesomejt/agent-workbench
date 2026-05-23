@@ -8,6 +8,30 @@ from ..database import db
 from .models import Event
 
 
+def _record(
+    *,
+    event_type: str,
+    project_id: uuid.UUID | None = None,
+    task_id: uuid.UUID | None = None,
+    run_id: uuid.UUID | None = None,
+    actor_type: str | None = None,
+    actor_name: str | None = None,
+    payload: dict | None = None,
+) -> None:
+    """Append an event row within the current session's transaction (no commit)."""
+    event = Event(
+        project_id=project_id,
+        task_id=task_id,
+        run_id=run_id,
+        event_type=event_type,
+        actor_type=actor_type,
+        actor_name=actor_name,
+        payload=payload,
+    )
+    db.session.add(event)
+    db.session.flush()
+
+
 def list_events(
     project_id: uuid.UUID, page: int = 1, per_page: int = 50
 ) -> tuple[list[Event], int]:

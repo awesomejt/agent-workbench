@@ -1,4 +1,5 @@
 """API contract tests for the projects module."""
+
 from __future__ import annotations
 
 
@@ -100,9 +101,7 @@ class TestUpdateProject:
 
     def test_requires_version(self, client):
         project = _create(client).get_json()
-        resp = client.patch(
-            f"/api/projects/{project['id']}", json={"name": "New Name"}
-        )
+        resp = client.patch(f"/api/projects/{project['id']}", json={"name": "New Name"})
         assert resp.status_code == 422
 
     def test_version_conflict(self, client):

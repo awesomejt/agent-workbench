@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     @field_validator("secret_key")
     @classmethod
     def validate_secret_key(cls, v: str, info) -> str:
-        env = (info.data.get("app_env") or "")
+        env = info.data.get("app_env") or ""
         if env == "prod" and v == "dev-insecure-change-me":
             raise ValueError("SECRET_KEY must be set to a secure value in prod")
         return v

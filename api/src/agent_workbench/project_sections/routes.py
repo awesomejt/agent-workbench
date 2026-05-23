@@ -48,18 +48,20 @@ def list_sections(project_id: str):
     try:
         page = max(1, int(request.args.get("page", 1)))
         per_page = min(100, max(1, int(request.args.get("per_page", 20))))
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         abort(400, "page and per_page must be integers")
 
     items, total = service.list_sections(project.id, page=page, per_page=per_page)
     pages = math.ceil(total / per_page) if total > 0 else 1
-    return jsonify({
-        "items": [_serialize(s) for s in items],
-        "page": page,
-        "per_page": per_page,
-        "total": total,
-        "pages": pages,
-    })
+    return jsonify(
+        {
+            "items": [_serialize(s) for s in items],
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+        }
+    )
 
 
 @bp.post("/<project_id>/sections")

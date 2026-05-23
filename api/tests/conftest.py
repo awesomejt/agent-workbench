@@ -4,6 +4,7 @@ Pytest fixtures for Agent Workbench API tests.
 Uses a dedicated `agent_workbench_test` database. Migrations run once per
 session; each test gets a clean slate via TRUNCATE before it runs.
 """
+
 from __future__ import annotations
 
 import os

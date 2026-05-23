@@ -107,6 +107,8 @@ validate:
 	cd $(API_DIR) && uv run mypy src/
 
 test:
+	@pg_isready -h localhost -p 5433 -q 2>/dev/null || \
+		(echo "Hint: PostgreSQL not reachable on localhost:5433. Run 'make db-up' to start the database container." && exit 1)
 	cd $(API_DIR) && uv run --env-file .env pytest
 
 smoke:

@@ -67,16 +67,16 @@ Items required before using agent-workbench to manage its own development. Order
 
 **P2 — Audit trail, reliability, and API correctness**
 
-- [ ] Auto-append events on task lifecycle transitions (claim, heartbeat, complete, block) within the same DB transaction as the state change; add tests verifying both state change and event creation.
-- [ ] Auto-append events on run transitions (heartbeat, complete, fail) within the same DB transaction; add tests.
+- [X] Auto-append events on task lifecycle transitions (claim, heartbeat, complete, block) within the same DB transaction as the state change; add tests verifying both state change and event creation. Completed 2026-05-22 by claude-sonnet-4-6; events/service._record() helper; 5 new tests in test_tasks.py.
+- [X] Auto-append events on run transitions (heartbeat, complete, fail) within the same DB transaction; add tests. Completed 2026-05-22 by claude-sonnet-4-6; 4 new tests in test_runs.py.
 - [ ] Define and implement idempotency behavior: scope to endpoint + actor + key rather than a single task column; update API and CLI to send and replay idempotency keys on claim/heartbeat/complete/block.
-- [ ] Add API validation: `duration_seconds` must be a positive integer within a reasonable range; return 422 on invalid input.
-- [ ] Add API validation: `project_section_id` on tasks and status records must belong to the same project; return 422 on mismatch.
-- [ ] Add API validation: `task_id` on run creation must belong to the provided project; return 422 on mismatch.
-- [ ] Add enum validation for task status, run status, review status/severity, phase, and environment fields across all routes; return 422 with field-level error details.
-- [ ] Decide and document whether `task block` should clear the lease like `task complete` does, or hold it intentionally; implement and test the chosen behavior.
-- [ ] Add `make cli-test` target (`cd cli && go test ./...`); add `make cli-clean-build-check` target that builds from a `git archive` to catch future gitignore issues.
-- [ ] Add a friendly hint to `make test` when the local PostgreSQL container is not reachable.
+- [X] Add API validation: `duration_seconds` must be a positive integer within a reasonable range; return 422 on invalid input. Completed 2026-05-22 by claude-sonnet-4-6; 1–604800s range enforced in claim and heartbeat routes.
+- [X] Add API validation: `project_section_id` on tasks must belong to the same project; return 422 on mismatch. Completed 2026-05-22 by claude-sonnet-4-6; validated on task create and update.
+- [X] Add API validation: `task_id` on run creation must belong to the provided project; return 422 on mismatch. Completed 2026-05-22 by claude-sonnet-4-6; project existence and task ownership validated in runs/routes.py.
+- [X] Add enum validation for task status, phase, review status, and review severity fields; return 422 with field-level error details. Completed 2026-05-22 by claude-sonnet-4-6; frozenset constants in tasks/routes.py and reviews/routes.py; 5 new tests.
+- [X] Decide and document whether `task block` should clear the lease like `task complete` does, or hold it intentionally; implement and test the chosen behavior. Completed 2026-05-22 by claude-sonnet-4-6; decision: block clears lease (agent gives up the task; it stays blocked until reset to pending); 1 new test confirms claimed_by/claimed_until both null after block.
+- [X] Add `make cli-test` target (`cd cli && go test ./...`); add `make cli-clean-build-check` target that builds from a `git archive` to catch future gitignore issues. Completed 2026-05-22 by claude-sonnet-4-6 (P0/P1 session).
+- [X] Add a friendly hint to `make test` when the local PostgreSQL container is not reachable. Completed 2026-05-22 by claude-sonnet-4-6; pg_isready pre-check with actionable message.
 
 **P3 — CLI expansion for full agent session coverage**
 

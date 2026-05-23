@@ -12,6 +12,11 @@ from .models import Review
 
 bp = Blueprint("reviews", __name__, url_prefix="/api")
 
+_VALID_SEVERITIES = frozenset({"critical", "high", "medium", "low", "info"})
+_VALID_STATUSES = frozenset({"open", "resolved", "deferred"})
+_VALID_SEVERITIES_STR = ", ".join(sorted(_VALID_SEVERITIES))
+_VALID_STATUSES_STR = ", ".join(sorted(_VALID_STATUSES))
+
 
 def _serialize(r: Review) -> dict:
     return {
@@ -47,18 +52,20 @@ def list_reviews(project_id: str):
     try:
         page = max(1, int(request.args.get("page", 1)))
         per_page = min(100, max(1, int(request.args.get("per_page", 20))))
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         abort(400, "page and per_page must be integers")
 
     items, total = service.list_reviews(project.id, page=page, per_page=per_page)
     pages = math.ceil(total / per_page) if total > 0 else 1
-    return jsonify({
-        "items": [_serialize(r) for r in items],
-        "page": page,
-        "per_page": per_page,
-        "total": total,
-        "pages": pages,
-    })
+    return jsonify(
+        {
+            "items": [_serialize(r) for r in items],
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+        }
+    )
 
 
 @bp.post("/projects/<project_id>/reviews")
@@ -71,6 +78,12 @@ def create_review(project_id: str):
 
     if not data.get("finding"):
         abort(422, "Missing required field: finding")
+
+    if "severity" in data and data["severity"] not in _VALID_SEVERITIES:
+        abort(422, f"Invalid severity '{data['severity']}'; valid: {_VALID_SEVERITIES_STR}")
+
+    if "status" in data and data["status"] not in _VALID_STATUSES:
+        abort(422, f"Invalid status '{data['status']}'; valid: {_VALID_STATUSES_STR}")
 
     linked_task_id = data.get("linked_task_id")
     if linked_task_id:
@@ -104,6 +117,12 @@ def update_review(review_id: str):
 
     if data["version"] != review.version:
         abort(409, f"Version conflict: expected {review.version}, got {data['version']}")
+
+    if "severity" in data and data["severity"] not in _VALID_SEVERITIES:
+        abort(422, f"Invalid severity '{data['severity']}'; valid: {_VALID_SEVERITIES_STR}")
+
+    if "status" in data and data["status"] not in _VALID_STATUSES:
+        abort(422, f"Invalid status '{data['status']}'; valid: {_VALID_STATUSES_STR}")
 
     linked_task_id = data.get("linked_task_id")
     if linked_task_id:

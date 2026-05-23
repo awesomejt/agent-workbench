@@ -6,6 +6,7 @@ from datetime import UTC, datetime
 from sqlalchemy import update
 
 from ..database import db
+from ..events import service as events_service
 from .models import Run
 
 
@@ -45,7 +46,15 @@ def heartbeat_run(run_id: uuid.UUID) -> Run:
         raise RunStateError("Run is not in running state")
     db.session.flush()
     run = db.session.get(Run, run_id)
-    return run  # type: ignore[return-value]
+    assert run is not None
+    events_service._record(
+        event_type="run.heartbeat",
+        project_id=run.project_id,
+        run_id=run_id,
+        actor_type="agent",
+        actor_name=run.agent_name,
+    )
+    return run
 
 
 def complete_run(run_id: uuid.UUID, data: dict) -> Run:
@@ -67,7 +76,16 @@ def complete_run(run_id: uuid.UUID, data: dict) -> Run:
         raise RunStateError("Run is not in running state")
     db.session.flush()
     run = db.session.get(Run, run_id)
-    return run  # type: ignore[return-value]
+    assert run is not None
+    events_service._record(
+        event_type="run.completed",
+        project_id=run.project_id,
+        run_id=run_id,
+        actor_type="agent",
+        actor_name=run.agent_name,
+        payload={"summary": data.get("summary")},
+    )
+    return run
 
 
 def fail_run(run_id: uuid.UUID, data: dict) -> Run:
@@ -89,4 +107,13 @@ def fail_run(run_id: uuid.UUID, data: dict) -> Run:
         raise RunStateError("Run is not in running state")
     db.session.flush()
     run = db.session.get(Run, run_id)
-    return run  # type: ignore[return-value]
+    assert run is not None
+    events_service._record(
+        event_type="run.failed",
+        project_id=run.project_id,
+        run_id=run_id,
+        actor_type="agent",
+        actor_name=run.agent_name,
+        payload={"summary": data.get("summary")},
+    )
+    return run

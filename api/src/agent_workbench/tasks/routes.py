@@ -7,10 +7,17 @@ from flask import Blueprint, abort, jsonify, request
 from sqlalchemy.exc import IntegrityError
 
 from ..database import db
+from ..project_sections import service as sections_service
 from ..projects import service as projects_service
 from . import service
 from .models import Task
 from .service import DEFAULT_LEASE_SECONDS, LeaseConflictError, LeaseOwnershipError
+
+_VALID_STATUSES = frozenset({"pending", "completed", "blocked"})
+_VALID_PHASES = frozenset({"planning", "research", "implementation", "testing", "review"})
+_VALID_STATUSES_STR = ", ".join(sorted(_VALID_STATUSES))
+_VALID_PHASES_STR = ", ".join(sorted(_VALID_PHASES))
+_MAX_DURATION_SECONDS = 7 * 24 * 3600  # 1 week hard cap
 
 bp = Blueprint("tasks", __name__, url_prefix="/api")
 
@@ -96,12 +103,21 @@ def create_task(project_id: str):
     if not data.get("title"):
         abort(422, "Missing required field: title")
 
+    if "status" in data and data["status"] not in _VALID_STATUSES:
+        abort(422, f"Invalid status '{data['status']}'; valid: {_VALID_STATUSES_STR}")
+
+    if "phase" in data and data["phase"] not in _VALID_PHASES:
+        abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
+
     section_id = data.get("project_section_id")
     if section_id:
         try:
-            uuid.UUID(section_id)
+            sid = uuid.UUID(section_id)
         except ValueError:
             abort(400, "project_section_id must be a valid UUID")
+        section = sections_service.get_section(sid)
+        if section is None or section.project_id != project.id:
+            abort(422, "project_section_id does not belong to this project")
 
     task = service.create_task(project.id, data)
     db.session.commit()
@@ -142,6 +158,21 @@ def update_task(task_id: str):
     if data["version"] != task.version:
         abort(409, f"Version conflict: expected {task.version}, got {data['version']}")
 
+    if "status" in data and data["status"] not in _VALID_STATUSES:
+        abort(422, f"Invalid status '{data['status']}'; valid: {_VALID_STATUSES_STR}")
+
+    if "phase" in data and data["phase"] not in _VALID_PHASES:
+        abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
+
+    if "project_section_id" in data and data["project_section_id"] is not None:
+        try:
+            sid = uuid.UUID(data["project_section_id"])
+        except ValueError:
+            abort(400, "project_section_id must be a valid UUID")
+        section = sections_service.get_section(sid)
+        if section is None or section.project_id != task.project_id:
+            abort(422, "project_section_id does not belong to this project")
+
     task = service.update_task(task, data)
     db.session.commit()
     return jsonify(_serialize(task))
@@ -163,11 +194,16 @@ def claim_task(task_id: str):
     task_obj = service.get_task(tid)
     if task_obj is None:
         abort(404, f"Task {task_id} not found")
-    duration = int(
-        data["duration_seconds"]
-        if "duration_seconds" in data
-        else (task_obj.estimated_duration_seconds or DEFAULT_LEASE_SECONDS)
-    )
+    if "duration_seconds" in data:
+        try:
+            req_duration = int(data["duration_seconds"])
+        except TypeError, ValueError:
+            abort(422, "duration_seconds must be a positive integer")
+        if req_duration <= 0 or req_duration > _MAX_DURATION_SECONDS:
+            abort(422, f"duration_seconds must be between 1 and {_MAX_DURATION_SECONDS}")
+        duration = req_duration
+    else:
+        duration = task_obj.estimated_duration_seconds or DEFAULT_LEASE_SECONDS
     idempotency_key = data.get("idempotency_key")
 
     try:
@@ -200,11 +236,16 @@ def heartbeat_task(task_id: str):
     task_obj = service.get_task(tid)
     if task_obj is None:
         abort(404, f"Task {task_id} not found")
-    duration = int(
-        data["duration_seconds"]
-        if "duration_seconds" in data
-        else (task_obj.estimated_duration_seconds or DEFAULT_LEASE_SECONDS)
-    )
+    if "duration_seconds" in data:
+        try:
+            req_duration = int(data["duration_seconds"])
+        except TypeError, ValueError:
+            abort(422, "duration_seconds must be a positive integer")
+        if req_duration <= 0 or req_duration > _MAX_DURATION_SECONDS:
+            abort(422, f"duration_seconds must be between 1 and {_MAX_DURATION_SECONDS}")
+        duration = req_duration
+    else:
+        duration = task_obj.estimated_duration_seconds or DEFAULT_LEASE_SECONDS
 
     try:
         task = service.heartbeat_task(tid, agent_name, duration=duration)

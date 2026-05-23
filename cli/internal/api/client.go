@@ -203,6 +203,33 @@ func (c *Client) BlockTask(taskID, agentName, reason string) (Task, error) {
 	return decode[Task](data)
 }
 
+// GetProject fetches a single project by ID.
+func (c *Client) GetProject(projectID string) (Project, error) {
+	data, _, err := c.do("GET", "/api/projects/"+projectID, nil)
+	if err != nil {
+		return Project{}, err
+	}
+	return decode[Project](data)
+}
+
+// CreateProject creates a new project.
+func (c *Client) CreateProject(body map[string]any) (Project, error) {
+	data, _, err := c.do("POST", "/api/projects", body)
+	if err != nil {
+		return Project{}, err
+	}
+	return decode[Project](data)
+}
+
+// UpdateProject patches a project by ID.
+func (c *Client) UpdateProject(projectID string, body map[string]any) (Project, error) {
+	data, _, err := c.do("PATCH", "/api/projects/"+projectID, body)
+	if err != nil {
+		return Project{}, err
+	}
+	return decode[Project](data)
+}
+
 // ── project status ────────────────────────────────────────────────────────────
 
 func (c *Client) ListProjectStatus(projectID string) (ProjectStatusList, error) {
@@ -211,4 +238,178 @@ func (c *Client) ListProjectStatus(projectID string) (ProjectStatusList, error) 
 		return ProjectStatusList{}, err
 	}
 	return decode[ProjectStatusList](data)
+}
+
+// CreateStatus creates a new status record for a project.
+func (c *Client) CreateStatus(projectID string, body map[string]any) (ProjectStatus, error) {
+	data, _, err := c.do("POST", "/api/projects/"+projectID+"/status", body)
+	if err != nil {
+		return ProjectStatus{}, err
+	}
+	return decode[ProjectStatus](data)
+}
+
+// UpdateStatus patches a project status record.
+func (c *Client) UpdateStatus(projectID, statusID string, body map[string]any) (ProjectStatus, error) {
+	path := "/api/projects/" + projectID + "/status/" + statusID
+	data, _, err := c.do("PATCH", path, body)
+	if err != nil {
+		return ProjectStatus{}, err
+	}
+	return decode[ProjectStatus](data)
+}
+
+// ── sections ──────────────────────────────────────────────────────────────────
+
+func (c *Client) ListSections(projectID string) (SectionList, error) {
+	data, _, err := c.do("GET", "/api/projects/"+projectID+"/sections", nil)
+	if err != nil {
+		return SectionList{}, err
+	}
+	return decode[SectionList](data)
+}
+
+func (c *Client) CreateSection(projectID string, body map[string]any) (Section, error) {
+	data, _, err := c.do("POST", "/api/projects/"+projectID+"/sections", body)
+	if err != nil {
+		return Section{}, err
+	}
+	return decode[Section](data)
+}
+
+func (c *Client) GetSection(projectID, sectionID string) (Section, error) {
+	path := "/api/projects/" + projectID + "/sections/" + sectionID
+	data, _, err := c.do("GET", path, nil)
+	if err != nil {
+		return Section{}, err
+	}
+	return decode[Section](data)
+}
+
+func (c *Client) UpdateSection(projectID, sectionID string, body map[string]any) (Section, error) {
+	path := "/api/projects/" + projectID + "/sections/" + sectionID
+	data, _, err := c.do("PATCH", path, body)
+	if err != nil {
+		return Section{}, err
+	}
+	return decode[Section](data)
+}
+
+// ── agents ────────────────────────────────────────────────────────────────────
+
+func (c *Client) ListAgents(page, perPage int) (AgentList, error) {
+	path := fmt.Sprintf("/api/agents?page=%d&per_page=%d", page, perPage)
+	data, _, err := c.do("GET", path, nil)
+	if err != nil {
+		return AgentList{}, err
+	}
+	return decode[AgentList](data)
+}
+
+func (c *Client) CreateAgent(body map[string]any) (Agent, error) {
+	data, _, err := c.do("POST", "/api/agents", body)
+	if err != nil {
+		return Agent{}, err
+	}
+	return decode[Agent](data)
+}
+
+func (c *Client) GetAgent(agentID string) (Agent, error) {
+	data, _, err := c.do("GET", "/api/agents/"+agentID, nil)
+	if err != nil {
+		return Agent{}, err
+	}
+	return decode[Agent](data)
+}
+
+func (c *Client) UpdateAgent(agentID string, body map[string]any) (Agent, error) {
+	data, _, err := c.do("PATCH", "/api/agents/"+agentID, body)
+	if err != nil {
+		return Agent{}, err
+	}
+	return decode[Agent](data)
+}
+
+// ── runs ──────────────────────────────────────────────────────────────────────
+
+// CreateRun starts a new run. projectID and agentName are required; taskID may be empty.
+func (c *Client) CreateRun(projectID, agentName, taskID, summary string) (Run, error) {
+	body := map[string]any{
+		"project_id": projectID,
+		"agent_name": agentName,
+	}
+	if taskID != "" {
+		body["task_id"] = taskID
+	}
+	if summary != "" {
+		body["summary"] = summary
+	}
+	data, _, err := c.do("POST", "/api/runs", body)
+	if err != nil {
+		return Run{}, err
+	}
+	return decode[Run](data)
+}
+
+func (c *Client) GetRun(runID string) (Run, error) {
+	data, _, err := c.do("GET", "/api/runs/"+runID, nil)
+	if err != nil {
+		return Run{}, err
+	}
+	return decode[Run](data)
+}
+
+func (c *Client) HeartbeatRun(runID string) (Run, error) {
+	data, _, err := c.do("POST", "/api/runs/"+runID+"/heartbeat", nil)
+	if err != nil {
+		return Run{}, err
+	}
+	return decode[Run](data)
+}
+
+func (c *Client) CompleteRun(runID, summary, validationResult string) (Run, error) {
+	body := map[string]any{}
+	if summary != "" {
+		body["summary"] = summary
+	}
+	if validationResult != "" {
+		body["validation_result"] = validationResult
+	}
+	data, _, err := c.do("POST", "/api/runs/"+runID+"/complete", body)
+	if err != nil {
+		return Run{}, err
+	}
+	return decode[Run](data)
+}
+
+func (c *Client) FailRun(runID, summary string) (Run, error) {
+	body := map[string]any{}
+	if summary != "" {
+		body["summary"] = summary
+	}
+	data, _, err := c.do("POST", "/api/runs/"+runID+"/fail", body)
+	if err != nil {
+		return Run{}, err
+	}
+	return decode[Run](data)
+}
+
+// ── events ────────────────────────────────────────────────────────────────────
+
+func (c *Client) ListEvents(projectID string, page, perPage int) (EventList, error) {
+	path := fmt.Sprintf("/api/projects/%s/events?page=%d&per_page=%d", projectID, page, perPage)
+	data, _, err := c.do("GET", path, nil)
+	if err != nil {
+		return EventList{}, err
+	}
+	return decode[EventList](data)
+}
+
+// AppendEvent posts a new event. body must include event_type; project_id/task_id/run_id are optional.
+func (c *Client) AppendEvent(body map[string]any) (Event, error) {
+	data, _, err := c.do("POST", "/api/events", body)
+	if err != nil {
+		return Event{}, err
+	}
+	return decode[Event](data)
 }

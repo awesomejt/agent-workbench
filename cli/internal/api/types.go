@@ -79,6 +79,88 @@ type ProjectStatusList struct {
 	Pages   int             `json:"pages"`
 }
 
+// Run mirrors the run serialization from the Flask API.
+type Run struct {
+	ID                 string   `json:"id"`
+	ProjectID          string   `json:"project_id"`
+	TaskID             *string  `json:"task_id"`
+	AgentName          string   `json:"agent_name"`
+	Status             string   `json:"status"`
+	StartedAt          string   `json:"started_at"`
+	LastHeartbeatAt    *string  `json:"last_heartbeat_at"`
+	CompletedAt        *string  `json:"completed_at"`
+	ValidationCommands []string `json:"validation_commands"`
+	ValidationResult   *string  `json:"validation_result"`
+	Summary            *string  `json:"summary"`
+	Version            int      `json:"version"`
+}
+
+// Event mirrors the event serialization from the Flask API.
+type Event struct {
+	ID        string  `json:"id"`
+	ProjectID *string `json:"project_id"`
+	TaskID    *string `json:"task_id"`
+	RunID     *string `json:"run_id"`
+	EventType string  `json:"event_type"`
+	ActorType *string `json:"actor_type"`
+	ActorName *string `json:"actor_name"`
+	Payload   any     `json:"payload"`
+	CreatedAt string  `json:"created_at"`
+}
+
+// EventList is the paginated event list response.
+type EventList struct {
+	Items   []Event `json:"items"`
+	Page    int     `json:"page"`
+	PerPage int     `json:"per_page"`
+	Total   int     `json:"total"`
+	Pages   int     `json:"pages"`
+}
+
+// Agent mirrors the agent serialization from the Flask API.
+type Agent struct {
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	AgentType    *string `json:"agent_type"`
+	DefaultModel *string `json:"default_model"`
+	RuntimeNotes *string `json:"runtime_notes"`
+	CreatedAt    string  `json:"created_at"`
+	UpdatedAt    string  `json:"updated_at"`
+	Version      int     `json:"version"`
+}
+
+// AgentList is the paginated agent list response.
+type AgentList struct {
+	Items   []Agent `json:"items"`
+	Page    int     `json:"page"`
+	PerPage int     `json:"per_page"`
+	Total   int     `json:"total"`
+	Pages   int     `json:"pages"`
+}
+
+// Section mirrors the project_section serialization from the Flask API.
+type Section struct {
+	ID          string  `json:"id"`
+	ProjectID   string  `json:"project_id"`
+	Name        string  `json:"name"`
+	Slug        string  `json:"slug"`
+	SectionType string  `json:"section_type"`
+	Description *string `json:"description"`
+	SortOrder   int     `json:"sort_order"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
+	Version     int     `json:"version"`
+}
+
+// SectionList is the paginated section list response.
+type SectionList struct {
+	Items   []Section `json:"items"`
+	Page    int       `json:"page"`
+	PerPage int       `json:"per_page"`
+	Total   int       `json:"total"`
+	Pages   int       `json:"pages"`
+}
+
 // APIError is the standard error shape returned by the Flask API.
 type APIError struct {
 	Error struct {

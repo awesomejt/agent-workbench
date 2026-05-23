@@ -80,12 +80,12 @@ Items required before using agent-workbench to manage its own development. Order
 
 **P3 — CLI expansion for full agent session coverage**
 
-- [ ] Add `awb run start/get/heartbeat/complete/fail` commands so every agent session can create a durable run record and heartbeat through it.
-- [ ] Add `awb event list/append` commands for debugging and audit trail inspection.
-- [ ] Add `awb agent list/create/get/update` commands for agent registry management.
-- [ ] Add `awb project create/get/update` and `awb section list/create/get/update` commands for project and section administration.
-- [ ] Add `awb status create/update` commands for project/section status management from the CLI.
-- [ ] Add shell completion (`awb completion bash/zsh/fish`) as the final CLI polish step after correctness fixes.
+- [X] Add `awb run start/get/heartbeat/complete/fail` commands so every agent session can create a durable run record and heartbeat through it. Completed 2026-05-22 by claude-sonnet-4-6.
+- [X] Add `awb event list/append` commands for debugging and audit trail inspection. Completed 2026-05-22 by claude-sonnet-4-6; event list supports --limit, append accepts --type/--task/--run/--actor-name/--payload.
+- [X] Add `awb agent list/create/get/update` commands for agent registry management. Completed 2026-05-22 by claude-sonnet-4-6.
+- [X] Add `awb project create/get/update` and `awb section list/create/get/update` commands for project and section administration. Completed 2026-05-22 by claude-sonnet-4-6.
+- [X] Add `awb status create/update` commands for project/section status management from the CLI. Completed 2026-05-22 by claude-sonnet-4-6; status show now includes ID column for use with update.
+- [X] Add shell completion (`awb completion bash/zsh/fish/powershell`) with inline install instructions. Completed 2026-05-22 by claude-sonnet-4-6.
 
 ### Discovery And Planning
 

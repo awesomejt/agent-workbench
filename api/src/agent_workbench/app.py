@@ -10,7 +10,7 @@ from .errors import register_error_handlers
 
 def create_app(settings: Settings | None = None) -> Flask:
     if settings is None:
-        settings = Settings()
+        settings = Settings()  # type: ignore[call-arg]  # pydantic-settings reads from env
 
     app = Flask(__name__)
     app.config["SQLALCHEMY_DATABASE_URI"] = settings.database_url
@@ -58,7 +58,7 @@ def _register_blueprints(app: Flask) -> None:
 
 
 def main() -> None:
-    settings = Settings()
+    settings = Settings()  # type: ignore[call-arg]  # pydantic-settings reads from env
     app = create_app(settings)
     app.run(
         host=settings.api_host,

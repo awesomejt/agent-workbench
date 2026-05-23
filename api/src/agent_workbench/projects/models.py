@@ -13,7 +13,7 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-class Project(db.Model):
+class Project(db.Model):  # type: ignore[name-defined]
     __tablename__ = "projects"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -33,9 +33,7 @@ class Project(db.Model):
     )
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
 
-    sections: Mapped[list] = relationship(
-        "ProjectSection", back_populates="project", lazy="select"
-    )
+    sections: Mapped[list] = relationship("ProjectSection", back_populates="project", lazy="select")
     tasks: Mapped[list] = relationship("Task", back_populates="project", lazy="select")
     runs: Mapped[list] = relationship("Run", back_populates="project", lazy="select")
     events: Mapped[list] = relationship("Event", back_populates="project", lazy="select")

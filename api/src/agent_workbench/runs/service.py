@@ -41,7 +41,7 @@ def heartbeat_run(run_id: uuid.UUID) -> Run:
         .values(last_heartbeat_at=now, version=Run.version + 1)
         .execution_options(synchronize_session="fetch")
     )
-    if result.rowcount == 0:
+    if result.rowcount == 0:  # type: ignore[attr-defined]
         raise RunStateError("Run is not in running state")
     db.session.flush()
     run = db.session.get(Run, run_id)
@@ -63,7 +63,7 @@ def complete_run(run_id: uuid.UUID, data: dict) -> Run:
         )
         .execution_options(synchronize_session="fetch")
     )
-    if result.rowcount == 0:
+    if result.rowcount == 0:  # type: ignore[attr-defined]
         raise RunStateError("Run is not in running state")
     db.session.flush()
     run = db.session.get(Run, run_id)
@@ -85,7 +85,7 @@ def fail_run(run_id: uuid.UUID, data: dict) -> Run:
         )
         .execution_options(synchronize_session="fetch")
     )
-    if result.rowcount == 0:
+    if result.rowcount == 0:  # type: ignore[attr-defined]
         raise RunStateError("Run is not in running state")
     db.session.flush()
     run = db.session.get(Run, run_id)

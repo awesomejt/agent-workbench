@@ -25,6 +25,7 @@ def list_tasks(
     per_page: int = 20,
     status: str | None = None,
     phase: str | None = None,
+    available: bool = False,
 ) -> tuple[list[Task], int]:
     per_page = min(per_page, 100)
     offset = (page - 1) * per_page
@@ -33,6 +34,12 @@ def list_tasks(
         base = base.where(Task.status == status)
     if phase:
         base = base.where(Task.phase == phase)
+    if available:
+        # "available" means pending and not held by an unexpired lease
+        now = datetime.now(UTC)
+        base = base.where(Task.status == "pending").where(
+            or_(Task.claimed_until.is_(None), Task.claimed_until < now)
+        )
     total = db.session.scalar(select(func.count()).select_from(base.subquery())) or 0
     items = db.session.scalars(
         base.order_by(Task.priority.desc(), Task.created_at).offset(offset).limit(per_page)
@@ -67,9 +74,17 @@ def create_task(project_id: uuid.UUID, data: dict) -> Task:
 
 def update_task(task: Task, data: dict) -> Task:
     mutable = (
-        "title", "description", "status", "priority", "phase",
-        "dependencies", "assignee_type", "assignee_name",
-        "estimated_duration_seconds", "validation_expectations", "completion_evidence",
+        "title",
+        "description",
+        "status",
+        "priority",
+        "phase",
+        "dependencies",
+        "assignee_type",
+        "assignee_name",
+        "estimated_duration_seconds",
+        "validation_expectations",
+        "completion_evidence",
     )
     for field in mutable:
         if field in data:
@@ -112,7 +127,7 @@ def claim_task(
         )
         .execution_options(synchronize_session="fetch")
     )
-    if result.rowcount == 0:
+    if result.rowcount == 0:  # type: ignore[attr-defined]
         raise LeaseConflictError("Task is not available for claiming")
 
     db.session.flush()
@@ -136,7 +151,7 @@ def heartbeat_task(
         .values(claimed_until=new_until, version=Task.version + 1)
         .execution_options(synchronize_session="fetch")
     )
-    if result.rowcount == 0:
+    if result.rowcount == 0:  # type: ignore[attr-defined]
         raise LeaseOwnershipError("Lease not held or expired")
 
     db.session.flush()
@@ -162,7 +177,7 @@ def complete_task(
         )
         .execution_options(synchronize_session="fetch")
     )
-    if result.rowcount == 0:
+    if result.rowcount == 0:  # type: ignore[attr-defined]
         raise LeaseOwnershipError("Task not claimed by this agent")
 
     db.session.flush()
@@ -186,7 +201,7 @@ def block_task(
         )
         .execution_options(synchronize_session="fetch")
     )
-    if result.rowcount == 0:
+    if result.rowcount == 0:  # type: ignore[attr-defined]
         raise LeaseOwnershipError("Task not claimed by this agent")
 
     db.session.flush()

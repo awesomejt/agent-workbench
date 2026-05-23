@@ -19,7 +19,7 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-class Event(db.Model):
+class Event(db.Model):  # type: ignore[name-defined]
     """Append-only audit record. Rows are never updated after insert."""
 
     __tablename__ = "events"

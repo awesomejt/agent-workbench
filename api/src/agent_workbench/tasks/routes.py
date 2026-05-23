@@ -58,24 +58,31 @@ def list_tasks(project_id: str):
     try:
         page = max(1, int(request.args.get("page", 1)))
         per_page = min(100, max(1, int(request.args.get("per_page", 20))))
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         abort(400, "page and per_page must be integers")
 
     status_filter = request.args.get("status")
     phase_filter = request.args.get("phase")
+    available = request.args.get("available", "").lower() in ("1", "true", "yes")
 
     items, total = service.list_tasks(
-        project.id, page=page, per_page=per_page,
-        status=status_filter, phase=phase_filter,
+        project.id,
+        page=page,
+        per_page=per_page,
+        status=status_filter,
+        phase=phase_filter,
+        available=available,
     )
     pages = math.ceil(total / per_page) if total > 0 else 1
-    return jsonify({
-        "items": [_serialize(t) for t in items],
-        "page": page,
-        "per_page": per_page,
-        "total": total,
-        "pages": pages,
-    })
+    return jsonify(
+        {
+            "items": [_serialize(t) for t in items],
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+        }
+    )
 
 
 @bp.post("/projects/<project_id>/tasks")

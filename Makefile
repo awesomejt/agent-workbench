@@ -102,6 +102,9 @@ type-check:
 validate:
 	python3 -m py_compile scripts/awb.py
 	cd $(API_DIR) && uv run python -c "from agent_workbench.app import create_app; print('imports ok')"
+	cd $(API_DIR) && uv run ruff check src/
+	cd $(API_DIR) && uv run ruff format --check src/
+	cd $(API_DIR) && uv run mypy src/
 
 test:
 	cd $(API_DIR) && uv run --env-file .env pytest

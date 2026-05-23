@@ -24,6 +24,7 @@ var taskListCmd = &cobra.Command{
 		}
 		statusFilter, _ := cmd.Flags().GetString("status")
 		phaseFilter, _ := cmd.Flags().GetString("phase")
+		availableFilter, _ := cmd.Flags().GetBool("available")
 
 		client := newClient()
 		project, err := client.ProjectBySlug(slug)
@@ -32,9 +33,11 @@ var taskListCmd = &cobra.Command{
 		}
 
 		list, err := client.ListTasks(project.ID, api.TaskListOpts{
-			Page: 1, PerPage: 50,
-			Status: statusFilter,
-			Phase:  phaseFilter,
+			Page:      1,
+			PerPage:   50,
+			Status:    statusFilter,
+			Phase:     phaseFilter,
+			Available: availableFilter,
 		})
 		if err != nil {
 			return render.Err("list tasks: %v", err)
@@ -102,7 +105,7 @@ var taskNextCmd = &cobra.Command{
 		}
 
 		list, err := client.ListTasks(project.ID, api.TaskListOpts{
-			Page: 1, PerPage: 1, Status: "pending",
+			Page: 1, PerPage: 1, Available: true,
 		})
 		if err != nil {
 			return render.Err("list tasks: %v", err)
@@ -152,4 +155,5 @@ func init() {
 
 	taskListCmd.Flags().String("status", "", "Filter by status (pending, completed, blocked)")
 	taskListCmd.Flags().String("phase", "", "Filter by phase")
+	taskListCmd.Flags().Bool("available", false, "Only show tasks available to claim (pending, no active lease)")
 }

@@ -130,6 +130,9 @@ func (c *Client) ListTasks(projectID string, opts TaskListOpts) (TaskList, error
 	if opts.Phase != "" {
 		params.Set("phase", opts.Phase)
 	}
+	if opts.Available {
+		params.Set("available", "true")
+	}
 	path := "/api/projects/" + projectID + "/tasks?" + params.Encode()
 	data, _, err := c.do("GET", path, nil)
 	if err != nil {
@@ -140,10 +143,11 @@ func (c *Client) ListTasks(projectID string, opts TaskListOpts) (TaskList, error
 
 // TaskListOpts holds optional filters for ListTasks.
 type TaskListOpts struct {
-	Page    int
-	PerPage int
-	Status  string
-	Phase   string
+	Page      int
+	PerPage   int
+	Status    string
+	Phase     string
+	Available bool // true = pending tasks with no active lease only
 }
 
 func (c *Client) GetTask(taskID string) (Task, error) {

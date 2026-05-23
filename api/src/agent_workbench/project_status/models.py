@@ -13,7 +13,7 @@ def _now() -> datetime:
     return datetime.now(UTC)
 
 
-class ProjectStatus(db.Model):
+class ProjectStatus(db.Model):  # type: ignore[name-defined]
     __tablename__ = "project_statuses"
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)

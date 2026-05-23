@@ -7,6 +7,15 @@ from sqlalchemy import func, select
 from ..database import db
 from .models import ProjectStatus
 
+# Forward-only phase ordinals — higher number = further along the lifecycle.
+PHASE_ORDER: dict[str, int] = {
+    "discovery": 1,
+    "design": 2,
+    "implementation": 3,
+    "testing": 4,
+    "review": 5,
+}
+
 
 def list_statuses(
     project_id: uuid.UUID, page: int = 1, per_page: int = 20
@@ -36,6 +45,40 @@ def create_status(project_id: uuid.UUID, data: dict) -> ProjectStatus:
         reason=data.get("reason"),
         details=data.get("details"),
         source=data.get("source"),
+    )
+    db.session.add(status)
+    db.session.flush()
+    return status
+
+
+def get_current_phase(project_id: uuid.UUID) -> str | None:
+    """Return the phase from the most recent project_status record, or None if none exist."""
+    row = db.session.scalar(
+        select(ProjectStatus)
+        .where(ProjectStatus.project_id == project_id)
+        .order_by(ProjectStatus.created_at.desc())
+        .limit(1)
+    )
+    return row.phase if row else None
+
+
+def advance_phase_if_needed(project_id: uuid.UUID, task_phase: str) -> ProjectStatus | None:
+    """Append a new project_status when task_phase ordinal exceeds current project phase.
+
+    Returns the new status record, or None if no advance was needed.
+    """
+    task_ordinal = PHASE_ORDER.get(task_phase, 0)
+    if task_ordinal == 0:
+        return None
+    current_phase = get_current_phase(project_id)
+    current_ordinal = PHASE_ORDER.get(current_phase, 0) if current_phase else 0
+    if task_ordinal <= current_ordinal:
+        return None
+    status = ProjectStatus(
+        project_id=project_id,
+        status="active",
+        phase=task_phase,
+        source="auto-claim",
     )
     db.session.add(status)
     db.session.flush()

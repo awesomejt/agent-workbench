@@ -7,6 +7,7 @@ from sqlalchemy import and_, func, or_, select, update
 
 from ..database import db
 from ..events import service as events_service
+from ..project_status import service as project_status_service
 from .models import Task, TaskRelationship
 
 DEFAULT_LEASE_SECONDS = 1800  # 30 minutes — generous default for local AI agents
@@ -157,6 +158,7 @@ def claim_task(
     db.session.flush()
     task = db.session.get(Task, task_id)
     assert task is not None
+    project_status_service.advance_phase_if_needed(task.project_id, task.phase)
     events_service._record(
         event_type="task.claimed",
         project_id=task.project_id,

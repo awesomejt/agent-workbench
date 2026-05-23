@@ -10,6 +10,11 @@ from ..database import db
 from . import service
 from .models import Project
 
+_VALID_PROJECT_TYPES = frozenset(
+    {"code", "course", "content", "research", "infrastructure", "other"}
+)
+_VALID_PROJECT_TYPES_STR = ", ".join(sorted(_VALID_PROJECT_TYPES))
+
 bp = Blueprint("projects", __name__, url_prefix="/api/projects")
 
 
@@ -61,6 +66,12 @@ def create_project():
     if missing:
         abort(422, f"Missing required fields: {', '.join(missing)}")
 
+    if "project_type" in data and data["project_type"] not in _VALID_PROJECT_TYPES:
+        abort(
+            422,
+            f"Invalid project_type '{data['project_type']}'; valid: {_VALID_PROJECT_TYPES_STR}",
+        )
+
     try:
         project = service.create_project(data)
         db.session.commit()
@@ -104,6 +115,12 @@ def update_project(project_id: str):
 
     if data["version"] != project.version:
         abort(409, f"Version conflict: expected {project.version}, got {data['version']}")
+
+    if "project_type" in data and data["project_type"] not in _VALID_PROJECT_TYPES:
+        abort(
+            422,
+            f"Invalid project_type '{data['project_type']}'; valid: {_VALID_PROJECT_TYPES_STR}",
+        )
 
     try:
         project = service.update_project(project, data)

@@ -19,7 +19,7 @@ class Project(db.Model):  # type: ignore[name-defined]
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     slug: Mapped[str] = mapped_column(String(255), nullable=False, unique=True, index=True)
-    project_type: Mapped[str] = mapped_column(String(64), nullable=False, default="development")
+    project_type: Mapped[str] = mapped_column(String(64), nullable=False, default="code")
     git_remote_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     local_path: Mapped[str | None] = mapped_column(Text, nullable=True)
     environment: Mapped[str] = mapped_column(String(64), nullable=False, default="local")

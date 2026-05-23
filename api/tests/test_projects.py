@@ -58,7 +58,7 @@ class TestCreateProject:
     def test_stores_optional_fields(self, client):
         resp = _create(
             client,
-            project_type="library",
+            project_type="code",
             environment="dev",
             git_remote_url="https://github.com/example/repo",
             local_path="/home/user/repo",
@@ -66,9 +66,20 @@ class TestCreateProject:
         )
         assert resp.status_code == 201
         data = resp.get_json()
-        assert data["project_type"] == "library"
+        assert data["project_type"] == "code"
         assert data["environment"] == "dev"
         assert data["git_remote_url"] == "https://github.com/example/repo"
+
+    def test_all_valid_project_types_accepted(self, client):
+        for i, pt in enumerate(
+            ["code", "course", "content", "research", "infrastructure", "other"]
+        ):
+            resp = _create(client, name=f"p-{i}", slug=f"slug-{i}", project_type=pt)
+            assert resp.status_code == 201, f"Expected 201 for project_type={pt}"
+
+    def test_invalid_project_type_rejected(self, client):
+        resp = _create(client, project_type="library")
+        assert resp.status_code == 422
 
 
 class TestGetProject:

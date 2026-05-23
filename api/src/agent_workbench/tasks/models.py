@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, Uuid
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import SCHEMA, db
@@ -61,3 +61,50 @@ class Task(db.Model):  # type: ignore[name-defined]
     project: Mapped[Project] = relationship("Project", back_populates="tasks")
     runs: Mapped[list] = relationship("Run", back_populates="task", lazy="select")
     events: Mapped[list] = relationship("Event", back_populates="task", lazy="select")
+    outgoing_relationships: Mapped[list] = relationship(
+        "TaskRelationship",
+        foreign_keys="[TaskRelationship.from_task_id]",
+        back_populates="from_task",
+        lazy="select",
+    )
+    incoming_relationships: Mapped[list] = relationship(
+        "TaskRelationship",
+        foreign_keys="[TaskRelationship.to_task_id]",
+        back_populates="to_task",
+        lazy="select",
+    )
+
+
+class TaskRelationship(db.Model):  # type: ignore[name-defined]
+    __tablename__ = "task_relationships"
+    __table_args__ = (
+        UniqueConstraint(
+            "from_task_id", "to_task_id", "relationship_type", name="uq_task_rel_from_to_type"
+        ),
+        {"schema": SCHEMA},
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    from_task_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey(f"{SCHEMA}.tasks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    to_task_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True),
+        ForeignKey(f"{SCHEMA}.tasks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    relationship_type: Mapped[str] = mapped_column(String(32), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=_now
+    )
+
+    from_task: Mapped[Task] = relationship(
+        "Task", foreign_keys=[from_task_id], back_populates="outgoing_relationships"
+    )
+    to_task: Mapped[Task] = relationship(
+        "Task", foreign_keys=[to_task_id], back_populates="incoming_relationships"
+    )

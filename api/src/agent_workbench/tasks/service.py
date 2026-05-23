@@ -7,7 +7,7 @@ from sqlalchemy import and_, func, or_, select, update
 
 from ..database import db
 from ..events import service as events_service
-from .models import Task
+from .models import Task, TaskRelationship
 
 DEFAULT_LEASE_SECONDS = 1800  # 30 minutes — generous default for local AI agents
 
@@ -51,6 +51,15 @@ def list_tasks(
                 and_(Task.status == "in_progress", Task.claimed_until < now),
             )
         )
+        # Exclude tasks that have any incomplete 'blocks' predecessor
+        blocking_ids = (
+            select(TaskRelationship.to_task_id)
+            .join(Task, Task.id == TaskRelationship.from_task_id)
+            .where(TaskRelationship.relationship_type == "blocks")
+            .where(Task.status != "completed")
+            .scalar_subquery()
+        )
+        base = base.where(Task.id.notin_(blocking_ids))
     total = db.session.scalar(select(func.count()).select_from(base.subquery())) or 0
     items = db.session.scalars(
         base.order_by(Task.priority.desc(), Task.created_at).offset(offset).limit(per_page)
@@ -259,3 +268,49 @@ def block_task(
         payload={"reason": reason},
     )
     return task
+
+
+# ── Task relationships ─────────────────────────────────────────────────────────
+
+VALID_RELATIONSHIP_TYPES = frozenset({"blocks", "subtask_of", "duplicates", "relates_to"})
+
+
+class RelationshipConflictError(Exception):
+    pass
+
+
+def list_relationships(task_id: uuid.UUID) -> list[TaskRelationship]:
+    return list(
+        db.session.scalars(
+            select(TaskRelationship)
+            .where(
+                or_(
+                    TaskRelationship.from_task_id == task_id,
+                    TaskRelationship.to_task_id == task_id,
+                )
+            )
+            .order_by(TaskRelationship.created_at)
+        ).all()
+    )
+
+
+def get_relationship(rel_id: uuid.UUID) -> TaskRelationship | None:
+    return db.session.get(TaskRelationship, rel_id)
+
+
+def create_relationship(
+    from_task_id: uuid.UUID, to_task_id: uuid.UUID, relationship_type: str
+) -> TaskRelationship:
+    rel = TaskRelationship(
+        from_task_id=from_task_id,
+        to_task_id=to_task_id,
+        relationship_type=relationship_type,
+    )
+    db.session.add(rel)
+    db.session.flush()
+    return rel
+
+
+def delete_relationship(rel: TaskRelationship) -> None:
+    db.session.delete(rel)
+    db.session.flush()

@@ -13,8 +13,13 @@ from ..idempotency import service as idempotency_service
 from ..project_sections import service as sections_service
 from ..projects import service as projects_service
 from . import service
-from .models import Task
-from .service import DEFAULT_LEASE_SECONDS, LeaseConflictError, LeaseOwnershipError
+from .models import Task, TaskRelationship
+from .service import (
+    DEFAULT_LEASE_SECONDS,
+    VALID_RELATIONSHIP_TYPES,
+    LeaseConflictError,
+    LeaseOwnershipError,
+)
 
 _VALID_STATUSES = frozenset(
     {"new", "pending", "blocked", "in_progress", "completed", "rejected", "duplicate"}
@@ -396,3 +401,97 @@ def block_task(task_id: str):
         abort(409, str(e))
 
     return jsonify(response_body)
+
+
+# ── Task relationship routes ──────────────────────────────────────────────────
+
+_VALID_REL_TYPES_STR = ", ".join(sorted(VALID_RELATIONSHIP_TYPES))
+
+
+def _serialize_rel(rel: TaskRelationship) -> dict:
+    return {
+        "id": str(rel.id),
+        "from_task_id": str(rel.from_task_id),
+        "to_task_id": str(rel.to_task_id),
+        "relationship_type": rel.relationship_type,
+        "created_at": rel.created_at.isoformat(),
+    }
+
+
+def _resolve_task(task_id: str) -> Task:
+    try:
+        tid = uuid.UUID(task_id)
+    except ValueError:
+        abort(400, "task_id must be a valid UUID")
+    task = service.get_task(tid)
+    if task is None:
+        abort(404, f"Task {task_id} not found")
+    return task  # type: ignore[return-value]
+
+
+@bp.get("/tasks/<task_id>/relationships")
+def list_relationships(task_id: str):
+    task = _resolve_task(task_id)
+    rels = service.list_relationships(task.id)
+    return jsonify({"items": [_serialize_rel(r) for r in rels], "total": len(rels)})
+
+
+@bp.post("/tasks/<task_id>/relationships")
+def create_relationship(task_id: str):
+    from_task = _resolve_task(task_id)
+
+    data = request.get_json(silent=True)
+    if not data:
+        abort(400, "Request body must be JSON")
+
+    rel_type = data.get("relationship_type")
+    if not rel_type:
+        abort(422, "Missing required field: relationship_type")
+    if rel_type not in VALID_RELATIONSHIP_TYPES:
+        abort(422, f"Invalid relationship_type '{rel_type}'; valid: {_VALID_REL_TYPES_STR}")
+
+    to_task_id_raw = data.get("to_task_id")
+    if not to_task_id_raw:
+        abort(422, "Missing required field: to_task_id")
+    try:
+        to_tid = uuid.UUID(to_task_id_raw)
+    except ValueError:
+        abort(400, "to_task_id must be a valid UUID")
+
+    if to_tid == from_task.id:
+        abort(422, "A task cannot have a relationship with itself")
+
+    to_task = service.get_task(to_tid)
+    if to_task is None:
+        abort(404, f"Task {to_task_id_raw} not found")
+    if to_task.project_id != from_task.project_id:
+        abort(422, "Relationships must be between tasks in the same project")
+
+    try:
+        rel = service.create_relationship(from_task.id, to_tid, rel_type)
+        db.session.commit()
+    except Exception:
+        db.session.rollback()
+        abort(409, "Relationship already exists")
+
+    return jsonify(_serialize_rel(rel)), 201
+
+
+@bp.delete("/tasks/<task_id>/relationships/<rel_id>")
+def delete_relationship(task_id: str, rel_id: str):
+    task = _resolve_task(task_id)
+
+    try:
+        rid = uuid.UUID(rel_id)
+    except ValueError:
+        abort(400, "rel_id must be a valid UUID")
+
+    rel = service.get_relationship(rid)
+    if rel is None:
+        abort(404, f"Relationship {rel_id} not found")
+    if rel.from_task_id != task.id and rel.to_task_id != task.id:
+        abort(404, f"Relationship {rel_id} not found")
+
+    service.delete_relationship(rel)
+    db.session.commit()
+    return "", 204

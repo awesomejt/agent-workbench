@@ -17,10 +17,6 @@ Thumbs.db
 
 # Logs and generated transcripts
 *.log
-chats/*.md
-!chats/.gitkeep
-agents/chats/*.md
-!agents/chats/.gitkeep
 
 # Local environment and secrets
 .env
@@ -90,8 +86,6 @@ build/
 *.key
 *.pem
 *.crt
-chats/*.md
-agents/chats/*.md
 working/
 test-output/
 

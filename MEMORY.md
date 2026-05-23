@@ -23,6 +23,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Prometheus support should be optional and easy to enable; Jason's server is `prometheus.taylor.lan`.
 - Use a modular monolith before considering separate services.
 - Runtime agent metrics (model_id, token counts, latency_ms, prompt_category) belong on the `runs` table in agent-workbench — used to inform future lease duration tuning and model selection.
+- Dogfood gate: all Codex P0–P2 pre-dogfood fixes must be completed before registering agent-workbench as its own project and switching from TODO.md edits to `awb task claim/complete` for remaining work.
+- Codex full-repo review (2026-05-22) accepted as the cloud review gate. Key validated findings: `cli/internal/output/` silently git-ignored (clean clone fails), ruff format fails 15 files, mypy fails 17 errors, `awb task next` not lease-aware, task transitions don't auto-append events, root `.env.example.local` uses wrong port (5432 vs 5433).
 - A separate `benchmark-harness` project will handle structured evaluation: prompt libraries, scoring rubrics, comparison reports. It will consume agent-workbench as infrastructure but live independently.
 - PostgreSQL should become the preferred source of truth for project/task/status/agent/run state.
 - Git remains the source of truth for source code and migrations.
@@ -97,6 +99,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-23 - claude-sonnet-4-6 (session 8)
+
+- Task: Codex review triage, pre-dogfood planning, CLI install improvements, doc updates.
+- Files changed: `cli/cmd/root.go` (fix `$HOME` expansion, `~/.config/awb` config path, yaml/json/toml support), `scripts/install-awb.sh` (new), `Makefile` (`install-cli`), `TODO.md` (Review section done, pre-dogfood fix list, dogfood item), `MEMORY.md`, `status.yaml`, all 5 docs in `docs/`.
+- Validation: `go vet ./...` clean; `make build-cli` succeeds.
+- Result: Codex review accepted as cloud review gate; 20 pre-dogfood fix items triaged into P0–P3; dogfood intent documented. All project docs updated to reflect CLI as shipped.
+- Blockers or follow-up: P0 fixes next (rename `cli/internal/output` → `render`, nil deref, double-error print, api-url trailing slash).
 
 ### 2026-05-22 - claude-sonnet-4-6 (session 7)
 

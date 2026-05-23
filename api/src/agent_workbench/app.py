@@ -23,6 +23,11 @@ def create_app(settings: Settings | None = None) -> Flask:
     register_error_handlers(app)
     _register_blueprints(app)
 
+    if settings.prometheus_enabled:
+        from .metrics import setup_metrics
+
+        setup_metrics(app)
+
     @app.get("/health")
     def health():
         try:

@@ -8,11 +8,11 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Current Status
 
-- Current phase: early dogfood.
-- Last major milestone: All P0–P3 Codex pre-dogfood fixes complete. Idempotency (P2) implemented as a proper scoped table. 101 tests passing. Cloud review signoff done. Docs updated (README, Development.md, Secrets.md, Prometheus.md). Local DB seeded with 142 tasks across 10 sections.
-- Dogfood transition active: TODO.md + `awb` CLI tracked in parallel during transition; neither is yet the sole source of truth. 46 tasks remain open.
-- Next recommended task: address remaining open Discovery/Planning and Architecture decisions (idempotency key behavior deferred items, state machine definitions, task duration model); or tackle scaffolding items (Prometheus endpoint, containerized integration tests, post-MVP web scaffold).
-- Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
+- Current phase: dogfood — active design/documentation work.
+- Last major milestone (2026-05-23 session 10): 6 already-implemented tasks closed as complete, then 9 design tasks completed in one session (state machines, project type vocabulary, task duration model, assignee/owner model, API docs strategy, OpenAPI decision, Markdown strategy, Prometheus scope, event history strategy). 189 tests passing. New docs: State-Machines.md, Project-Types.md, Task-Duration.md. `_VALID_PROJECT_TYPES` enum added to projects API.
+- Dogfood transition complete: `awb` is the primary task source; `TODO.md` is read-only reference.
+- Next recommended task: `89b164b7` — Define project discovery config; or `f3b8554b` — Create benchmark-harness project; or `306cae8f` — Add env-aware schema bootstrap wrapper.
+- Current blocker: Jason should confirm exact dev/stage/prod database names/users (task `0f1079ef`).
 
 ## Key Decisions
 
@@ -87,12 +87,13 @@ Record findings from real systems, live services, browser/device testing, deploy
 
 ## Open Questions
 
-- Which IDP/auth model should be used after the private-network MVP?
-- What are the exact dev, stage, and production database names/users?
+- Which IDP/auth model should be used after the private-network MVP? (task `1977b02a`)
+- What are the exact dev, stage, and production database names/users? (task `0f1079ef` — needs Jason's decision)
 - What are the exact dev/stage/prod credential injection details for the first Docker Compose VM deployment?
 - Should OpenCode automation interact with the workbench through CLI, API, or both during bootstrap?
-- Should API URLs use nested project routes, flat convenience routes, or both?
-- What section/module defaults should each project type create?
+- **Resolved:** Section/module defaults per project type — documented in `docs/Project-Types.md`.
+- **Resolved:** Flat convenience routes — not for MVP; canonical multi-project routes only.
+- **Resolved:** OpenAPI strategy — `docs/API-Contracts.md` is canonical through MVP; `flask-smorest` post-MVP.
 
 ## Blockers
 
@@ -101,6 +102,15 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-23 - claude-sonnet-4-6 (session 10)
+
+- Task: Review task queue, close already-complete tasks, then complete design work.
+- Files changed: `docs/API-Contracts.md` (contract strategy + in-code API docs sections, resolved open questions), `docs/State-Machines.md` (new; task/phase/run/review state machines + assignment vs. claiming model), `docs/Project-Types.md` (new; 6-type vocab, default sections, phase expectations, agent role defaults), `docs/Task-Duration.md` (new; t-shirt sizing, lease resolution, multipliers), `api/src/agent_workbench/projects/routes.py` (_VALID_PROJECT_TYPES validation), `api/src/agent_workbench/projects/models.py` (default `code`), `api/tests/test_projects.py` (3 new tests), `AGENTS.md` (Markdown File Strategy section), `MEMORY.md` (this update).
+- Validation: 189 tests pass; ruff clean.
+- Closed tasks: cee07b4f (idempotency behavior), ed225a08 (claim/lease behavior), 2748e2cc (event model), 43b6421d (PG container), 34c3fb2e (Prometheus scope), 700d45cb (event history strategy), 264cb3f7 (OpenAPI decision), a3e64fe6 (in-code API docs), 1fe5ebe8 (state machines), ed2fe9f6 (project types), e1efdd78 (assignee/owner model), f8e61d04 (task duration), 3fea7a50 (Markdown strategy).
+- Result: 13 tasks closed in one session. Design queue largely complete. Remaining open work is mostly human-decision items, post-MVP features, and implementation tasks.
+- Blockers or follow-up: Jason needs to confirm dev/stage/prod DB names/users (task 0f1079ef).
 
 ### 2026-05-23 - claude-sonnet-4-6 (session 9)
 

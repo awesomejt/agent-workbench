@@ -233,6 +233,34 @@ Agent workflow managers should copy or mirror transcripts and runtime logs to ex
 
 For OpenCode, n8n, OpenClaw, or another orchestrator, use equivalent configured storage.
 
+## Markdown File Strategy
+
+Markdown files are a context bridge — useful for human and agent onboarding when there is no persistent memory of earlier sessions. The workbench API and PostgreSQL are authoritative for task/project/status state.
+
+| File | Role | Who updates | When |
+|---|---|---|---|
+| `MEMORY.md` | Durable project narrative: decisions, milestones, architecture notes, open questions, blockers, run log | Any agent | After each meaningful session; whenever a key decision is made or reversed |
+| `TODO.md` | Historical task reference; read-only after dogfood transition (2026-05-23) | No one | Never — use `awb` or the API for new tasks |
+| `status.yaml` | Pre-API fallback for shared workflow state | Any agent | When the API is unavailable or a human-readable override is needed |
+| `.agents/chat/*.md` | High-detail per-session logs (local only, gitignored) | Agent that ran the session | After each meaningful work session |
+| `docs/reviews/*.md` | Formal cloud/human review artifacts | Reviewer | When a review is complete |
+
+**MEMORY.md update triggers:**
+- A new design decision or architectural choice is made.
+- A key implementation milestone is reached.
+- A blocker is added or resolved.
+- An open question is answered.
+- The project phase advances.
+- At the start of a session: update "Current Status" to reflect the actual queue state.
+
+**What NOT to put in MEMORY.md:**
+- Full chat transcripts or tool outputs (these go in `.agents/chat/`).
+- Task lists (these live in the workbench API).
+- Secrets, credentials, private keys, or database URLs.
+
+**Project status snapshots:**
+The `project_statuses` table in PostgreSQL is the authoritative source. MEMORY.md's "Current Status" section is a human-readable summary written by agents — it may lag slightly but should be updated each session.
+
 ## Stop Conditions
 
 Stop and mark a task blocked if:

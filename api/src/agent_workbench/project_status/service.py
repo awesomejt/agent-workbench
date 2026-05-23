@@ -31,7 +31,7 @@ def create_status(project_id: uuid.UUID, data: dict) -> ProjectStatus:
         project_id=project_id,
         project_section_id=uuid.UUID(section_id) if section_id else None,
         status=data.get("status", "active"),
-        phase=data.get("phase", "planning"),
+        phase=data.get("phase", "design"),
         summary=data.get("summary"),
         reason=data.get("reason"),
         details=data.get("details"),

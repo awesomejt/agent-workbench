@@ -80,7 +80,7 @@ def create_task(project_id: uuid.UUID, data: dict) -> Task:
         description=data.get("description"),
         status=data.get("status", "pending"),
         priority=data.get("priority", 0),
-        phase=data.get("phase", "planning"),
+        phase=data.get("phase", "design"),
         dependencies=data.get("dependencies"),
         assignee_type=data.get("assignee_type"),
         assignee_name=data.get("assignee_name"),

@@ -30,7 +30,7 @@ class ProjectStatus(db.Model):  # type: ignore[name-defined]
         index=True,
     )
     status: Mapped[str] = mapped_column(String(64), nullable=False, default="active")
-    phase: Mapped[str] = mapped_column(String(64), nullable=False, default="planning")
+    phase: Mapped[str] = mapped_column(String(64), nullable=False, default="design")
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)

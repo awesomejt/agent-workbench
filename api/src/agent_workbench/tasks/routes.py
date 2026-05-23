@@ -25,7 +25,7 @@ _VALID_STATUSES = frozenset(
     {"new", "pending", "blocked", "in_progress", "completed", "rejected", "duplicate"}
 )
 _VALID_CREATE_STATUSES = frozenset({"new", "pending"})
-_VALID_PHASES = frozenset({"planning", "research", "implementation", "testing", "review"})
+_VALID_PHASES = frozenset({"discovery", "design", "implementation", "testing", "review"})
 _VALID_ROLES = frozenset(
     {"researcher", "planner", "implementer", "writer", "reviewer", "tester", "orchestrator"}
 )

@@ -37,7 +37,7 @@ class Task(db.Model):  # type: ignore[name-defined]
     description: Mapped[str | None] = mapped_column(Text, nullable=True)
     status: Mapped[str] = mapped_column(String(64), nullable=False, default="pending", index=True)
     priority: Mapped[int] = mapped_column(Integer, nullable=False, default=0, index=True)
-    phase: Mapped[str] = mapped_column(String(64), nullable=False, default="planning")
+    phase: Mapped[str] = mapped_column(String(64), nullable=False, default="design")
     dependencies: Mapped[list | None] = mapped_column(JSON, nullable=True)
     assignee_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
     assignee_name: Mapped[str | None] = mapped_column(String(128), nullable=True)

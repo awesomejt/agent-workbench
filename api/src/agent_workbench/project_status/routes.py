@@ -10,6 +10,9 @@ from ..projects import service as projects_service
 from . import service
 from .models import ProjectStatus
 
+_VALID_PHASES = frozenset({"discovery", "design", "implementation", "testing", "review"})
+_VALID_PHASES_STR = ", ".join(sorted(_VALID_PHASES))
+
 bp = Blueprint("project_status", __name__, url_prefix="/api/projects")
 
 
@@ -72,6 +75,9 @@ def create_status(project_id: str):
     if not data:
         abort(400, "Request body must be JSON")
 
+    if "phase" in data and data["phase"] not in _VALID_PHASES:
+        abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
+
     section_id = data.get("project_section_id")
     if section_id:
         try:
@@ -106,6 +112,9 @@ def update_status(project_id: str, status_id: str):
 
     if data["version"] != status.version:
         abort(409, f"Version conflict: expected {status.version}, got {data['version']}")
+
+    if "phase" in data and data["phase"] not in _VALID_PHASES:
+        abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
 
     status = service.update_status(status, data)
     db.session.commit()

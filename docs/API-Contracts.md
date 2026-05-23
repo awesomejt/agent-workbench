@@ -25,8 +25,8 @@ This is intentionally OpenAPI-style without becoming a full generated spec yet. 
 
 Initial phase values:
 
-- `planning`
-- `research`
+- `discovery`
+- `design`
 - `implementation`
 - `testing`
 - `review`

@@ -85,8 +85,8 @@ Use `project_section_id = null` for project-wide/general work. Do not require a 
 
 Initial phase values:
 
-- `planning`
-- `research`
+- `discovery`
+- `design`
 - `implementation`
 - `testing`
 - `review`

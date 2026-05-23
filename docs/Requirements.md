@@ -74,7 +74,7 @@ Convenience routes such as `/api/project/status` can be considered for current-p
 - Status records and tasks may reference a section/module.
 - If a status record or task has no `project_section_id`, it is project-wide/general work.
 - Do not require a magic `general` section row for project-wide work; UI/CLI may display null section as `Project-wide` or `General`.
-- Supported initial phases: `planning`, `research`, `implementation`, `testing`, and `review`.
+- Supported initial phases: `discovery`, `design`, `implementation`, `testing`, and `review`.
 - Phase should be tracked on both status records and tasks.
 - Project types may define default sections and default phase workflows.
 

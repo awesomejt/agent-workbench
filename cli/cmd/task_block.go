@@ -19,7 +19,7 @@ var taskBlockCmd = &cobra.Command{
 		reason, _ := cmd.Flags().GetString("reason")
 
 		client := newClient()
-		task, err := client.BlockTask(args[0], agentName, reason)
+		task, err := client.BlockTask(args[0], agentName, reason, newIdempotencyKey())
 		if err != nil {
 			return render.Err("block task: %v", err)
 		}

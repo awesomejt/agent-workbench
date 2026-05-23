@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import json
 import math
 import uuid
 
-from flask import Blueprint, abort, jsonify, request
+from flask import Blueprint, Response, abort, jsonify, make_response, request
 from sqlalchemy.exc import IntegrityError
 
 from ..database import db
+from ..idempotency import service as idempotency_service
 from ..project_sections import service as sections_service
 from ..projects import service as projects_service
 from . import service
@@ -56,6 +58,30 @@ def _resolve_project(project_id: str):
     if project is None:
         abort(404, f"Project {project_id} not found")
     return project
+
+
+def _check_idempotency(endpoint: str, agent_name: str) -> tuple[str | None, Response | None]:
+    """Return (key, cached_response) from the Idempotency-Key header.
+
+    If a key is present and a cached response exists, the caller should return
+    the Response immediately.  If no key, both values are None.
+    """
+    key = request.headers.get("Idempotency-Key")
+    if not key:
+        return None, None
+    cached = idempotency_service.check_key(key, endpoint, agent_name)
+    if cached is None:
+        return key, None
+    resp = make_response(cached["body"], cached["status"])
+    resp.headers["Content-Type"] = "application/json"
+    return key, resp
+
+
+def _store_idempotency(
+    key: str | None, endpoint: str, agent_name: str, body: dict, status: int
+) -> None:
+    if key:
+        idempotency_service.store_key(key, endpoint, agent_name, status, json.dumps(body))
 
 
 @bp.get("/projects/<project_id>/tasks")
@@ -190,6 +216,10 @@ def claim_task(task_id: str):
     if not agent_name:
         abort(422, "agent_name is required")
 
+    idem_key, cached_resp = _check_idempotency("task.claim", agent_name)
+    if cached_resp is not None:
+        return cached_resp
+
     # Duration priority: request body > task's per-task estimate > system default
     task_obj = service.get_task(tid)
     if task_obj is None:
@@ -204,12 +234,11 @@ def claim_task(task_id: str):
         duration = req_duration
     else:
         duration = task_obj.estimated_duration_seconds or DEFAULT_LEASE_SECONDS
-    idempotency_key = data.get("idempotency_key")
 
     try:
-        task = service.claim_task(
-            tid, agent_name, duration=duration, idempotency_key=idempotency_key
-        )
+        task = service.claim_task(tid, agent_name, duration=duration)
+        response_body = _serialize(task)
+        _store_idempotency(idem_key, "task.claim", agent_name, response_body, 200)
         db.session.commit()
     except LeaseConflictError as e:
         db.session.rollback()
@@ -218,7 +247,7 @@ def claim_task(task_id: str):
         db.session.rollback()
         abort(409, "Duplicate idempotency key")
 
-    return jsonify(_serialize(task))
+    return jsonify(response_body)
 
 
 @bp.post("/tasks/<task_id>/heartbeat")
@@ -232,6 +261,10 @@ def heartbeat_task(task_id: str):
     agent_name = data.get("agent_name")
     if not agent_name:
         abort(422, "agent_name is required")
+
+    idem_key, cached_resp = _check_idempotency("task.heartbeat", agent_name)
+    if cached_resp is not None:
+        return cached_resp
 
     task_obj = service.get_task(tid)
     if task_obj is None:
@@ -249,12 +282,14 @@ def heartbeat_task(task_id: str):
 
     try:
         task = service.heartbeat_task(tid, agent_name, duration=duration)
+        response_body = _serialize(task)
+        _store_idempotency(idem_key, "task.heartbeat", agent_name, response_body, 200)
         db.session.commit()
     except LeaseOwnershipError as e:
         db.session.rollback()
         abort(409, str(e))
 
-    return jsonify(_serialize(task))
+    return jsonify(response_body)
 
 
 @bp.post("/tasks/<task_id>/complete")
@@ -272,14 +307,20 @@ def complete_task(task_id: str):
     if not agent_name:
         abort(422, "agent_name is required")
 
+    idem_key, cached_resp = _check_idempotency("task.complete", agent_name)
+    if cached_resp is not None:
+        return cached_resp
+
     try:
         task = service.complete_task(tid, agent_name, evidence=data.get("evidence"))
+        response_body = _serialize(task)
+        _store_idempotency(idem_key, "task.complete", agent_name, response_body, 200)
         db.session.commit()
     except LeaseOwnershipError as e:
         db.session.rollback()
         abort(409, str(e))
 
-    return jsonify(_serialize(task))
+    return jsonify(response_body)
 
 
 @bp.post("/tasks/<task_id>/block")
@@ -297,11 +338,17 @@ def block_task(task_id: str):
     if not agent_name:
         abort(422, "agent_name is required")
 
+    idem_key, cached_resp = _check_idempotency("task.block", agent_name)
+    if cached_resp is not None:
+        return cached_resp
+
     try:
         task = service.block_task(tid, agent_name, reason=data.get("reason"))
+        response_body = _serialize(task)
+        _store_idempotency(idem_key, "task.block", agent_name, response_body, 200)
         db.session.commit()
     except LeaseOwnershipError as e:
         db.session.rollback()
         abort(409, str(e))
 
-    return jsonify(_serialize(task))
+    return jsonify(response_body)

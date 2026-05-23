@@ -20,7 +20,7 @@ var taskClaimCmd = &cobra.Command{
 		duration, _ := cmd.Flags().GetInt("duration")
 
 		client := newClient()
-		task, err := client.ClaimTask(args[0], agentName, duration)
+		task, err := client.ClaimTask(args[0], agentName, newIdempotencyKey(), duration)
 		if err != nil {
 			return render.Err("claim task: %v", err)
 		}

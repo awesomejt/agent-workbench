@@ -18,7 +18,7 @@ var taskHeartbeatCmd = &cobra.Command{
 		}
 
 		client := newClient()
-		task, err := client.HeartbeatTask(args[0], agentName)
+		task, err := client.HeartbeatTask(args[0], agentName, newIdempotencyKey())
 		if err != nil {
 			return render.Err("heartbeat: %v", err)
 		}

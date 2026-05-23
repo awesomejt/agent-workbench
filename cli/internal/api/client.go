@@ -35,6 +35,10 @@ func (c *Client) url(path string) string {
 }
 
 func (c *Client) do(method, path string, body any) ([]byte, int, error) {
+	return c.doWithHeaders(method, path, body, nil)
+}
+
+func (c *Client) doWithHeaders(method, path string, body any, headers map[string]string) ([]byte, int, error) {
 	var reqBody io.Reader
 	if body != nil {
 		b, err := json.Marshal(body)
@@ -52,6 +56,9 @@ func (c *Client) do(method, path string, body any) ([]byte, int, error) {
 		req.Header.Set("Content-Type", "application/json")
 	}
 	req.Header.Set("Accept", "application/json")
+	for k, v := range headers {
+		req.Header.Set(k, v)
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -158,49 +165,61 @@ func (c *Client) GetTask(taskID string) (Task, error) {
 	return decode[Task](data)
 }
 
-func (c *Client) ClaimTask(taskID, agentName string, durationSeconds int) (Task, error) {
+func (c *Client) ClaimTask(taskID, agentName, idempotencyKey string, durationSeconds int) (Task, error) {
 	body := map[string]any{"agent_name": agentName}
 	if durationSeconds > 0 {
 		body["duration_seconds"] = durationSeconds
 	}
-	data, _, err := c.do("POST", "/api/tasks/"+taskID+"/claim", body)
+	headers := idempotencyHeader(idempotencyKey)
+	data, _, err := c.doWithHeaders("POST", "/api/tasks/"+taskID+"/claim", body, headers)
 	if err != nil {
 		return Task{}, err
 	}
 	return decode[Task](data)
 }
 
-func (c *Client) HeartbeatTask(taskID, agentName string) (Task, error) {
+func (c *Client) HeartbeatTask(taskID, agentName, idempotencyKey string) (Task, error) {
 	body := map[string]any{"agent_name": agentName}
-	data, _, err := c.do("POST", "/api/tasks/"+taskID+"/heartbeat", body)
+	headers := idempotencyHeader(idempotencyKey)
+	data, _, err := c.doWithHeaders("POST", "/api/tasks/"+taskID+"/heartbeat", body, headers)
 	if err != nil {
 		return Task{}, err
 	}
 	return decode[Task](data)
 }
 
-func (c *Client) CompleteTask(taskID, agentName, evidence string) (Task, error) {
+func (c *Client) CompleteTask(taskID, agentName, evidence, idempotencyKey string) (Task, error) {
 	body := map[string]any{
 		"agent_name": agentName,
 		"evidence":   evidence,
 	}
-	data, _, err := c.do("POST", "/api/tasks/"+taskID+"/complete", body)
+	headers := idempotencyHeader(idempotencyKey)
+	data, _, err := c.doWithHeaders("POST", "/api/tasks/"+taskID+"/complete", body, headers)
 	if err != nil {
 		return Task{}, err
 	}
 	return decode[Task](data)
 }
 
-func (c *Client) BlockTask(taskID, agentName, reason string) (Task, error) {
+func (c *Client) BlockTask(taskID, agentName, reason, idempotencyKey string) (Task, error) {
 	body := map[string]any{
 		"agent_name": agentName,
 		"reason":     reason,
 	}
-	data, _, err := c.do("POST", "/api/tasks/"+taskID+"/block", body)
+	headers := idempotencyHeader(idempotencyKey)
+	data, _, err := c.doWithHeaders("POST", "/api/tasks/"+taskID+"/block", body, headers)
 	if err != nil {
 		return Task{}, err
 	}
 	return decode[Task](data)
+}
+
+// idempotencyHeader returns a header map with Idempotency-Key set if key is non-empty.
+func idempotencyHeader(key string) map[string]string {
+	if key == "" {
+		return nil
+	}
+	return map[string]string{"Idempotency-Key": key}
 }
 
 // GetProject fetches a single project by ID.

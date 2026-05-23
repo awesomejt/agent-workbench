@@ -45,9 +45,6 @@ class Task(db.Model):  # type: ignore[name-defined]
     claimed_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
     claimed_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     lease_version: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
-    idempotency_key: Mapped[str | None] = mapped_column(
-        String(255), nullable=True, unique=True, index=True
-    )
     # Per-task lease window in seconds; overrides the system default when set.
     # Set this generously for local AI agents — token generation can take many minutes.
     estimated_duration_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)

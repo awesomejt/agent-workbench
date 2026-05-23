@@ -19,7 +19,7 @@ var taskCompleteCmd = &cobra.Command{
 		evidence, _ := cmd.Flags().GetString("evidence")
 
 		client := newClient()
-		task, err := client.CompleteTask(args[0], agentName, evidence)
+		task, err := client.CompleteTask(args[0], agentName, evidence, newIdempotencyKey())
 		if err != nil {
 			return render.Err("complete task: %v", err)
 		}

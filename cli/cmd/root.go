@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -79,4 +81,11 @@ func upcase(s string) string {
 		}
 	}
 	return string(result)
+}
+
+// newIdempotencyKey returns a random 32-char hex string for use as an Idempotency-Key header.
+func newIdempotencyKey() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	return hex.EncodeToString(b)
 }

@@ -27,7 +27,8 @@ _TEST_DATABASE_URL = os.environ.get(
 _ALL_TABLES = (
     "agent_workbench.events, agent_workbench.reviews, agent_workbench.runs, "
     "agent_workbench.tasks, agent_workbench.project_statuses, "
-    "agent_workbench.project_sections, agent_workbench.projects, agent_workbench.agents"
+    "agent_workbench.project_sections, agent_workbench.projects, agent_workbench.agents, "
+    "agent_workbench.idempotency_keys"
 )
 
 

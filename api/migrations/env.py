@@ -15,6 +15,7 @@ if config.config_file_name is not None:
 from agent_workbench.agents.models import Agent  # noqa: F401, E402
 from agent_workbench.database import db  # noqa: E402
 from agent_workbench.events.models import Event  # noqa: F401, E402
+from agent_workbench.idempotency.models import IdempotencyRecord  # noqa: F401, E402
 from agent_workbench.project_sections.models import ProjectSection  # noqa: F401, E402
 from agent_workbench.project_status.models import ProjectStatus  # noqa: F401, E402
 from agent_workbench.projects.models import Project  # noqa: F401, E402

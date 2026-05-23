@@ -102,7 +102,6 @@ def claim_task(
     task_id: uuid.UUID,
     agent_name: str,
     duration: int = DEFAULT_LEASE_SECONDS,
-    idempotency_key: str | None = None,
 ) -> Task:
     now = datetime.now(UTC)
     new_until = now + timedelta(seconds=duration)
@@ -123,7 +122,6 @@ def claim_task(
             claimed_by=agent_name,
             claimed_until=new_until,
             lease_version=Task.lease_version + 1,
-            idempotency_key=idempotency_key,
             version=Task.version + 1,
         )
         .execution_options(synchronize_session="fetch")

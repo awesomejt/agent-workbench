@@ -528,3 +528,110 @@ class TestPatchStatusTransitions:
             json={"status": "pending", "title": "Updated title", "version": task["version"]},
         )
         assert resp.status_code == 200
+
+
+class TestTaskRoleAndModelTier:
+    """role and model_tier fields on tasks."""
+
+    def test_role_and_model_tier_default_to_null(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        assert task["role"] is None
+        assert task["model_tier"] is None
+
+    def test_create_with_role_and_model_tier(self, client):
+        p = _make_project(client)
+        resp = client.post(
+            f"/api/projects/{p['id']}/tasks",
+            json={"title": "T", "role": "implementer", "model_tier": "cloud"},
+        )
+        assert resp.status_code == 201
+        data = resp.get_json()
+        assert data["role"] == "implementer"
+        assert data["model_tier"] == "cloud"
+
+    def test_all_valid_roles_accepted(self, client):
+        p = _make_project(client)
+        roles = [
+            "researcher",
+            "planner",
+            "implementer",
+            "writer",
+            "reviewer",
+            "tester",
+            "orchestrator",
+        ]
+        for role in roles:
+            resp = client.post(
+                f"/api/projects/{p['id']}/tasks",
+                json={"title": role, "role": role},
+            )
+            assert resp.status_code == 201, f"role {role!r} rejected"
+
+    def test_all_valid_model_tiers_accepted(self, client):
+        p = _make_project(client)
+        for tier in ["local", "cloud"]:
+            resp = client.post(
+                f"/api/projects/{p['id']}/tasks",
+                json={"title": tier, "model_tier": tier},
+            )
+            assert resp.status_code == 201, f"model_tier {tier!r} rejected"
+
+    def test_invalid_role_rejected(self, client):
+        p = _make_project(client)
+        resp = client.post(
+            f"/api/projects/{p['id']}/tasks",
+            json={"title": "T", "role": "hacker"},
+        )
+        assert resp.status_code == 422
+
+    def test_invalid_model_tier_rejected(self, client):
+        p = _make_project(client)
+        resp = client.post(
+            f"/api/projects/{p['id']}/tasks",
+            json={"title": "T", "model_tier": "ultra"},
+        )
+        assert resp.status_code == 422
+
+    def test_patch_sets_role_and_model_tier(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"role": "reviewer", "model_tier": "local", "version": task["version"]},
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["role"] == "reviewer"
+        assert data["model_tier"] == "local"
+
+    def test_patch_invalid_role_rejected(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"role": "badvalue", "version": task["version"]},
+        )
+        assert resp.status_code == 422
+
+    def test_patch_invalid_model_tier_rejected(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"model_tier": "badvalue", "version": task["version"]},
+        )
+        assert resp.status_code == 422
+
+    def test_patch_clears_role_to_null(self, client):
+        p = _make_project(client)
+        task = client.post(
+            f"/api/projects/{p['id']}/tasks",
+            json={"title": "T", "role": "planner"},
+        ).get_json()
+        resp = client.patch(
+            f"/api/tasks/{task['id']}",
+            json={"role": None, "version": task["version"]},
+        )
+        assert resp.status_code == 200
+        assert resp.get_json()["role"] is None

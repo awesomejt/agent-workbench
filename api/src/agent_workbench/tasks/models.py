@@ -41,6 +41,8 @@ class Task(db.Model):  # type: ignore[name-defined]
     dependencies: Mapped[list | None] = mapped_column(JSON, nullable=True)
     assignee_type: Mapped[str | None] = mapped_column(String(32), nullable=True)
     assignee_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    role: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    model_tier: Mapped[str | None] = mapped_column(String(32), nullable=True)
     # Lease fields for atomic task claiming
     claimed_by: Mapped[str | None] = mapped_column(String(128), nullable=True)
     claimed_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

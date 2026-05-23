@@ -26,9 +26,15 @@ _VALID_STATUSES = frozenset(
 )
 _VALID_CREATE_STATUSES = frozenset({"new", "pending"})
 _VALID_PHASES = frozenset({"planning", "research", "implementation", "testing", "review"})
+_VALID_ROLES = frozenset(
+    {"researcher", "planner", "implementer", "writer", "reviewer", "tester", "orchestrator"}
+)
+_VALID_MODEL_TIERS = frozenset({"local", "cloud"})
 _VALID_STATUSES_STR = ", ".join(sorted(_VALID_STATUSES))
 _VALID_CREATE_STATUSES_STR = ", ".join(sorted(_VALID_CREATE_STATUSES))
 _VALID_PHASES_STR = ", ".join(sorted(_VALID_PHASES))
+_VALID_ROLES_STR = ", ".join(sorted(_VALID_ROLES))
+_VALID_MODEL_TIERS_STR = ", ".join(sorted(_VALID_MODEL_TIERS))
 _MAX_DURATION_SECONDS = 7 * 24 * 3600  # 1 week hard cap
 
 # Valid status transitions enforced at the API level.
@@ -60,6 +66,8 @@ def _serialize(t: Task) -> dict:
         "dependencies": t.dependencies,
         "assignee_type": t.assignee_type,
         "assignee_name": t.assignee_name,
+        "role": t.role,
+        "model_tier": t.model_tier,
         "estimated_duration_seconds": t.estimated_duration_seconds,
         "claimed_by": t.claimed_by,
         "claimed_until": t.claimed_until.isoformat() if t.claimed_until else None,
@@ -161,6 +169,16 @@ def create_task(project_id: str):
     if "phase" in data and data["phase"] not in _VALID_PHASES:
         abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
 
+    if "role" in data and data["role"] is not None and data["role"] not in _VALID_ROLES:
+        abort(422, f"Invalid role '{data['role']}'; valid: {_VALID_ROLES_STR}")
+
+    if "model_tier" in data and data["model_tier"] is not None:
+        if data["model_tier"] not in _VALID_MODEL_TIERS:
+            abort(
+                422,
+                f"Invalid model_tier '{data['model_tier']}'; valid: {_VALID_MODEL_TIERS_STR}",
+            )
+
     section_id = data.get("project_section_id")
     if section_id:
         try:
@@ -224,6 +242,16 @@ def update_task(task_id: str):
 
     if "phase" in data and data["phase"] not in _VALID_PHASES:
         abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
+
+    if "role" in data and data["role"] is not None and data["role"] not in _VALID_ROLES:
+        abort(422, f"Invalid role '{data['role']}'; valid: {_VALID_ROLES_STR}")
+
+    if "model_tier" in data and data["model_tier"] is not None:
+        if data["model_tier"] not in _VALID_MODEL_TIERS:
+            abort(
+                422,
+                f"Invalid model_tier '{data['model_tier']}'; valid: {_VALID_MODEL_TIERS_STR}",
+            )
 
     if "project_section_id" in data and data["project_section_id"] is not None:
         try:

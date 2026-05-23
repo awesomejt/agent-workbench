@@ -84,6 +84,8 @@ def create_task(project_id: uuid.UUID, data: dict) -> Task:
         dependencies=data.get("dependencies"),
         assignee_type=data.get("assignee_type"),
         assignee_name=data.get("assignee_name"),
+        role=data.get("role"),
+        model_tier=data.get("model_tier"),
         estimated_duration_seconds=data.get("estimated_duration_seconds"),
         validation_expectations=data.get("validation_expectations"),
     )
@@ -102,6 +104,8 @@ def update_task(task: Task, data: dict) -> Task:
         "dependencies",
         "assignee_type",
         "assignee_name",
+        "role",
+        "model_tier",
         "estimated_duration_seconds",
         "validation_expectations",
         "completion_evidence",

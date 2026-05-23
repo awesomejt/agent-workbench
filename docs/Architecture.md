@@ -129,6 +129,78 @@ sequenceDiagram
 9. The API records state transitions transactionally and keeps append-only history or structured event logs during bootstrap.
 10. Markdown summaries can be generated or manually updated for agent context handoff.
 
+## Task Status State Machine
+
+Task `status` encodes lifecycle position. The API enforces valid transitions; invalid ones return 409.
+
+| Status | Meaning | Terminal |
+|---|---|---|
+| `new` | Human-submitted; awaiting orchestrator triage | no |
+| `pending` | Triaged/approved; ready to claim | no |
+| `blocked` | Waiting on unresolved `blocks` dependency | no |
+| `in_progress` | Actively leased by an agent | no |
+| `completed` | Done | yes |
+| `rejected` | Won't be worked | yes |
+| `duplicate` | Superseded; references original via relationship | yes |
+
+Valid transitions: `new → pending | rejected | duplicate` · `pending → blocked | in_progress` · `blocked → pending` · `in_progress → completed | blocked`
+
+## Task Relationships
+
+A `task_relationships` junction table models inter-task dependencies:
+
+```
+task_relationships(id, from_task_id, to_task_id, relationship_type, created_at)
+```
+
+| Type | Meaning |
+|---|---|
+| `blocks` | from_task must complete before to_task can start |
+| `subtask_of` | from_task was decomposed from to_task |
+| `duplicates` | from_task is a duplicate of to_task |
+| `relates_to` | informational; no workflow implication |
+
+The `available` filter excludes tasks that have any incomplete `blocks` predecessor. Setting a task `duplicate` should also create the corresponding `duplicates` relationship row.
+
+## Phase Vocabulary
+
+Phases are **ordered**. The same vocabulary applies to both task phase (categorical membership) and project phase (current active stage).
+
+| Ordinal | Phase | Typical work |
+|---|---|---|
+| 1 | `discovery` | research, exploration, requirements |
+| 2 | `design` | architecture, planning, outlines |
+| 3 | `implementation` | code, content, configuration |
+| 4 | `testing` | QA, validation, fact-checking |
+| 5 | `review` | code review, editorial review, signoff |
+
+**Task phase** = which phase this task categorically belongs to (set at creation; does not change).  
+**Project phase** = current active phase; forward-only high-water mark tracked via `project_statuses` records.
+
+Project phase advancement: when a task is claimed whose `phase` ordinal is greater than the project's current phase ordinal, a new `project_statuses` row is inserted automatically. Project phase never moves backward.
+
+## Agent Role and Capability Model
+
+Tasks carry two fields set during triage:
+
+- **`role`**: `researcher | planner | implementer | writer | reviewer | tester | orchestrator`
+- **`model_tier`**: `local | cloud`
+
+Roles are abstract and project-type-disambiguated — `implementer` means programmer on a code project, content creator on a course project. Interpretation lives in the project's AGENTS.md, not in the data model.
+
+Default tier convention (overridable per task):
+- `cloud` — discovery-phase tasks, any review-phase task, design-review tasks
+- `local` — design-phase first pass, implementation first pass, testing
+
+Agent registry matching: `task.role + task.model_tier → agents table lookup → agent.default_model`. The `agents` table carries a `model_tier` field alongside the existing `agent_type` and `default_model`.
+
+## AGENTS.md Strategy
+
+- `AGENTS.md` at repo root is the canonical, framework-agnostic project context file. All agent tools should fall back to it if their tool-specific file is absent.
+- Tool-specific files (`HERMES.md`, `SOUL.md`, `CLAUDE.md`) are thin adapters that layer tool-specific config on top; they do not duplicate content from `AGENTS.md`.
+- Workbench-level `AGENTS.md`: canonical phase vocabulary, role definitions, model tier defaults, API contract summary, orchestrator protocol.
+- Project-level `AGENTS.md`: project-specific goals, agent role assignments, model tier overrides, local tool configuration.
+
 ## Database Design Principles
 
 - Use the same logical schema across local, dev, stage, and prod.
@@ -138,9 +210,10 @@ sequenceDiagram
 - Use UUID primary keys unless a clear reason emerges otherwise.
 - Model project sections/modules as first-class `project_sections` rows.
 - Use nullable `project_section_id` on status records and tasks for project-wide/general work.
-- Track `phase` on both status records and tasks.
-- Start with phases: `planning`, `research`, `implementation`, `testing`, and `review`.
+- Track `phase` on tasks (categorical) and on `project_statuses` records (current project phase).
+- Canonical phase order: `discovery → design → implementation → testing → review`.
 - Use `created_at`, `updated_at`, and optimistic `version` fields on mutable rows.
+- Use `role` and `model_tier` fields on tasks for agent routing.
 - Use assignment fields such as `assignee_type` and `assignee_name` or an equivalent owner model for tasks.
 - Use lease fields such as `claimed_by`, `claimed_until`, and `lease_version` for tasks.
 - Use append-only `events` for durable state-change evidence.

@@ -86,6 +86,61 @@ Prevent drift between docs, API, CLI, scripts, tests, and deployment config.
 - Search for old names and paths after migrations.
 - Verify tests exercise the actual app shape, not an older or imagined interface.
 
+## Phase Vocabulary
+
+The canonical project phases, in order:
+
+| Ordinal | Phase | Typical task types |
+|---|---|---|
+| 1 | `discovery` | research, exploration, requirements gathering, spikes |
+| 2 | `design` | architecture, planning, outlines, curriculum design |
+| 3 | `implementation` | code, content creation, configuration, writing |
+| 4 | `testing` | QA, validation, fact-checking, integration tests |
+| 5 | `review` | code review, editorial review, signoff, release prep |
+
+When creating a task, set `phase` to the phase where the work categorically belongs — not the current project phase. A research spike added mid-implementation still has `phase = discovery`.
+
+Project phase (tracked in `project_statuses`) is a forward-only high-water mark. It advances automatically when the first task of a later phase is claimed; it never moves backward.
+
+## Agent Roles and Model Tiers
+
+Tasks carry a `role` and a `model_tier` set during triage.
+
+**Roles** (abstract; interpretation depends on project type):
+
+| Role | Code project | Course/book/content project |
+|---|---|---|
+| `researcher` | tech research, spikes | topic research, source gathering |
+| `planner` | architecture, design decisions | outline, curriculum design |
+| `implementer` | programmer | content creator |
+| `writer` | docs, READMEs, guides | prose, narrative |
+| `reviewer` | code reviewer | editorial reviewer |
+| `tester` | QA, integration validation | accuracy/fact checker |
+| `orchestrator` | triage, decomposition, routing | same |
+
+**Model tiers:**
+
+- `cloud` — tasks requiring judgment, nuance, or broad knowledge: discovery-phase work, design review, any review-phase task, complex orchestration decisions.
+- `local` — tasks suited to structured, well-defined execution: design first pass, implementation first pass, testing, documentation.
+
+These are defaults. The orchestrator may override `model_tier` per task when the default does not fit.
+
+## Triage Protocol (Orchestrator Agents)
+
+The orchestrator claims tasks with `status = new` from the project's triage queue.
+
+For each `new` task, the orchestrator must:
+
+1. Evaluate whether the request is valid and non-duplicate.
+   - If duplicate: set `status = duplicate`, create a `duplicates` relationship to the original task.
+   - If invalid/out of scope: set `status = rejected` with a reason in the summary.
+2. Optionally decompose into sub-tasks (same project only). Sub-tasks should have `relationship_type = subtask_of` pointing to the parent.
+3. Set `role` and `model_tier` on each resulting task.
+4. Set `phase` to the appropriate ordinal position.
+5. Set `status = pending` on tasks ready for worker agents to claim.
+
+Do not create tasks in other projects. Inbox is always per-project.
+
 ## Agent Coordination Design Rules
 
 When designing or implementing coordination features:

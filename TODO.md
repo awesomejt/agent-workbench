@@ -53,17 +53,17 @@ Items required before using agent-workbench to manage its own development. Order
 
 **P0 — Build-breaking and crash risks**
 
-- [ ] Fix `.gitignore` global `output/` rule silently ignoring `cli/internal/output/output.go`; rename directory to `cli/internal/render` and update all import paths. A clean Git clone cannot build the CLI today.
-- [ ] Fix CLI nil pointer dereference: `task_claim.go` dereferences `*task.ClaimedBy` without a nil check; crashes on any unassigned task.
-- [ ] Fix CLI double-error printing: commands return `err` to Cobra while also calling `output.Err`; results in duplicate error messages on stderr.
-- [ ] Trim trailing slashes from `--api-url` in the API client to prevent malformed URLs like `http://host//api/...`.
+- [X] Fix `.gitignore` global `output/` rule silently ignoring `cli/internal/output/output.go`; rename directory to `cli/internal/render` and update all import paths. Completed 2026-05-22 by claude-sonnet-4-6 in commit da937e6.
+- [X] Fix CLI nil pointer dereference: `task_claim.go` dereferences `*task.ClaimedBy` without a nil check; crashes on any unassigned task. Completed 2026-05-22 by claude-sonnet-4-6 in commit da937e6.
+- [X] Fix CLI double-error printing: commands return `err` to Cobra while also calling `output.Err`; results in duplicate error messages on stderr. Completed 2026-05-22 by claude-sonnet-4-6 in commit da937e6.
+- [X] Trim trailing slashes from `--api-url` in the API client to prevent malformed URLs like `http://host//api/...`. Completed 2026-05-22 by claude-sonnet-4-6 in commit da937e6.
 
 **P1 — Quality gate and product correctness**
 
-- [ ] Run `ruff format` across all Python source files (15 files currently fail format check); add format check to `make validate`.
-- [ ] Fix 17 mypy errors; decide and document mypy strictness policy for Flask-SQLAlchemy and rowcount typing patterns; add `make type-check` to `make validate`.
-- [ ] Make `awb task next` and `awb task list` lease-aware: add `available=true` API filter meaning `status=pending AND (claimed_until IS NULL OR claimed_until < now())`; update CLI flags accordingly.
-- [ ] Fix `root/.env.example.local` to use port 5433 and password `agent_workbench_local` to match `api/.env.example` and Docker Compose.
+- [X] Run `ruff format` across all Python source files (15 files currently fail format check); add format check to `make validate`. Completed 2026-05-22 by claude-sonnet-4-6 in commit f98cc15.
+- [X] Fix 17 mypy errors; decide and document mypy strictness policy for Flask-SQLAlchemy and rowcount typing patterns; add `make type-check` to `make validate`. Completed 2026-05-22 by claude-sonnet-4-6 in commit f98cc15.
+- [X] Make `awb task next` and `awb task list` lease-aware: add `available=true` API filter meaning `status=pending AND (claimed_until IS NULL OR claimed_until < now())`; update CLI flags accordingly. Completed 2026-05-22 by claude-sonnet-4-6 in commit f98cc15.
+- [X] Fix `root/.env.example.local` to use port 5433 and password `agent_workbench_local` to match `api/.env.example` and Docker Compose. Completed 2026-05-22 by claude-sonnet-4-6 in commit f98cc15.
 
 **P2 — Audit trail, reliability, and API correctness**
 
@@ -184,10 +184,10 @@ Items required before using agent-workbench to manage its own development. Order
 
 ### Documentation And Deployment
 
-- [ ] Update `README.md` with setup and bootstrap workflow.
-- [ ] Add `docs/Development.md` after Compose/scripts exist.
-- [ ] Document deployment, environment variables, and operational notes.
-- [ ] Document database migration workflow.
+- [X] Update `README.md` with setup and bootstrap workflow. Completed 2026-05-23 by claude-sonnet-4-6; quick start, CLI usage, project structure, module table, bootstrap fallback section.
+- [X] Add `docs/Development.md` after Compose/scripts exist. Completed 2026-05-23 by claude-sonnet-4-6; prerequisites, first-time setup, daily workflow, CLI config, migrations, environment variables, project structure, dogfood workflow, secrets policy.
+- [X] Document deployment, environment variables, and operational notes. Completed 2026-05-23 by claude-sonnet-4-6; covered in `docs/Development.md` (API/CLI/Makefile env vars, DB targets, secrets policy).
+- [X] Document database migration workflow. Completed 2026-05-23 by claude-sonnet-4-6; covered in `docs/Development.md` (local, dev, stage, prod migration commands).
 - [X] Add database environment and schema planning doc. Completed 2026-05-22 by Codex in `docs/Database.md`.
 - [ ] Document secret handling, Docker Compose secrets/env files, Vault future option, and Ansible integration expectations without copying secrets.
 - [X] Document bootstrap CLI command workflow for OpenCode in `docs/Bootstrap-CLI.md`. Completed 2026-05-22 by Codex.

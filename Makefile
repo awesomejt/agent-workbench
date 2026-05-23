@@ -1,6 +1,6 @@
 .PHONY: help setup up down db-up db-down migrate migrate-dev migrate-stage migrate-prod \
         lint format type-check test smoke validate build-cli cli-tidy cli-vet install-cli \
-        cli-test cli-clean-build-check task-next status-show clean
+        cli-test cli-clean-build-check task-next status-show seed-dev clean
 
 API_DIR = api
 
@@ -144,6 +144,11 @@ cli-clean-build-check:
 	  cd $$tmp/cli && go build ./... && \
 	  echo "clean-clone build: ok" && \
 	  rm -rf $$tmp
+
+# ── Seed ─────────────────────────────────────────────────────────────────────
+
+seed-dev:
+	cd $(API_DIR) && uv run --env-file .env python ../scripts/seed_dev.py
 
 # ── Bootstrap scripts (local Markdown state) ──────────────────────────────────
 

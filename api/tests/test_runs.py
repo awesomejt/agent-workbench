@@ -49,9 +49,7 @@ class TestCreateRun:
     def test_task_id_wrong_project_rejected(self, client):
         p1 = _make_project(client, slug="p1")
         p2 = _make_project(client, slug="p2")
-        task = client.post(
-            f"/api/projects/{p1['id']}/tasks", json={"title": "t"}
-        ).get_json()
+        task = client.post(f"/api/projects/{p1['id']}/tasks", json={"title": "t"}).get_json()
         resp = client.post(
             "/api/runs",
             json={"project_id": p2["id"], "agent_name": "bot", "task_id": task["id"]},
@@ -60,9 +58,7 @@ class TestCreateRun:
 
     def test_task_id_same_project_accepted(self, client):
         p = _make_project(client)
-        task = client.post(
-            f"/api/projects/{p['id']}/tasks", json={"title": "t"}
-        ).get_json()
+        task = client.post(f"/api/projects/{p['id']}/tasks", json={"title": "t"}).get_json()
         resp = client.post(
             "/api/runs",
             json={"project_id": p["id"], "agent_name": "bot", "task_id": task["id"]},

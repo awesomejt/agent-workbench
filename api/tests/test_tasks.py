@@ -364,17 +364,13 @@ class TestTaskStateMachineGuards:
     def test_cannot_complete_unclaimed_task(self, client):
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
-        resp = client.post(
-            f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-a"}
-        )
+        resp = client.post(f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-a"})
         assert resp.status_code == 409
 
     def test_cannot_block_unclaimed_task(self, client):
         p = _make_project(client)
         task = _make_task(client, p["id"]).get_json()
-        resp = client.post(
-            f"/api/tasks/{task['id']}/block", json={"agent_name": "agent-a"}
-        )
+        resp = client.post(f"/api/tasks/{task['id']}/block", json={"agent_name": "agent-a"})
         assert resp.status_code == 409
 
     def test_complete_sets_status_to_completed(self, client):

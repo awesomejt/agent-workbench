@@ -1,4 +1,6 @@
-.PHONY: help setup up down db-up db-down migrate migrate-dev migrate-stage migrate-prod \
+.PHONY: help setup up down db-up db-down \
+        bootstrap-db bootstrap-db-dev bootstrap-db-stage bootstrap-db-prod \
+        migrate migrate-dev migrate-stage migrate-prod \
         lint format type-check test smoke validate build-cli cli-tidy cli-vet install-cli \
         cli-test cli-clean-build-check task-next status-show seed-dev clean
 
@@ -14,6 +16,10 @@ help:
 	@echo "    down          Stop and remove containers"
 	@echo "    db-up         Start only the database container"
 	@echo "    db-down       Stop the database container"
+	@echo "    bootstrap-db        Create agent_workbench schema + pgcrypto on local db (idempotent)"
+	@echo "    bootstrap-db-dev    Create schema on dev (requires AGENT_WORKBENCH_DEV_DATABASE_URL)"
+	@echo "    bootstrap-db-stage  Create schema on stage (requires AGENT_WORKBENCH_STAGE_DATABASE_URL)"
+	@echo "    bootstrap-db-prod   Create schema on prod — prompts for confirmation"
 	@echo "    migrate             Run Alembic migrations against local db (uses api/.env)"
 	@echo "    migrate-generate    Generate a new migration: make migrate-generate MSG=\"description\""
 	@echo ""
@@ -62,6 +68,20 @@ db-down:
 
 down:
 	docker compose down
+
+# ── Schema bootstrap ─────────────────────────────────────────────────────────
+
+bootstrap-db:
+	@./scripts/bootstrap-db.sh --env local
+
+bootstrap-db-dev:
+	@./scripts/bootstrap-db.sh --env dev
+
+bootstrap-db-stage:
+	@./scripts/bootstrap-db.sh --env stage
+
+bootstrap-db-prod:
+	@./scripts/bootstrap-db.sh --env prod
 
 # ── Database migrations ───────────────────────────────────────────────────────
 

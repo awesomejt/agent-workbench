@@ -8,9 +8,10 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Current Status
 
-- Current phase: implementation.
-- Last major milestone: Codex cloud review completed; findings triaged and added to pre-dogfood fix list in TODO.md. CLI install script and config path improvements committed.
-- Next recommended task: Codex pre-dogfood fixes in priority order (P0 gitignore/crash fixes → P1 ruff format + mypy + lease-aware task next → P2 audit trail + validation → P3 CLI expansion); then register agent-workbench as its own project and dogfood `awb` for remaining work.
+- Current phase: early dogfood.
+- Last major milestone: All P0–P3 Codex pre-dogfood fixes complete. Idempotency (P2) implemented as a proper scoped table. 101 tests passing. Cloud review signoff done. Docs updated (README, Development.md, Secrets.md, Prometheus.md). Local DB seeded with 142 tasks across 10 sections.
+- Dogfood transition active: TODO.md + `awb` CLI tracked in parallel during transition; neither is yet the sole source of truth. 46 tasks remain open.
+- Next recommended task: address remaining open Discovery/Planning and Architecture decisions (idempotency key behavior deferred items, state machine definitions, task duration model); or tackle scaffolding items (Prometheus endpoint, containerized integration tests, post-MVP web scaffold).
 - Current blocker: Jason should confirm exact dev/stage/prod database names/users and the first non-local deployment secret injection details.
 
 ## Key Decisions
@@ -58,7 +59,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Core coordination concepts: task leases, heartbeats, idempotency keys, optimistic locking (`version` field), append-only events, and validation evidence.
 - Implemented modules (as of 2026-05-22 scaffolding): `projects`, `project_sections`, `project_status`, `tasks`, `agents`, `runs`, `events`, `reviews` — each with SQLAlchemy models, Blueprint stub, and service stub.
 - All models use `Uuid` PKs, `DateTime(timezone=True)`, `version` int for optimistic locking; `MetaData(schema="agent_workbench")` applied globally.
-- Tasks have lease fields: `claimed_by`, `claimed_until`, `lease_version`, `idempotency_key`.
+- Tasks have lease fields: `claimed_by`, `claimed_until`, `lease_version`. The old `tasks.idempotency_key` column was removed and replaced by a proper `idempotency_keys` table (migration c8e1f2a3b4d5).
+- `idempotency_keys` table: unique on `(idempotency_key, endpoint, actor_name)`; 24-hour TTL checked on read; stores `response_status` + `response_body` for replay. Idempotency-Key HTTP header triggers check/store on task claim/heartbeat/complete/block.
 - Events table is append-only by design; no `updated_at` column.
 
 ## Technical Notes
@@ -99,6 +101,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-23 - claude-sonnet-4-6 (session 9)
+
+- Task: Commit pending docs work, then execute P2 idempotency + Tests & Quality + Cloud review signoff + Documentation stubs in order.
+- Files changed: `README.md` (rewrite), `docs/Development.md` (new), `scripts/seed_dev.py` (new), `Makefile` (seed-dev target), `TODO.md` (sync); then `api/src/agent_workbench/idempotency/` (new module + model + service), `api/migrations/versions/20260523_c8e1f2a3b4d5_add_idempotency_keys_table.py`, `tasks/models.py` (drop idempotency_key field), `tasks/service.py` (drop idempotency_key param), `tasks/routes.py` (check/store idempotency on 4 endpoints), `cli/internal/api/client.go` (doWithHeaders, updated 4 task methods), `cli/cmd/root.go` (newIdempotencyKey), `cli/cmd/task_{claim,heartbeat,complete,block}.go`; then `tests/test_idempotency.py` (7 tests), `tests/test_tasks.py` (+9 state machine + available filter tests), `tests/conftest.py` (add idempotency_keys to truncate list); then `docs/Secrets.md` (new), `docs/Prometheus.md` (new), `MEMORY.md` (this update).
+- Validation: 101 tests pass; `make validate` (ruff + mypy) passes; `make cli-vet` passes; `make build-cli` succeeds.
+- Result: All 4 planned work areas complete. P2 idempotency properly scoped to endpoint+actor+key table. Cloud review signoff formally done — all 3 highest-risk Codex items resolved. 46 open tasks remain.
+- Blockers or follow-up: Jason still needs to confirm dev/stage/prod DB names/users and secret injection details.
 
 ### 2026-05-23 - claude-sonnet-4-6 (session 8)
 

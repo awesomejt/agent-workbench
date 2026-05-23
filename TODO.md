@@ -45,7 +45,7 @@ Use this section for a cloud-based AI agent or larger-context reviewer before re
 - [X] Cloud review: inspect Docker/Compose and deployment docs for repeatability and secret handling. Completed 2026-05-22 by Codex.
 - [X] Cloud review: run or specify the closest available validation commands and record failures, skipped checks, and missing tooling. Completed 2026-05-22 by Codex; ruff lint passes, ruff format fails (15 files), mypy fails (17 errors), pytest passes (54 tests), go vet passes, clean-clone build fails due to gitignore issue.
 - [X] Cloud review: convert findings into prioritized TODO items before broad refactoring begins. Completed 2026-05-22 by Codex; findings recorded in `docs/reviews/2026-05-22-1741-codex-cli-repo-recommendations.md` and added to pre-dogfood fix list below.
-- [ ] Cloud review signoff: confirm all high-risk findings are resolved or explicitly deferred before real use.
+- [X] Cloud review signoff: confirm all high-risk findings are resolved or explicitly deferred before real use. Completed 2026-05-23 by claude-sonnet-4-6. All three explicitly-named highest-risk items resolved: (1) ignored `cli/internal/output` package → renamed to `render` (P0, da937e6); (2) task selection not agent-safe → `available=true` filter added (P1, f98cc15); (3) event/idempotency behavior not matching implementation → auto-append events (P2) + idempotency table (P2, ea75a71). All P0–P3 pre-dogfood fixes complete. Medium-priority items (OpenAPI strategy, bootstrap transition, CLI ergonomics like `--output` validation and timeout) are explicitly deferred to post-MVP; none block real use.
 
 ### Codex Review: Pre-Dogfood Fixes
 
@@ -189,12 +189,12 @@ Items required before using agent-workbench to manage its own development. Order
 - [X] Document deployment, environment variables, and operational notes. Completed 2026-05-23 by claude-sonnet-4-6; covered in `docs/Development.md` (API/CLI/Makefile env vars, DB targets, secrets policy).
 - [X] Document database migration workflow. Completed 2026-05-23 by claude-sonnet-4-6; covered in `docs/Development.md` (local, dev, stage, prod migration commands).
 - [X] Add database environment and schema planning doc. Completed 2026-05-22 by Codex in `docs/Database.md`.
-- [ ] Document secret handling, Docker Compose secrets/env files, Vault future option, and Ansible integration expectations without copying secrets.
+- [X] Document secret handling, Docker Compose secrets/env files, Vault future option, and Ansible integration expectations without copying secrets. Completed 2026-05-23 by claude-sonnet-4-6; `docs/Secrets.md` covers local dev, Compose env files, non-local migration injection, SECRET_KEY policy, Ansible boundary, and Vault future path.
 - [X] Document bootstrap CLI command workflow for OpenCode in `docs/Bootstrap-CLI.md`. Completed 2026-05-22 by Codex.
 - [ ] Document OpenCode automation workflow once the OpenCode setup repo is ready.
 - [ ] Document post-MVP web UI scope for human review and adding tasks on the fly, using React + Express on Node.js 24 LTS.
-- [ ] Document optional Prometheus setup and scrape example.
-- [ ] Record decisions and milestones in `MEMORY.md`.
+- [X] Document optional Prometheus setup and scrape example. Completed 2026-05-23 by claude-sonnet-4-6; `docs/Prometheus.md` covers planned design, enable flag, scrape config for prometheus.taylor.lan, and security note. Implementation deferred to Scaffolding section.
+- [X] Record decisions and milestones in `MEMORY.md`. Completed 2026-05-23 by claude-sonnet-4-6; current status, idempotency architecture note, session 9 run log entry added.
 
 ## In Progress
 

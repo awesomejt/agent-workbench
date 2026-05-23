@@ -174,12 +174,12 @@ Items required before using agent-workbench to manage its own development. Order
 
 ### Tests And Quality
 
-- [ ] Add unit tests for state transitions and validation.
+- [X] Add unit tests for state transitions and validation. Completed 2026-05-23 by claude-sonnet-4-6; TestTaskStateMachineGuards (6 tests: cannot claim completed/blocked, cannot complete/block unclaimed, status/evidence on complete and block) + TestAvailableFilter (3 tests); total 101 tests, all pass.
 - [X] Add API tests for all module contracts. Completed 2026-05-22 by claude-sonnet-4-6; test_projects.py, test_tasks.py (incl. lease lifecycle + duration), test_agents.py — 54 tests, 54 passed, 0.89s.
 - [ ] Add database integration tests using local PostgreSQL container.
 - [ ] Add smoke script tests for health and minimal task lifecycle.
 - [ ] Add Python containerized integration tests for multi-project workflows and task leases.
-- [ ] Run lint, format check, type check, build, and tests when available.
+- [X] Run lint, format check, type check, build, and tests when available. Completed 2026-05-23 by claude-sonnet-4-6; make validate (ruff + mypy) and make test (101 tests) both pass; make cli-vet passes.
 - [ ] Review with `QUALITY_CHECKLIST.md`.
 
 ### Documentation And Deployment

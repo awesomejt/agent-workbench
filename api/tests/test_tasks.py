@@ -337,3 +337,92 @@ class TestTaskEnumValidation:
             json={"status": "bogus", "version": task["version"]},
         )
         assert resp.status_code == 422
+
+
+class TestTaskStateMachineGuards:
+    """State machine: invalid transitions must be rejected at the API level."""
+
+    def test_cannot_claim_completed_task(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        client.post(f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-a"})
+        resp = client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        assert resp.status_code == 409
+
+    def test_cannot_claim_blocked_task(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        client.post(
+            f"/api/tasks/{task['id']}/block",
+            json={"agent_name": "agent-a", "reason": "stuck"},
+        )
+        resp = client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        assert resp.status_code == 409
+
+    def test_cannot_complete_unclaimed_task(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.post(
+            f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-a"}
+        )
+        assert resp.status_code == 409
+
+    def test_cannot_block_unclaimed_task(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        resp = client.post(
+            f"/api/tasks/{task['id']}/block", json={"agent_name": "agent-a"}
+        )
+        assert resp.status_code == 409
+
+    def test_complete_sets_status_to_completed(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        resp = client.post(
+            f"/api/tasks/{task['id']}/complete",
+            json={"agent_name": "agent-a", "evidence": "all tests pass"},
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["status"] == "completed"
+        assert data["completion_evidence"] == "all tests pass"
+
+    def test_block_sets_status_to_blocked(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        resp = client.post(
+            f"/api/tasks/{task['id']}/block",
+            json={"agent_name": "agent-a", "reason": "waiting for dep"},
+        )
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["status"] == "blocked"
+
+
+class TestAvailableFilter:
+    """available=true returns only pending tasks with no active lease."""
+
+    def test_available_excludes_claimed_task(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        resp = client.get(f"/api/projects/{p['id']}/tasks?available=true")
+        assert resp.get_json()["total"] == 0
+
+    def test_available_includes_unclaimed_pending(self, client):
+        p = _make_project(client)
+        _make_task(client, p["id"])
+        resp = client.get(f"/api/projects/{p['id']}/tasks?available=true")
+        assert resp.get_json()["total"] == 1
+
+    def test_available_excludes_completed_task(self, client):
+        p = _make_project(client)
+        task = _make_task(client, p["id"]).get_json()
+        client.post(f"/api/tasks/{task['id']}/claim", json={"agent_name": "agent-a"})
+        client.post(f"/api/tasks/{task['id']}/complete", json={"agent_name": "agent-a"})
+        resp = client.get(f"/api/projects/{p['id']}/tasks?available=true")
+        assert resp.get_json()["total"] == 0

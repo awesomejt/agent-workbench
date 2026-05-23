@@ -16,8 +16,33 @@ If the IDE context, shell working directory, chat history, or open tabs point at
 2. Build the smallest correct change that advances the highest-priority unblocked task.
 3. Keep public contracts aligned across API docs, implementation, CLI/scripts, tests, deployment config, and Markdown handoff docs.
 4. Prefer readable, maintainable code with focused tests and integration checks over broad rewrites.
-5. Keep `TODO.md`, `MEMORY.md`, docs, and `status.yaml` current until the app can generate or mirror that state from Postgres.
+5. Keep `MEMORY.md` and docs current; record new work as tasks in the workbench API rather than updating `TODO.md` or `status.yaml`.
 6. Stop and mark blockers clearly when a human decision, credential, external service, or unsafe operation is required.
+
+## Task Workflow (Dogfood Mode)
+
+The workbench API is live. Use the `awb` CLI for all task operations — it is the authoritative source for what to work on.
+
+```
+# Find available tasks
+AWB_API_URL=http://localhost:8000 AWB_PROJECT=<slug> AWB_AGENT=<name> awb task list --available
+
+# Claim a task
+awb task claim <task-id>
+
+# Heartbeat (renew lease during long work)
+awb task heartbeat <task-id>
+
+# Complete
+awb task complete <task-id> --evidence "summary of work done"
+
+# Mark blocked
+awb task block <task-id> --reason "reason"
+```
+
+Set `AWB_API_URL`, `AWB_PROJECT`, and `AWB_AGENT` via environment or `--flag` on each call. The CLI binary is at `cli/builds/awb` in the repo root.
+
+Task selection order: highest `priority` first, then oldest `created_at`. Prefer tasks with `blocks` relationships unblocked before moving to lower-priority items.
 
 ## Required First Reads
 
@@ -25,11 +50,11 @@ Before starting a task, read:
 
 - `PROJECT_BRIEF.md`
 - `MEMORY.md`
-- `TODO.md`
-- `status.yaml`
 - `docs/Requirements.md`
 - `docs/Tech-Stack.md`
 - Any source, test, or config files directly relevant to the task
+
+`TODO.md` is a read-only historical reference. Do not update it; use the workbench API.
 
 If the task affects architecture, API shape, data model, deployment, or local/agent workflow, also read:
 
@@ -40,11 +65,11 @@ If the task affects architecture, API shape, data model, deployment, or local/ag
 
 ## Root Contract
 
-- `AGENTS.md` - agent operating instructions.
+- `AGENTS.md` - agent operating instructions (this file).
 - `README.md` - human-facing overview and setup.
-- `TODO.md` - task lanes, priorities, blockers, and completed work.
-- `MEMORY.md` - persistent project memory, decisions, milestones, and run notes.
-- `status.yaml` - shared workflow state for humans and automation.
+- `TODO.md` - historical task reference; read-only. Active tasks live in the workbench API.
+- `MEMORY.md` - persistent project memory, decisions, and milestones.
+- `status.yaml` - shared workflow state for humans and automation (pre-API fallback).
 - `PROJECT_BRIEF.md` - product goals, constraints, users, and source material.
 - `AGENT_WORKFLOW.md` - recurring local-agent, cloud-agent, and review workflow.
 - `QUALITY_CHECKLIST.md` - pre-review, pre-PR, and pre-release quality gate.
@@ -55,7 +80,7 @@ If the task affects architecture, API shape, data model, deployment, or local/ag
 - Git is the source of truth for source code, migrations, docs, and deployment definitions.
 - PostgreSQL 18. Do not use SQLite. It is the intended source of truth for project/task/status/agent/run state once bootstrapped.
 - Markdown files are a context bridge for humans and local agents, not the long-term coordination database.
-- Until the API/CLI exists, keep Markdown files accurate and concise; later, prefer generating or mirroring summaries from Postgres.
+- The workbench API and `awb` CLI are operational — task and project state lives in Postgres. Do not mirror task state back into Markdown.
 - Do not commit secrets, database credentials, private keys, local env files, or raw transcripts.
 - Ansible secrets may be referenced operationally but must never be copied into this repo.
 
@@ -78,7 +103,7 @@ If the task affects architecture, API shape, data model, deployment, or local/ag
 Prevent drift between docs, API, CLI, scripts, tests, and deployment config.
 
 - Treat public contracts as shared source material: API routes, request/response JSON, CLI commands, script names, config names, environment variables, database schema, state transitions, idempotency behavior, and build outputs.
-- Review `TODO.md` during each session and add or update tasks when new work is discovered, especially during research/planning, scaffolding, and early implementation.
+- When new work is discovered during a session, create it as a task via `awb task create` or the API (POST `/api/projects/{id}/tasks`) rather than editing Markdown files.
 - Before changing API behavior, read the relevant docs, tests, clients/scripts, and TODO items.
 - When changing a public contract, update all affected surfaces in the same task or leave explicit TODOs if the task is intentionally planning-only.
 - Do not mark a task complete just because code was written. Done requires the relevant validation to pass, or a clearly documented blocker/test gap.
@@ -156,7 +181,7 @@ When designing or implementing coordination features:
 
 ## Status Workflow
 
-Use `status.yaml` as the shared state file until the app can manage this state:
+`status.yaml` is a pre-API fallback for shared state. Prefer project status entries via the API (`POST /api/projects/{id}/status`) for new status records. Use `status.yaml` when the API is unavailable or for human-readable overrides.
 
 - `active` - work may proceed.
 - `paused` - do not perform automated work.
@@ -169,7 +194,7 @@ Automated agents should set `working` only while actively editing, and return to
 
 ## Task Selection
 
-Prefer tasks in this order unless `TODO.md` says otherwise:
+Use `awb task list --available` to find claimable tasks. Prefer tasks in this order:
 
 1. Blocker removal and requirements clarification.
 2. Contract drift across docs, API, scripts/CLI, tests, database, and deployment config.
@@ -181,11 +206,11 @@ Prefer tasks in this order unless `TODO.md` says otherwise:
 
 ## Cloud Review Gate
 
-Before real use, release, or deployment, schedule a cloud-based AI review/refactor pass from `TODO.md`.
+Before real use, release, or deployment, schedule a cloud-based AI review/refactor pass. Create a review task in the workbench API with `role=reviewer`, `model_tier=cloud`.
 
 - Cloud review should prioritize correctness, contract alignment, test reliability, maintainability, data integrity, security-sensitive assumptions, and production-readiness risks.
-- Review findings should be added to `TODO.md` before broad refactors begin.
-- Refactors should be split by module or contract boundary and validated with the root workflow once it exists.
+- Review findings should be filed as new tasks (or added to the review task's evidence) before broad refactors begin.
+- Refactors should be split by module or contract boundary and validated with the full test suite.
 - Do not treat local-loop generated code as production-ready until the cloud review/refactor lane and relevant validation have completed.
 
 ## Chat Logs And External Agent Logs

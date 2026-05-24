@@ -2,7 +2,8 @@
         bootstrap-db bootstrap-db-dev bootstrap-db-stage bootstrap-db-prod \
         migrate migrate-dev migrate-stage migrate-prod \
         lint format type-check test integration-test smoke validate build-cli cli-tidy cli-vet install-cli \
-        cli-test cli-clean-build-check probe-servers task-next status-show seed-dev opencode-run clean
+        cli-test cli-clean-build-check probe-servers task-next status-show seed-dev opencode-run \
+        web-install web-dev web-build clean
 
 API_DIR = api
 
@@ -50,6 +51,12 @@ help:
 	@echo "    opencode-run  Claim next workbench task and run one focused OpenCode session"
 	@echo "                  Uses AWB_API_URL, AWB_PROJECT, AWB_AGENT env vars."
 	@echo "                  Pass --dry-run to preview without invoking opencode."
+	@echo ""
+	@echo "  Web UI (post-MVP):"
+	@echo "    web-install   Install npm dependencies (web/)"
+	@echo "    web-dev       Start Vite dev server (port 3000, proxies /api to localhost:8000)"
+	@echo "    web-build     Build production bundle to web/dist/"
+	@echo "                  Docker Compose profile 'web' runs the production Express server."
 	@echo ""
 	@echo "  Bootstrap scripts (local Markdown-backed state):"
 	@echo "    task-next     Show next available AI Agent Work task"
@@ -191,6 +198,19 @@ cli-clean-build-check:
 
 opencode-run:
 	@./scripts/opencode-run.sh
+
+# ── Web UI ───────────────────────────────────────────────────────────────────
+
+WEB_DIR = web
+
+web-install:
+	cd $(WEB_DIR) && npm install
+
+web-dev:
+	cd $(WEB_DIR) && npm run dev
+
+web-build:
+	cd $(WEB_DIR) && npm run build
 
 # ── Seed ─────────────────────────────────────────────────────────────────────
 

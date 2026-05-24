@@ -1,0 +1,75 @@
+.layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  background: #1a1a2e;
+  color: #ffffff;
+  padding: 1rem 1.5rem;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.main {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 64rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.error {
+  color: #c0392b;
+  background: #fdf2f0;
+  border: 1px solid #e8c4be;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+}
+
+.projectList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.projectItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.projectSlug {
+  font-family: ui-monospace, monospace;
+  font-size: 0.875rem;
+  color: #555;
+  min-width: 14rem;
+}
+
+.projectName {
+  font-weight: 500;
+  flex: 1;
+}
+
+.projectPhase {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #777;
+  background: #f0f4f8;
+  padding: 0.2rem 0.5rem;
+  border-radius: 3px;
+}

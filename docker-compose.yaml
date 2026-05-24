@@ -44,5 +44,17 @@ services:
     profiles:
       - migrate
 
+  web:
+    build: web
+    environment:
+      AWB_API_URL: http://api:8000
+      PORT: "3000"
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      - api
+    profiles:
+      - web
+
 volumes:
   db_data:

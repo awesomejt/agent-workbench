@@ -44,6 +44,7 @@ def create_app(settings: Settings | None = None) -> Flask:
 
 def _register_blueprints(app: Flask) -> None:
     from .agents.routes import bp as agents_bp
+    from .ai_servers.routes import bp as ai_servers_bp
     from .events.routes import bp as events_bp
     from .project_sections.routes import bp as sections_bp
     from .project_status.routes import bp as status_bp
@@ -60,6 +61,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(runs_bp)
     app.register_blueprint(events_bp)
     app.register_blueprint(reviews_bp)
+    app.register_blueprint(ai_servers_bp)
 
 
 def main() -> None:

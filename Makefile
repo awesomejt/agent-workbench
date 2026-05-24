@@ -2,7 +2,7 @@
         bootstrap-db bootstrap-db-dev bootstrap-db-stage bootstrap-db-prod \
         migrate migrate-dev migrate-stage migrate-prod \
         lint format type-check test smoke validate build-cli cli-tidy cli-vet install-cli \
-        cli-test cli-clean-build-check task-next status-show seed-dev clean
+        cli-test cli-clean-build-check probe-servers task-next status-show seed-dev clean
 
 API_DIR = api
 
@@ -35,6 +35,7 @@ help:
 	@echo "    validate      Validate Python syntax and imports"
 	@echo "    test          Run pytest (inside api/)"
 	@echo "    smoke         Run curl smoke checks against running API"
+	@echo "    probe-servers Probe all registered AI servers and update availability status"
 	@echo ""
 	@echo "  CLI:"
 	@echo "    build-cli     Build Go CLI binary to cli/builds/awb"
@@ -133,6 +134,9 @@ test:
 
 smoke:
 	@./scripts/smoke-curl.sh 2>/dev/null || echo "smoke-curl.sh not yet implemented"
+
+probe-servers:
+	AWB_API_URL=http://localhost:8000 python3 scripts/probe-ai-servers.py
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 

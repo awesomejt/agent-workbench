@@ -7,15 +7,18 @@ Operating loop for local and cloud agents working on `Agent Workbench`.
 Use this mode if you are running an agent manually rather than on a schedule.
 
 1. Read `AGENTS.md`.
-2. Read `PROJECT_BRIEF.md`, `MEMORY.md`, `TODO.md`, and `status.yaml`.
-3. Read relevant docs in `docs/`.
-4. Check `git status`.
-5. Pick the highest-priority unblocked task from `TODO.md`, or follow the user's explicit task.
-6. Run the Contract Preflight if the task touches API, database, CLI/scripts, Docker, deployment, or workflow docs.
+2. Read `PROJECT_BRIEF.md`, `MEMORY.md`, and relevant docs in `docs/`.
+3. Check `git status`.
+4. Pick the highest-priority unblocked task via `awb task next`, or follow the
+   user's explicit task. (`TODO.md` is a read-only historical reference.)
+5. Claim the task: `awb task claim <task-id>`.
+6. Run the Contract Preflight if the task touches API, database, CLI/scripts,
+   Docker, deployment, or workflow docs.
 7. Implement only that task.
 8. Run the most relevant validation available.
-9. Update `TODO.md`, `MEMORY.md`, and docs.
-10. Summarize changes, validation, blockers, and follow-up.
+9. Update `MEMORY.md` and docs when behavior or contracts change.
+10. Mark the task complete or blocked via `awb task complete / block`.
+11. Summarize changes, validation, blockers, and follow-up.
 
 ## Contract Preflight
 
@@ -27,32 +30,43 @@ Run this quick check before implementation tasks.
 4. If surfaces disagree, prefer a small alignment task before adding new features.
 5. Record unresolved drift in `TODO.md` rather than silently carrying it forward.
 
-## Local Agent Loop
+## Local Agent Loop (Dogfood Mode)
 
-Use this loop for OpenCode, a persistent local agent, scheduled runner, or workflow manager.
+The workbench API is live. Use the `awb` CLI for all task coordination —
+`status.yaml` and `TODO.md` are no longer the authoritative task source.
+
+For unattended scheduled runs use `scripts/opencode-run.sh` (see
+`docs/OpenCode-Workflow.md`). For manual or CI-driven runs follow this loop:
 
 1. Pull the latest changes.
-2. Read `AGENTS.md`, `PROJECT_BRIEF.md`, `MEMORY.md`, `TODO.md`, and `status.yaml`.
-3. Append a wake entry to external log storage.
-4. Act on `status.yaml`:
-   - `stopped` - halt.
-   - `paused` - halt without work.
-   - `blocked` - halt until the blocker is resolved.
-   - `working` - another worker is active; skip this cycle.
-   - `error` - halt and require human recovery.
-   - `active` - continue.
-5. Check for unresolved placeholders in required root files.
-6. Pick the highest-priority unblocked task from `AI Agent Work`.
-7. Move that task to `In Progress` if multiple agents may run.
-8. Set `status.yaml` to `working`.
-9. Work only that task.
-10. Run appropriate tests, checks, or builds.
-11. Write or update a concise Markdown session log in `.agents/chat/` using `.agents/chat/YYYY-MM-DD-HHMM-<agent>-<topic>.md` (gitignored; local context only).
-12. Review `TODO.md` and add or update tasks for newly discovered work, especially in research/planning, scaffolding, and early implementation.
-13. Update `TODO.md`, `MEMORY.md`, and relevant docs.
-14. If blocked, move the task to `Blocked`, add a `Needs Attention` item, set `status.yaml` to `blocked`, and stop.
-15. If complete and validated, move the task to `Done` and return `status.yaml` to `active`.
-16. Commit and push only when the project workflow explicitly calls for it.
+2. Read `AGENTS.md`, `PROJECT_BRIEF.md`, `MEMORY.md`, and any docs relevant
+   to the candidate task.
+3. Find and claim the next task:
+   ```
+   awb task next --output json        # inspect
+   awb task claim <task-id>           # claim (sets status → in_progress)
+   ```
+4. Work only that task.
+5. Send periodic heartbeats during long work:
+   ```
+   awb task heartbeat <task-id>
+   ```
+6. Run the most relevant validation.
+7. Update docs when behavior, API contracts, or setup changes.
+8. On completion:
+   ```
+   awb task complete <task-id> --evidence "<summary>"
+   ```
+9. If blocked:
+   ```
+   awb task block <task-id> --reason "<reason>"
+   ```
+10. Commit completed work. Do not push unless the project workflow
+    explicitly calls for it.
+
+Set `AWB_API_URL`, `AWB_PROJECT`, and `AWB_AGENT` via environment or `--flag`.
+The CLI binary is at `cli/builds/awb`. See `AGENTS.md` for the full command
+reference.
 
 ## Done Criteria
 

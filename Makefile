@@ -2,7 +2,7 @@
         bootstrap-db bootstrap-db-dev bootstrap-db-stage bootstrap-db-prod \
         migrate migrate-dev migrate-stage migrate-prod \
         lint format type-check test integration-test smoke validate build-cli cli-tidy cli-vet install-cli \
-        cli-test cli-clean-build-check probe-servers task-next status-show seed-dev clean
+        cli-test cli-clean-build-check probe-servers task-next status-show seed-dev opencode-run clean
 
 API_DIR = api
 
@@ -45,6 +45,11 @@ help:
 	@echo "    install-cli   Build and install awb to ~/.local/bin or ~/bin"
 	@echo "    cli-test      Run Go CLI tests"
 	@echo "    cli-clean-build-check  Build CLI from git archive to catch gitignore issues"
+	@echo ""
+	@echo "  OpenCode integration:"
+	@echo "    opencode-run  Claim next workbench task and run one focused OpenCode session"
+	@echo "                  Uses AWB_API_URL, AWB_PROJECT, AWB_AGENT env vars."
+	@echo "                  Pass --dry-run to preview without invoking opencode."
 	@echo ""
 	@echo "  Bootstrap scripts (local Markdown-backed state):"
 	@echo "    task-next     Show next available AI Agent Work task"
@@ -181,6 +186,11 @@ cli-clean-build-check:
 	  cd $$tmp/cli && go build ./... && \
 	  echo "clean-clone build: ok" && \
 	  rm -rf $$tmp
+
+# ── OpenCode integration ──────────────────────────────────────────────────────
+
+opencode-run:
+	@./scripts/opencode-run.sh
 
 # ── Seed ─────────────────────────────────────────────────────────────────────
 

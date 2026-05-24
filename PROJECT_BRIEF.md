@@ -106,5 +106,5 @@ The project is successful when:
 - Confirm exact Python 3.14 patch version during scaffolding.
 - Confirmed: MVP is API plus CLI/scripts; web UI follows for human review and ad hoc task entry.
 - Confirmed: initial use is private LAN/local homelab; authentication is deferred and IDP research is future work.
-- Confirm dev/stage/production database names, users, schema layout, and secret injection approach.
+- Confirmed: all environments use database `agent_workbench`, schema `agent_workbench`, user `agent_workbench`, on separate hosts (`postgresql-dev`, `postgresql-stage`, `postgresql`). Secret injection: Docker Compose env files first; Vault as future research.
 - Confirm exact OpenCode scheduled-run command once stub CLI commands exist.

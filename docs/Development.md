@@ -2,6 +2,8 @@
 
 Local setup, daily workflow, and environment reference for Agent Workbench contributors and agents.
 
+For deploying to dev/stage/prod, see [Deployment.md](Deployment.md).
+
 ## Prerequisites
 
 | Tool | Required version | Install |

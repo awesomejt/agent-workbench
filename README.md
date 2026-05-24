@@ -27,7 +27,7 @@ cd api && uv run --env-file .env agent-workbench-api
 
 The API binds to `http://localhost:8000` by default. Check `GET /health` to confirm it's up.
 
-See [docs/Development.md](docs/Development.md) for a full walkthrough including config, environment variables, and the Docker Compose API profile.
+See [docs/Development.md](docs/Development.md) for a full walkthrough including config, environment variables, and the Docker Compose API profile. For deploying to dev/stage/prod, see [docs/Deployment.md](docs/Deployment.md).
 
 ## CLI Usage
 

@@ -41,7 +41,7 @@ def list_servers():
     try:
         page = max(1, int(request.args.get("page", 1)))
         per_page = min(100, max(1, int(request.args.get("per_page", 20))))
-    except ValueError, TypeError:
+    except ValueError:
         abort(400, "page and per_page must be integers")
 
     status_filter = request.args.get("status")

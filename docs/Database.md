@@ -32,23 +32,14 @@ Runtime code should resolve `DATABASE_URL` first. Bootstrap scripts may resolve 
 
 Preferred layout:
 
-| Environment | PostgreSQL target | Database | Schema |
+| Environment | PostgreSQL host | Database | Schema |
 | --- | --- | --- | --- |
-| local | Docker Compose container | `agent_workbench` | `agent_workbench` |
-| dev | `postgresql-dev` | `agent_workbench_dev` | `agent_workbench` |
-| stage | `postgresql-stage` | `agent_workbench_stage` | `agent_workbench` |
-| prod | `postgresql` / `postgresql.taylor.lan` | `agent_workbench_prod` | `agent_workbench` |
+| local | Docker Compose container (`localhost:5433`) | `agent_workbench` | `agent_workbench` |
+| dev | `postgresql-dev` | `agent_workbench` | `agent_workbench` |
+| stage | `postgresql-stage` | `agent_workbench` | `agent_workbench` |
+| prod | `postgresql` / `postgresql.taylor.lan` | `agent_workbench` | `agent_workbench` |
 
-Use separate database servers per non-local environment and keep the schema name stable as `agent_workbench` so migrations are environment-independent.
-
-If the existing PostgreSQL layout uses one database per server and separate schemas instead, use these schema names instead:
-
-- `agent_workbench_local`
-- `agent_workbench_dev`
-- `agent_workbench_stage`
-- `agent_workbench_prod`
-
-Choose one layout before migrations are finalized and record the decision in `MEMORY.md`.
+All environments use the same database name `agent_workbench` and schema `agent_workbench`. Isolation is provided by separate PostgreSQL hosts, not separate database names. The `agent_workbench` PostgreSQL user owns the database in all environments; credentials are injected at runtime and never committed.
 
 ## Secret Handling
 

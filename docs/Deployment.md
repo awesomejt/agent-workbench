@@ -37,13 +37,14 @@ This is a two-step process: bootstrap the schema (once per environment), then ru
 
 ### Step 1 — Create the database and user
 
-Run this on the target PostgreSQL host (or via `psql` with superuser credentials). Replace `<password>` and `<database>` with the values for your environment.
+Run this on the target PostgreSQL host (or via `psql` with superuser credentials). Replace `<password>` with the value from your secrets manager.
 
 ```sql
-CREATE USER agent_workbench WITH PASSWORD '<password>';
-CREATE DATABASE agent_workbench_dev OWNER agent_workbench;
--- or: agent_workbench_stage, agent_workbench_prod
+CREATE USER awb WITH PASSWORD '<password>';
+CREATE DATABASE agent_workbench OWNER awb;
 ```
+
+The PostgreSQL user is `awb` (not `agent_workbench`). The database name is `agent_workbench` in all environments.
 
 If the database already exists but the `agent_workbench` schema does not, skip to Step 2.
 
@@ -55,17 +56,19 @@ Supply the connection URL as an environment variable, then run:
 
 ```bash
 # Dev
-AGENT_WORKBENCH_DEV_DATABASE_URL="postgresql+psycopg://agent_workbench:<pass>@postgresql-dev/agent_workbench_dev" \
+AGENT_WORKBENCH_DEV_DATABASE_URL="postgresql+psycopg://awb:<pass>@postgresql-dev/agent_workbench" \
   make bootstrap-db-dev
 
 # Stage
-AGENT_WORKBENCH_STAGE_DATABASE_URL="postgresql+psycopg://agent_workbench:<pass>@postgresql-stage/agent_workbench_stage" \
+AGENT_WORKBENCH_STAGE_DATABASE_URL="postgresql+psycopg://awb:<pass>@postgresql-stage/agent_workbench" \
   make bootstrap-db-stage
 
 # Prod — includes a 5-second abort window
-AGENT_WORKBENCH_PROD_DATABASE_URL="postgresql+psycopg://agent_workbench:<pass>@postgresql.taylor.lan/agent_workbench_prod" \
+AGENT_WORKBENCH_PROD_DATABASE_URL="postgresql+psycopg://awb:<pass>@postgresql.taylor.lan/agent_workbench" \
   make bootstrap-db-prod
 ```
+
+**Note:** if the password contains special characters (e.g. `@`), percent-encode them in the URL: `@` → `%40`. Example: `Mytric@01` → `Mytric%4001`.
 
 The bootstrap SQL is at [db/bootstrap/create-schema.sql](../db/bootstrap/create-schema.sql). It contains no credentials.
 

@@ -39,7 +39,7 @@ Preferred layout:
 | stage | `postgresql-stage` | `agent_workbench` | `agent_workbench` |
 | prod | `postgresql` / `postgresql.taylor.lan` | `agent_workbench` | `agent_workbench` |
 
-All environments use the same database name `agent_workbench` and schema `agent_workbench`. Isolation is provided by separate PostgreSQL hosts, not separate database names. The `agent_workbench` PostgreSQL user owns the database in all environments; credentials are injected at runtime and never committed.
+All environments use the same database name `agent_workbench` and schema `agent_workbench`. Isolation is provided by separate PostgreSQL hosts, not separate database names. The PostgreSQL user is `awb`; credentials are injected at runtime and never committed.
 
 ## Secret Handling
 

@@ -1,7 +1,7 @@
 .PHONY: help setup up down db-up db-down \
         bootstrap-db bootstrap-db-dev bootstrap-db-stage bootstrap-db-prod \
         migrate migrate-dev migrate-stage migrate-prod \
-        lint format type-check test smoke validate build-cli cli-tidy cli-vet install-cli \
+        lint format type-check test integration-test smoke validate build-cli cli-tidy cli-vet install-cli \
         cli-test cli-clean-build-check probe-servers task-next status-show seed-dev clean
 
 API_DIR = api
@@ -34,6 +34,7 @@ help:
 	@echo "    type-check    Run mypy type checker (inside api/)"
 	@echo "    validate      Validate Python syntax and imports"
 	@echo "    test          Run pytest (inside api/)"
+	@echo "    integration-test  Build and run containerized integration tests (Docker required)"
 	@echo "    smoke         Run curl smoke checks against running API"
 	@echo "    probe-servers Probe all registered AI servers and update availability status"
 	@echo ""
@@ -131,6 +132,18 @@ test:
 	@pg_isready -h localhost -p 5433 -q 2>/dev/null || \
 		(echo "Hint: PostgreSQL not reachable on localhost:5433. Run 'make db-up' to start the database container." && exit 1)
 	cd $(API_DIR) && uv run --env-file .env pytest
+
+integration-test:
+	docker compose -p agent-workbench-itest -f docker-compose.integration.yaml up --build -d; \
+	RUNNER=""; \
+	while [ -z "$$RUNNER" ]; do \
+		sleep 2; \
+		RUNNER=$$(docker compose -p agent-workbench-itest -f docker-compose.integration.yaml ps -q test-runner 2>/dev/null); \
+	done; \
+	docker logs -f $$RUNNER; \
+	CODE=$$(docker wait $$RUNNER); \
+	docker compose -p agent-workbench-itest -f docker-compose.integration.yaml down -v; \
+	exit $$CODE
 
 smoke:
 	@./scripts/smoke-curl.sh 2>/dev/null || echo "smoke-curl.sh not yet implemented"

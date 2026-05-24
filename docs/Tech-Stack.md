@@ -43,7 +43,7 @@ scripts/    Bootstrap agent scripts (Markdown-backed local state, MVP interim to
 db/         Database bootstrap SQL (schema creation templates)
 ```
 
-Root-level files (`docker-compose.yml`, `Makefile`) orchestrate all components.
+Root-level files (`docker-compose.yaml`, `Makefile`) orchestrate all components.
 
 ## Commands
 

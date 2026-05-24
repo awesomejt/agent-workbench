@@ -33,7 +33,7 @@ The defaults in `.env.example` work as-is for local development:
 For the API container, pass secrets via an env file:
 
 ```yaml
-# docker-compose.yml (api service, --profile api)
+# docker-compose.yaml (api service, --profile api)
 services:
   api:
     env_file: api/.env

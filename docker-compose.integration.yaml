@@ -1,0 +1,54 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: agent_workbench
+      POSTGRES_USER: agent_workbench
+      POSTGRES_PASSWORD: agent_workbench_test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U agent_workbench"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrations:
+    build: api
+    command: uv run alembic upgrade head
+    environment:
+      APP_ENV: local
+      DATABASE_URL: postgresql+psycopg://agent_workbench:agent_workbench_test@db/agent_workbench
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build: api
+    environment:
+      APP_ENV: dev
+      DATABASE_URL: postgresql+psycopg://agent_workbench:agent_workbench_test@db/agent_workbench
+      API_HOST: "0.0.0.0"
+      API_PORT: "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        - "CMD"
+        - "python3"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)"
+      interval: 5s
+      timeout: 4s
+      retries: 20
+      start_period: 5s
+
+  test-runner:
+    build: tests/integration
+    environment:
+      AWB_API_URL: http://api:8000
+    depends_on:
+      api:
+        condition: service_healthy

@@ -45,7 +45,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Scaffolding Decisions (2026-05-22)
 
 - Flask package layout: `src/` layout inside `api/`, application factory `create_app()` in `app.py`, Flask-SQLAlchemy 3.x, pydantic-settings for typed config that fails fast on missing `DATABASE_URL`.
-- Repository structure: `api/` (Python/Flask), `cli/` (Go, stub), `web/` (React, stub) as top-level component dirs; `docker-compose.yml` and `Makefile` at root to orchestrate all three.
+- Repository structure: `api/` (Python/Flask), `cli/` (Go, stub), `web/` (React, stub) as top-level component dirs; `compose.yaml` and `Makefile` at root to orchestrate all three.
 - Alembic configuration: `api/alembic.ini` with semantic revision IDs (`YYYYMMDD_<rev>_<slug>`); `env.py` reads `APP_ENV` and resolves the matching `AGENT_WORKBENCH_*_DATABASE_URL`; creates schema and pgcrypto extension if absent.
 - Docker Compose workflow: `db` service always available; `api` and `migrations` services behind profiles (`--profile api`, `--profile migrate`) to avoid accidental startup.
 - Primary local dev workflow: Docker Compose for db and migrations; `uv` commands run inside `api/` for lint/test/type-check via Makefile targets.

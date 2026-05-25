@@ -3,7 +3,7 @@
         migrate migrate-dev migrate-stage migrate-prod \
         lint format type-check test integration-test smoke validate build-cli cli-tidy cli-vet install-cli \
         cli-test cli-clean-build-check probe-servers task-next status-show seed-dev opencode-run \
-        web-install web-dev web-build clean
+        web-install web-dev web-build onboard clean
 
 API_DIR = api
 
@@ -46,6 +46,12 @@ help:
 	@echo "    install-cli   Build and install awb to ~/.local/bin or ~/bin"
 	@echo "    cli-test      Run Go CLI tests"
 	@echo "    cli-clean-build-check  Build CLI from git archive to catch gitignore issues"
+	@echo ""
+	@echo "  Onboarding:"
+	@echo "    onboard       Scan onboarding/ for ready Markdown prompts and create tasks"
+	@echo "                  Pass AWB_API_URL to override the default http://localhost:8000."
+	@echo "                  Pass ONBOARD_DRY_RUN=1 to preview without creating tasks."
+	@echo "                  Cron example: */30 * * * * cd /path/to/repo && make onboard"
 	@echo ""
 	@echo "  OpenCode integration:"
 	@echo "    opencode-run  Claim next workbench task and run one focused OpenCode session"
@@ -146,15 +152,15 @@ test:
 	cd $(API_DIR) && uv run --env-file .env pytest
 
 integration-test:
-	docker compose -p agent-workbench-itest -f docker-compose.integration.yaml up --build -d; \
+	docker compose -p agent-workbench-itest -f compose.integration.yaml up --build -d; \
 	RUNNER=""; \
 	while [ -z "$$RUNNER" ]; do \
 		sleep 2; \
-		RUNNER=$$(docker compose -p agent-workbench-itest -f docker-compose.integration.yaml ps -q test-runner 2>/dev/null); \
+		RUNNER=$$(docker compose -p agent-workbench-itest -f compose.integration.yaml ps -q test-runner 2>/dev/null); \
 	done; \
 	docker logs -f $$RUNNER; \
 	CODE=$$(docker wait $$RUNNER); \
-	docker compose -p agent-workbench-itest -f docker-compose.integration.yaml down -v; \
+	docker compose -p agent-workbench-itest -f compose.integration.yaml down -v; \
 	exit $$CODE
 
 smoke:
@@ -193,6 +199,14 @@ cli-clean-build-check:
 	  cd $$tmp/cli && go build ./... && \
 	  echo "clean-clone build: ok" && \
 	  rm -rf $$tmp
+
+# ── Onboarding ───────────────────────────────────────────────────────────────
+
+onboard:
+	uv run scripts/onboard.py \
+		--onboarding-dir onboarding/ \
+		--api-url $(or $(AWB_API_URL),http://localhost:8000) \
+		$(if $(ONBOARD_DRY_RUN),--dry-run)
 
 # ── OpenCode integration ──────────────────────────────────────────────────────
 

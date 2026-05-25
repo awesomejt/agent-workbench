@@ -204,7 +204,7 @@ benchmark-harness/
 ├── reports/                # Generated comparison reports
 ├── tests/
 ├── docs/
-├── docker-compose.yaml
+├── compose.yaml
 ├── Makefile
 └── AGENTS.md
 ```

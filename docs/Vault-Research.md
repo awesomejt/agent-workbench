@@ -51,7 +51,7 @@ credential, writes it to a shared file or env var, and renews the lease
 automatically.
 
 ```yaml
-# docker-compose.yaml (conceptual)
+# compose.yaml (conceptual)
 services:
   vault-agent:
     image: hashicorp/vault:1.17

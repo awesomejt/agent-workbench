@@ -8,11 +8,12 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Current Status
 
-- Current phase: dogfood — active design/documentation work.
-- Last major milestone (2026-05-23 session 10): 6 already-implemented tasks closed as complete, then 9 design tasks completed in one session (state machines, project type vocabulary, task duration model, assignee/owner model, API docs strategy, OpenAPI decision, Markdown strategy, Prometheus scope, event history strategy). 189 tests passing. New docs: State-Machines.md, Project-Types.md, Task-Duration.md. `_VALID_PROJECT_TYPES` enum added to projects API.
+- Current phase: dogfood — API/CLI MVP is live enough for self-coordination, with follow-up review findings recorded.
+- Latest review milestone (2026-05-25 Codex): formal project review recorded in `docs/reviews/2026-05-25-1632-codex-project-review.md`. Main risks: `awb --project` flag handling, masked smoke failures, direct claim bypass of `blocks` dependencies, project phase high-water drift, invalid default `project_type`, section/review validation gaps, and docs contract drift.
+- Validation snapshot (2026-05-25 Codex): `make validate`, `make test` (211 passed), `make cli-vet`, `make build-cli`, `make cli-test`, `make cli-clean-build-check`, and `npm run build` passed. `make smoke` reported 1 failing smoke check but exited successfully because the Makefile target masks smoke script failures.
 - Dogfood transition complete: `awb` is the primary task source; `TODO.md` is read-only reference.
-- Next recommended task: `89b164b7` — Define project discovery config; or `f3b8554b` — Create benchmark-harness project; or `306cae8f` — Add env-aware schema bootstrap wrapper.
-- Current blocker: Jason should confirm exact dev/stage/prod database names/users (task `0f1079ef`).
+- Queue snapshot (2026-05-25 Codex): `awb task list --available` for `agent-workbench` returned no available tasks.
+- Current blocker: non-local database credential/user details still require human confirmation before dev/stage/prod migration/deployment.
 
 ## Key Decisions
 
@@ -102,6 +103,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-25 - Codex
+
+- Task: Review the project so far and record findings in `docs/reviews/`.
+- Files changed: `docs/reviews/2026-05-25-1632-codex-project-review.md`, `MEMORY.md`, `.agents/chat/2026-05-25-1632-codex-project-review.md`.
+- Validation: `make validate` passed; `make test` passed with 211 tests; `make cli-vet`, `make build-cli`, `make cli-test`, `make cli-clean-build-check`, and `npm run build` passed. `make smoke` reported 5 passed / 1 failed but exited successfully because the Makefile target masks failures.
+- Result: Formal review recorded. Highest-risk findings are broken `awb --project` handling, false-green smoke target, direct claim bypass of `blocks`, phase high-water drift, and invalid default project type.
+- Blockers or follow-up: Create focused workbench tasks for the review findings once task creation workflow is chosen.
 
 ### 2026-05-23 - claude-sonnet-4-6 (session 10)
 

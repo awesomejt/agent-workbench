@@ -118,6 +118,28 @@ make build-cli      # rebuild awb binary
 make seed-dev       # seed local DB from TODO.md state (idempotent)
 ```
 
+## Task Onboarding
+
+Human operators can author tasks as Markdown files and have them automatically ingested into the workbench inbox.
+
+1. Copy `onboarding/task.template.md` to a new file in `onboarding/` (any name, e.g. `onboarding/my-task.md`).
+2. Fill in the front matter (`title`, `project`, `phase`, `role`, `model_tier`, `priority`) and write the task description in the body.
+3. Set `status: ready` when the task is complete.
+
+```bash
+make onboard            # process all ready files (requires API on localhost:8000)
+ONBOARD_DRY_RUN=1 make onboard   # preview without creating tasks
+AWB_API_URL=http://... make onboard   # override API URL
+```
+
+The tool sets `status: processed` and adds `task_id` + `processed_at` to the file's front matter after a task is created. Files with `status: draft` and `*.template.md` files are ignored.
+
+To run automatically, add a cron entry:
+
+```
+*/30 * * * * cd /path/to/agent-workbench && make onboard
+```
+
 ## Bootstrap Fallback
 
 During Phase 1 (before a live API), bootstrap scripts back agent commands with Markdown files:

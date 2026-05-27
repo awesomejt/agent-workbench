@@ -18,6 +18,10 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Key Decisions
 
 - MVP scope is API plus CLI/scripts first; web UI is post-MVP for human review and adding tasks on the fly.
+- CI runs on a self-hosted GitHub Actions runner (host needs Docker only); all build tools run in purpose-built containers pulled from Harbor.
+- Harbor projects: `proxy/` (pull-through cache for DockerHub/ghcr.io), `base/` (curated base images), `ci/` (CI tool images). CI images live in a separate `infra/homelab-images` repo alongside Ansible.
+- CI image tag convention: `<upstream-version>-<build-revision>` (e.g. `python-uv:3.14-1`); revision increments for any image change without an upstream version bump, resets to `-1` on upstream version bump. Follows Debian package versioning. Avoid `:latest` in CI workflows.
+- CI jobs are purpose-driven (separate python-uv, golang, node images) rather than a single fat image.
 - Private-network/local homelab MVP can defer authentication; research IDP-backed auth before broader exposure.
 - First non-local deployment should use Docker Compose env files or Compose secrets; HashiCorp Vault is future research.
 - Tasks need assignee/owner information for the responsible agent or human.

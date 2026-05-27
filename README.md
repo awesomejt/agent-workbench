@@ -118,27 +118,37 @@ make build-cli      # rebuild awb binary
 make seed-dev       # seed local DB from TODO.md state (idempotent)
 ```
 
-## Task Onboarding
+## Onboarding
 
-Human operators can author tasks as Markdown files and have them automatically ingested into the workbench inbox.
+Human operators can author projects and tasks as Markdown files and have them
+automatically registered in the workbench via `scripts/onboard.py`.
 
-1. Copy `onboarding/task.template.md` to a new file in `onboarding/` (any name, e.g. `onboarding/my-task.md`).
-2. Fill in the front matter (`title`, `project`, `phase`, `role`, `model_tier`, `priority`) and write the task description in the body.
-3. Set `status: ready` when the task is complete.
+Each file declares its type in YAML front matter:
+
+- **`type: project`** — registers a new project (`POST /api/projects`)
+- **`type: task`** — creates a task in an existing project's inbox (omitting `type` defaults to `task`)
+
+Projects are always processed before tasks in the same run, so a project file
+and its task files can be submitted together in a single batch.
 
 ```bash
-make onboard            # process all ready files (requires API on localhost:8000)
-ONBOARD_DRY_RUN=1 make onboard   # preview without creating tasks
-AWB_API_URL=http://... make onboard   # override API URL
+# Copy a template and fill it in
+cp onboarding/project.template.md onboarding/my-project.md
+cp onboarding/task.template.md    onboarding/my-task.md
+
+make onboard                        # process ready files (API on localhost:8000)
+ONBOARD_DRY_RUN=1 make onboard     # preview without changes
+AWB_API_URL=http://... make onboard # override API URL
+make onboard-archive                # move processed files to onboarding/archive/
 ```
 
-The tool sets `status: processed` and adds `task_id` + `processed_at` to the file's front matter after a task is created. Files with `status: draft` and `*.template.md` files are ignored.
+On success the script sets `status: processed` and appends tracking fields
+(`project_id`/`task_id` and `processed_at`) to the file's front matter.
+Files with `status: draft` and `*.template.md` files are always ignored.
 
-To run automatically, add a cron entry:
-
-```
-*/30 * * * * cd /path/to/agent-workbench && make onboard
-```
+For an always-on monitoring setup (e.g. watching an SMB share), install
+self-contained stub scripts — see [docs/Onboarding.md](docs/Onboarding.md)
+for the full reference including cron examples and server install instructions.
 
 ## Bootstrap Fallback
 

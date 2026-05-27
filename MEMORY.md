@@ -104,6 +104,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 
 Newest entries first.
 
+### 2026-05-26 - claude-sonnet-4-6
+
+- Task: Extend onboarding system with project creation, archive pass, server install, and documentation.
+- Files changed: `scripts/onboard.py` (type: project/task two-pass processing, --archive flag), `onboarding/task.template.md` (add type: task field), `onboarding/project.template.md` (new), `scripts/install-onboard.sh` (new; writes awb-onboard + awb-onboard-archive stubs, no system path assumptions), `docs/Onboarding.md` (new; full reference with Mermaid lifecycle/flow/deploy diagrams), `README.md` (updated onboarding section), `Makefile` (onboard-archive + install-onboard targets).
+- Validation: `python3 -c "import ast; ast.parse(...)"` clean; dry-run smoke test of both passes confirmed correct output; `make onboard-archive ONBOARD_DRY_RUN=1` passed.
+- Result: Onboarding now supports two file types. A project file and its task files can be dropped together — projects are registered first, tasks second. Processed files are archived by a separate nightly pass. Server/container deployments use `install-onboard.sh` with explicit flags; no path assumptions from the build host.
+- Blockers or follow-up: None.
+
 ### 2026-05-25 - Codex
 
 - Task: Review the project so far and record findings in `docs/reviews/`.

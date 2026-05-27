@@ -3,7 +3,7 @@
         migrate migrate-dev migrate-stage migrate-prod \
         lint format type-check test integration-test smoke validate build-cli cli-tidy cli-vet install-cli \
         cli-test cli-clean-build-check probe-servers task-next status-show seed-dev opencode-run \
-        web-install web-dev web-build onboard clean
+        web-install web-dev web-build onboard onboard-archive install-onboard clean
 
 API_DIR = api
 
@@ -48,10 +48,13 @@ help:
 	@echo "    cli-clean-build-check  Build CLI from git archive to catch gitignore issues"
 	@echo ""
 	@echo "  Onboarding:"
-	@echo "    onboard       Scan onboarding/ for ready Markdown prompts and create tasks"
-	@echo "                  Pass AWB_API_URL to override the default http://localhost:8000."
-	@echo "                  Pass ONBOARD_DRY_RUN=1 to preview without creating tasks."
-	@echo "                  Cron example: */30 * * * * cd /path/to/repo && make onboard"
+	@echo "    onboard         Process ready project/task files in onboarding/"
+	@echo "                    AWB_API_URL overrides http://localhost:8000"
+	@echo "                    ONBOARD_DRY_RUN=1 previews without changes"
+	@echo "    onboard-archive Move processed files to onboarding/archive/"
+	@echo "                    ONBOARD_DRY_RUN=1 previews without moving"
+	@echo "    install-onboard Install awb-onboard/awb-onboard-archive stubs"
+	@echo "                    INSTALL_DIR, ONBOARDING_DIR, AWB_API_URL control the install"
 	@echo ""
 	@echo "  OpenCode integration:"
 	@echo "    opencode-run  Claim next workbench task and run one focused OpenCode session"
@@ -207,6 +210,20 @@ onboard:
 		--onboarding-dir onboarding/ \
 		--api-url $(or $(AWB_API_URL),http://localhost:8000) \
 		$(if $(ONBOARD_DRY_RUN),--dry-run)
+
+onboard-archive:
+	uv run scripts/onboard.py \
+		--onboarding-dir onboarding/ \
+		--archive \
+		$(if $(ONBOARD_DRY_RUN),--dry-run)
+
+install-onboard:
+	@[ -n "$(INSTALL_DIR)" ]     || (echo "error: INSTALL_DIR is required"; exit 1)
+	@[ -n "$(ONBOARDING_DIR)" ]  || (echo "error: ONBOARDING_DIR is required"; exit 1)
+	bash scripts/install-onboard.sh \
+		--install-dir "$(INSTALL_DIR)" \
+		--onboarding-dir "$(ONBOARDING_DIR)" \
+		$(if $(AWB_API_URL),--api-url "$(AWB_API_URL)")
 
 # ── OpenCode integration ──────────────────────────────────────────────────────
 

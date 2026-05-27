@@ -1,7 +1,8 @@
 ---
+type: task
 status: draft
 title: ""
-project: agent-workbench
+project: my-project-slug
 phase: discovery
 role: orchestrator
 model_tier: cloud
@@ -18,15 +19,16 @@ in the onboarding/ folder as a reference.
 
 ## Front matter reference
 
-| Field      | Required | Values                                                                 |
-|------------|----------|------------------------------------------------------------------------|
-| status     | yes      | draft · ready · processed                                              |
-| title      | yes      | short task title                                                       |
-| project    | yes      | project slug (must exist in the workbench)                             |
-| phase      | no       | discovery · design · implementation · testing · review (default: discovery) |
+| Field      | Required | Values                                                                        |
+|------------|----------|-------------------------------------------------------------------------------|
+| type       | no       | task (default when omitted)                                                   |
+| status     | yes      | draft · ready · processed                                                     |
+| title      | yes      | short task title                                                               |
+| project    | yes      | project slug (must already exist in the workbench)                            |
+| phase      | no       | discovery · design · implementation · testing · review (default: discovery)   |
 | role       | no       | researcher · planner · implementer · writer · reviewer · tester · orchestrator |
-| model_tier | no       | cloud · local (default: cloud)                                         |
-| priority   | no       | integer, higher = more urgent (default: 5)                             |
+| model_tier | no       | cloud · local (default: cloud)                                                |
+| priority   | no       | integer, higher = more urgent (default: 5)                                    |
 
 After onboarding, the tool adds these fields automatically:
   task_id:      UUID of the created task

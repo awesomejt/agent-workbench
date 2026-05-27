@@ -40,12 +40,27 @@ added to the front matter.
 """
 
 import argparse
+import os
+import ssl
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import requests
 import yaml
+
+# requests running inside a uv virtual environment uses its own certifi bundle,
+# which does not include private / self-signed CAs. Prefer the system CA bundle
+# so that internal HTTPS endpoints (e.g. awb-api.taylor.lan) are trusted after
+# the internal CA is installed via update-ca-certificates.
+_ca_bundle: str | bool = (
+    os.environ.get("REQUESTS_CA_BUNDLE")
+    or os.environ.get("SSL_CERT_FILE")
+    or ssl.get_default_verify_paths().cafile
+    or True
+)
+_session = requests.Session()
+_session.verify = _ca_bundle
 
 
 def parse_front_matter(text: str) -> tuple[dict, str]:
@@ -65,7 +80,7 @@ def write_front_matter(path: Path, data: dict, body: str) -> None:
 
 
 def get_project_id(api_url: str, slug: str) -> str | None:
-    resp = requests.get(f"{api_url}/api/projects", timeout=10)
+    resp = _session.get(f"{api_url}/api/projects", timeout=10)
     resp.raise_for_status()
     for p in resp.json().get("items", []):
         if p["slug"] == slug:
@@ -89,7 +104,7 @@ def api_create_project(api_url: str, fm: dict) -> dict:
     if fm.get("default_agent"):
         payload["default_agent"] = fm["default_agent"]
 
-    resp = requests.post(f"{api_url}/api/projects", json=payload, timeout=10)
+    resp = _session.post(f"{api_url}/api/projects", json=payload, timeout=10)
     resp.raise_for_status()
     return resp.json()
 
@@ -110,7 +125,7 @@ def api_create_task(api_url: str, project_id: str, fm: dict, body: str) -> dict:
     if fm.get("priority") is not None:
         payload["priority"] = int(fm["priority"])
 
-    resp = requests.post(
+    resp = _session.post(
         f"{api_url}/api/projects/{project_id}/tasks",
         json=payload,
         timeout=10,

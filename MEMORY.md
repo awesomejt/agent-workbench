@@ -9,7 +9,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Current Status
 
 - Current phase: dogfood — API/CLI MVP is live enough for self-coordination, with follow-up review findings recorded.
-- Latest review milestone (2026-05-25 Codex): formal project review recorded in `docs/reviews/2026-05-25-1632-codex-project-review.md`. Main risks: `awb --project` flag handling, masked smoke failures, direct claim bypass of `blocks` dependencies, project phase high-water drift, invalid default `project_type`, section/review validation gaps, and docs contract drift.
+- Latest CLI additions (2026-05-27): `awb task create` and `awb init` added; per-repo `.awb/config.yaml` convention established; `requireFlag` Cobra+Viper flag-priority bug fixed.
+- Latest review milestone (2026-05-25 Codex): formal project review recorded in `docs/reviews/2026-05-25-1632-codex-project-review.md`. Main risks: `awb --project` flag handling (now fixed), masked smoke failures, direct claim bypass of `blocks` dependencies, project phase high-water drift, invalid default `project_type`, section/review validation gaps, and docs contract drift.
 - Validation snapshot (2026-05-25 Codex): `make validate`, `make test` (211 passed), `make cli-vet`, `make build-cli`, `make cli-test`, `make cli-clean-build-check`, and `npm run build` passed. `make smoke` reported 1 failing smoke check but exited successfully because the Makefile target masks smoke script failures.
 - Dogfood transition complete: `awb` is the primary task source; `TODO.md` is read-only reference.
 - Queue snapshot (2026-05-25 Codex): `awb task list --available` for `agent-workbench` returned no available tasks.
@@ -17,6 +18,9 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Key Decisions
 
+- `awb task create` is the correct way for agents to record newly-discovered work mid-session; editing `TODO.md` directly is no longer permitted.
+- Per-repo config lives at `.awb/config.yaml` (created by `awb init --project <slug>`). Config search order: `.awb/config.yaml` → `./config.yaml` → `~/.config/awb/config.*` → `~/.config/agent-workbench/config.*`. An explicit `--flag` always wins over config-file values.
+- `requireFlag` was fixed to check Cobra's `f.Changed` before calling `viper.GetString` — this resolves the Codex-flagged risk where PersistentFlag values were silently overridden by config-file values when both were present.
 - MVP scope is API plus CLI/scripts first; web UI is post-MVP for human review and adding tasks on the fly.
 - CI runs on a self-hosted GitHub Actions runner (host needs Docker only); all build tools run in purpose-built containers pulled from Harbor.
 - Harbor projects: `proxy/` (pull-through cache for DockerHub/ghcr.io), `base/` (curated base images), `ci/` (CI tool images). CI images live in a separate `infra/homelab-images` repo alongside Ansible.
@@ -81,7 +85,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 - Database servers: local container, `postgresql-dev`, `postgresql-stage`, `postgresql`/`postgresql.taylor.lan` for prod.
 - Production database: `postgresql`/`postgresql.taylor.lan` with secrets supplied externally; never committed.
 - Deployment target: Docker Compose VM first; K3s is future work.
-- CLI direction: Go 1.26, Cobra + Viper, binary `awb` built to `cli/builds/` (git-ignored). Module path `agent-workbench/cli` (local; update when GitHub remote is added). Config resolution: `--flag` > `AWB_*` env var > `~/.config/awb/config.*` > `~/.config/agent-workbench/config.*`; yaml, json, and toml formats all supported. Install via `make install-cli` or `scripts/install-awb.sh` (targets `~/.local/bin`, then `~/bin`).
+- CLI direction: Go 1.26, Cobra + Viper, binary `awb` built to `cli/builds/` (git-ignored). Module path `agent-workbench/cli` (local; update when GitHub remote is added). Config resolution (highest to lowest): explicit `--flag` > `AWB_*` env var > `.awb/config.yaml` (repo-level, created by `awb init`) > `./config.yaml` > `~/.config/awb/config.*` > `~/.config/agent-workbench/config.*`; yaml, json, and toml formats all supported. Install via `make install-cli` or `scripts/install-awb.sh` (targets `~/.local/bin`, then `~/bin`).
 - Bootstrap scripts: `scripts/` (root level), backed by `.agent-workbench/bootstrap-state.json` (git-ignored), used until Go CLI replaces them.
 
 ## Manual Validation Findings
@@ -107,6 +111,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-27 - claude-sonnet-4-6
+
+- Task: Add `awb task create` and `awb init` CLI commands; establish per-repo config convention.
+- Files changed: `cli/cmd/task_create.go` (new), `cli/cmd/init.go` (new), `cli/cmd/root.go` (config search order, `requireFlag` fix), `cli/internal/api/client.go` (`CreateTask` method), `AGENTS.md` (task workflow updated), `cli/builds/awb` (rebuilt).
+- Validation: `go build ./...` clean; `awb init`, `awb task create --help`, all resolution paths (flag, env, config file, override) smoke-tested manually.
+- Result: Agents can now use `awb task create` to record newly-discovered work mid-session instead of editing Markdown. `awb init` creates `.awb/config.yaml` so agents running inside a repo automatically target the right project without needing `AWB_PROJECT` set externally. Fixed pre-existing Cobra+Viper `requireFlag` bug where PersistentFlag values were silently ignored when a config file was present.
+- Blockers or follow-up: remaining Codex review findings (masked smoke, `blocks` bypass, phase drift, project_type default) still open.
 
 ### 2026-05-26 - claude-sonnet-4-6
 

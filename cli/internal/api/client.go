@@ -157,6 +157,15 @@ type TaskListOpts struct {
 	Available bool // true = pending tasks with no active lease only
 }
 
+// CreateTask creates a new task under the given project.
+func (c *Client) CreateTask(projectID string, body map[string]any) (Task, error) {
+	data, _, err := c.do("POST", "/api/projects/"+projectID+"/tasks", body)
+	if err != nil {
+		return Task{}, err
+	}
+	return decode[Task](data)
+}
+
 func (c *Client) GetTask(taskID string) (Task, error) {
 	data, _, err := c.do("GET", "/api/tasks/"+taskID, nil)
 	if err != nil {

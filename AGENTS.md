@@ -38,6 +38,9 @@ awb task complete <task-id> --evidence "summary of work done"
 
 # Mark blocked
 awb task block <task-id> --reason "reason"
+
+# Create a new task when you discover work (use instead of editing Markdown)
+awb task create --title "Do the thing" --phase implementation --priority 50
 ```
 
 Set `AWB_API_URL`, `AWB_PROJECT`, and `AWB_AGENT` via environment or `--flag` on each call. The CLI binary is at `cli/builds/awb` in the repo root.
@@ -103,7 +106,7 @@ If the task affects architecture, API shape, data model, deployment, or local/ag
 Prevent drift between docs, API, CLI, scripts, tests, and deployment config.
 
 - Treat public contracts as shared source material: API routes, request/response JSON, CLI commands, script names, config names, environment variables, database schema, state transitions, idempotency behavior, and build outputs.
-- When new work is discovered during a session, create it as a task via `awb task create` or the API (POST `/api/projects/{id}/tasks`) rather than editing Markdown files.
+- When new work is discovered during a session, create it as a task via `awb task create --title "..." --phase <phase> --priority <n>` rather than editing Markdown files.
 - Before changing API behavior, read the relevant docs, tests, clients/scripts, and TODO items.
 - When changing a public contract, update all affected surfaces in the same task or leave explicit TODOs if the task is intentionally planning-only.
 - Do not mark a task complete just because code was written. Done requires the relevant validation to pass, or a clearly documented blocker/test gap.

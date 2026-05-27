@@ -52,16 +52,24 @@ func init() {
 func initConfig() {
 	viper.SetConfigName("config")
 	// No SetConfigType — Viper auto-detects yaml, json, toml, etc.
+	// Search order: repo-local (.awb/) wins over cwd, then user-level.
+	viper.AddConfigPath(filepath.Join(".", ".awb"))
+	viper.AddConfigPath(".")
 	if home, err := os.UserHomeDir(); err == nil {
 		viper.AddConfigPath(filepath.Join(home, ".config", "awb"))
 		viper.AddConfigPath(filepath.Join(home, ".config", "agent-workbench"))
 	}
-	viper.AddConfigPath(".")
 	_ = viper.ReadInConfig() // config file is optional
 }
 
 // requireFlag aborts with a usage error if the named flag is empty.
+// It checks the root persistent flag directly first so that an explicit
+// --flag value always wins over a config-file value (BindPFlag priority
+// is unreliable for parent persistent flags when a config file is present).
 func requireFlag(cmd *cobra.Command, name string) (string, error) {
+	if f := cmd.Root().PersistentFlags().Lookup(name); f != nil && f.Changed {
+		return f.Value.String(), nil
+	}
 	v := viper.GetString(name)
 	if v == "" {
 		return "", fmt.Errorf("--%s is required (or set AWB_%s)", name, upcase(name))

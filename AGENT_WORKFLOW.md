@@ -32,8 +32,7 @@ Run this quick check before implementation tasks.
 
 ## Local Agent Loop (Dogfood Mode)
 
-The workbench API is live. Use the `awb` CLI for all task coordination —
-`status.yaml` and `TODO.md` are no longer the authoritative task source.
+The workbench API is live at `https://awb-api.taylor.lan`. Use the `awb` CLI for all task and status coordination — `status.yaml` is deprecated and `TODO.md` is a read-only historical reference.
 
 For unattended scheduled runs use `scripts/opencode-run.sh` (see
 `docs/OpenCode-Workflow.md`). For manual or CI-driven runs follow this loop:
@@ -76,7 +75,7 @@ A task is done only when implementation and project state agree.
 - Public contracts are aligned across API, scripts/CLI, docs, tests, database, and deployment config where relevant.
 - The most relevant validation command has passed, or the validation gap is documented in `TODO.md` and `MEMORY.md`.
 - Stale TODO wording, old endpoint paths, and duplicate completed items are cleaned up.
-- `status.yaml` is returned to `active`, `blocked`, `error`, or `stopped`.
+- Project status is updated via `awb status create` or `awb status update` to reflect the new state.
 
 Do not move a task to Done based only on generated code, a partial build, or an assumption that another module will be updated later.
 
@@ -114,12 +113,10 @@ Cloud review should emphasize correctness, integration behavior, maintainability
 If blocked:
 
 1. Stop the task.
-2. Move it to `Blocked` in `TODO.md`.
-3. Add the exact decision, credential, source file, account access, or validation needed.
-4. Add a short entry to `Needs Attention`.
-5. Update `status.yaml` with `status: blocked`, the reason, phase, worker, and timestamp.
-6. Update `MEMORY.md`.
-7. Notify through the configured workflow manager if available.
+2. Run `awb task block <task-id> --reason "<exact blocker>"`.
+3. Update project status: `awb status create --status blocked --phase <phase> --reason "<blocker summary>"`.
+4. Update `MEMORY.md` with the blocker and what is needed to unblock.
+5. Notify through the configured workflow manager if available.
 
 Do not guess current external APIs, pricing, laws, platform rules, account flows, production behavior, or security-sensitive behavior.
 

@@ -17,6 +17,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Key Decisions
 
+- `status.yaml` is deprecated. Project status is now tracked exclusively via `awb status show/create/update` against `https://awb-api.taylor.lan`. The file is kept only as a last-resort fallback when the API is unreachable. Do not edit it in normal operation.
 - `awb export todo` generates a `TODO.md` grouped by phase (with checkboxes) from live task data. `awb export yaml` generates a structured YAML snapshot of the project and all tasks. Both accept `--output -` to print to stdout and page through all tasks automatically. AWB remains the source of truth; exports are for offline/public use only.
 - Onboarding script (`scripts/onboard.py`) accepts three file formats: `*.md` (YAML front matter + body), `*.yaml`, and `*.yml` (pure YAML, no body). Projects are always processed before tasks in the same batch. Template files (`*.template.md`, `*.template.yaml`) are always ignored.
 - The `make smoke` target now propagates non-zero exits from `smoke-curl.sh`; smoke failures are no longer masked. `smoke-curl.sh` uses `project_type: code` (matching the API's default) rather than the previously incorrect `generic`.

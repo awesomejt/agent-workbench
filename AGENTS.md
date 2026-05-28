@@ -78,7 +78,7 @@ If the task affects architecture, API shape, data model, deployment, or local/ag
 - `README.md` - human-facing overview and setup.
 - `TODO.md` - historical task reference; read-only. Active tasks live in the workbench API.
 - `MEMORY.md` - persistent project memory, decisions, and milestones.
-- `status.yaml` - shared workflow state for humans and automation (pre-API fallback).
+- `status.yaml` - **deprecated**. Project status is now tracked via `awb status show/create/update`. This file is kept as a last-resort fallback if the API is unreachable.
 - `PROJECT_BRIEF.md` - product goals, constraints, users, and source material.
 - `AGENT_WORKFLOW.md` - recurring local-agent, cloud-agent, and review workflow.
 - `QUALITY_CHECKLIST.md` - pre-review, pre-PR, and pre-release quality gate.
@@ -190,7 +190,20 @@ When designing or implementing coordination features:
 
 ## Status Workflow
 
-`status.yaml` is a pre-API fallback for shared state. Prefer project status entries via the API (`POST /api/projects/{id}/status`) for new status records. Use `status.yaml` when the API is unavailable or for human-readable overrides.
+Project status is tracked via the workbench API. Use `awb status` commands — do not edit `status.yaml`.
+
+```bash
+# View current status
+awb status show
+
+# Create a new status record (e.g. on session start)
+awb status create --status active --phase <phase> --summary "starting work on X"
+
+# Update an existing record (requires --version from the current record)
+awb status update <id> --status blocked --reason "waiting on Y" --version <n>
+```
+
+Valid status values:
 
 - `active` - work may proceed.
 - `paused` - do not perform automated work.
@@ -199,7 +212,7 @@ When designing or implementing coordination features:
 - `error` - repo or automation state is unsafe; stop and request recovery.
 - `stopped` - project is complete or intentionally shut down.
 
-Automated agents should set `working` only while actively editing, and return to `active`, `blocked`, `error`, or `stopped` before ending a run.
+Automated agents should set `working` before editing and return to `active`, `blocked`, `error`, or `stopped` before ending a run. If `awb-api.taylor.lan` is unreachable, fall back to `status.yaml` as a last resort.
 
 ## Task Selection
 
@@ -250,7 +263,7 @@ Markdown files are a context bridge — useful for human and agent onboarding wh
 |---|---|---|---|
 | `MEMORY.md` | Durable project narrative: decisions, milestones, architecture notes, open questions, blockers, run log | Any agent | After each meaningful session; whenever a key decision is made or reversed |
 | `TODO.md` | Historical task reference; read-only after dogfood transition (2026-05-23) | No one | Never — use `awb` or the API for new tasks |
-| `status.yaml` | Pre-API fallback for shared workflow state | Any agent | When the API is unavailable or a human-readable override is needed |
+| `status.yaml` | Last-resort fallback only — deprecated | Any agent | Only when `awb-api.taylor.lan` is unreachable; use `awb status` instead |
 | `.agents/chat/*.md` | High-detail per-session logs (local only, gitignored) | Agent that ran the session | After each meaningful work session |
 | `docs/reviews/*.md` | Formal cloud/human review artifacts | Reviewer | When a review is complete |
 

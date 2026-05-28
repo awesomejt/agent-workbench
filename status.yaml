@@ -1,17 +1,16 @@
-# status.yaml
-# Controls the local agent loop. Tracked by Git so changes propagate to all
-# clones and agents. Agents must pull the latest before reading this file.
+# status.yaml — DEPRECATED
 #
-# status values:
-#   active  - agent works normally
-#   paused  - do not perform automated work
-#   blocked - waiting on a human decision, credential, source file, or validation
-#   stopped - project complete or intentionally shut down
-#   error   - severe repo or automation failure; stop and request recovery
-#   working - agent is actively changing the repo; other agents should skip
+# Project status is now tracked via the Agent Workbench API.
+# Use the awb CLI instead of editing this file:
+#
+#   awb status show                          # view current status
+#   awb status create --status active ...    # create a new record
+#   awb status update <id> --version <n> ... # update existing record
+#
+# This file is kept as a last-resort fallback only, for when
+# awb-api.taylor.lan is unreachable. Do not update it in normal operation.
 
 status: "active"
-phase: "implementation"
-reason: "Codex cloud review complete; pre-dogfood fixes triaged into TODO; next: P0 fixes (gitignore/cli-internal/render rename, nil deref, double-error, api-url trim)"
-worker: "claude-sonnet-4-6"
-updated: "2026-05-23T00:10:00-06:00"
+phase: "review"
+reason: "Deprecated — authoritative status is in awb-api.taylor.lan. See: awb status show --project agent-workbench"
+updated: "2026-05-28"

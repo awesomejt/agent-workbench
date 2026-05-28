@@ -130,6 +130,18 @@ def claim_task(
     now = datetime.now(UTC)
     new_until = now + timedelta(seconds=duration)
 
+    # Reject if any incomplete task blocks this one (same predicate as available=true filter)
+    blocker_count = db.session.scalar(
+        select(func.count())
+        .select_from(TaskRelationship)
+        .join(Task, Task.id == TaskRelationship.from_task_id)
+        .where(TaskRelationship.to_task_id == task_id)
+        .where(TaskRelationship.relationship_type == "blocks")
+        .where(Task.status != "completed")
+    )
+    if blocker_count:
+        raise LeaseConflictError("Task has incomplete blocking predecessors and cannot be claimed")
+
     # Succeed if task is pending (normal) or in_progress with an expired lease (recovery)
     result = db.session.execute(
         update(Task)

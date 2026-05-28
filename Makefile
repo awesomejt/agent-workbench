@@ -167,7 +167,7 @@ integration-test:
 	exit $$CODE
 
 smoke:
-	@./scripts/smoke-curl.sh 2>/dev/null || echo "smoke-curl.sh not yet implemented"
+	@./scripts/smoke-curl.sh
 
 probe-servers:
 	AWB_API_URL=http://localhost:8000 python3 scripts/probe-ai-servers.py

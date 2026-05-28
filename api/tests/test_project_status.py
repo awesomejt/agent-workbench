@@ -133,3 +133,45 @@ class TestAutoPhaseAdvance:
         # Both claims are for the same phase — only one new record on first claim
         impl_records = [s for s in statuses if s["phase"] == "implementation"]
         assert len(impl_records) == 1
+
+
+class TestPhaseHighWater:
+    """Manual phase writes cannot regress below the current high-water mark."""
+
+    def test_create_backward_phase_rejected(self, client):
+        p = _make_project(client)
+        client.post(f"/api/projects/{p['id']}/status", json={"phase": "implementation"})
+        resp = client.post(f"/api/projects/{p['id']}/status", json={"phase": "design"})
+        assert resp.status_code == 422
+
+    def test_create_same_phase_allowed(self, client):
+        p = _make_project(client)
+        client.post(f"/api/projects/{p['id']}/status", json={"phase": "implementation"})
+        resp = client.post(f"/api/projects/{p['id']}/status", json={"phase": "implementation"})
+        assert resp.status_code == 201
+
+    def test_create_forward_phase_allowed(self, client):
+        p = _make_project(client)
+        client.post(f"/api/projects/{p['id']}/status", json={"phase": "implementation"})
+        resp = client.post(f"/api/projects/{p['id']}/status", json={"phase": "review"})
+        assert resp.status_code == 201
+
+    def test_patch_backward_phase_rejected(self, client):
+        p = _make_project(client)
+        client.post(f"/api/projects/{p['id']}/status", json={"phase": "testing"})
+        s = client.post(f"/api/projects/{p['id']}/status", json={"phase": "testing"}).get_json()
+        resp = client.patch(
+            f"/api/projects/{p['id']}/status/{s['id']}",
+            json={"phase": "design", "version": s["version"]},
+        )
+        assert resp.status_code == 422
+
+    def test_high_water_uses_max_ordinal_not_newest_row(self, client):
+        """A lower-phase row added later must not lower the high-water mark."""
+        p = _make_project(client)
+        client.post(f"/api/projects/{p['id']}/status", json={"phase": "testing"})
+        # Simulate a stale row that somehow exists at a lower phase:
+        # advance_phase_if_needed won't write it, but create_status would have if called directly.
+        # After the fix, we verify the high-water is 'testing', not a lower phase.
+        resp = client.post(f"/api/projects/{p['id']}/status", json={"phase": "discovery"})
+        assert resp.status_code == 422

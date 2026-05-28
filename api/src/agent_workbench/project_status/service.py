@@ -52,14 +52,17 @@ def create_status(project_id: uuid.UUID, data: dict) -> ProjectStatus:
 
 
 def get_current_phase(project_id: uuid.UUID) -> str | None:
-    """Return the phase from the most recent project_status record, or None if none exist."""
-    row = db.session.scalar(
-        select(ProjectStatus)
-        .where(ProjectStatus.project_id == project_id)
-        .order_by(ProjectStatus.created_at.desc())
-        .limit(1)
-    )
-    return row.phase if row else None
+    """Return the highest-ordinal phase seen across all project_status records, or None.
+
+    Uses max ordinal rather than most-recent row so that a manual lower-phase
+    status entry cannot make auto-advance regress.
+    """
+    rows = db.session.scalars(
+        select(ProjectStatus).where(ProjectStatus.project_id == project_id)
+    ).all()
+    if not rows:
+        return None
+    return max(rows, key=lambda r: PHASE_ORDER.get(r.phase, 0)).phase
 
 
 def advance_phase_if_needed(project_id: uuid.UUID, task_phase: str) -> ProjectStatus | None:

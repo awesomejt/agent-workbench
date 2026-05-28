@@ -78,6 +78,18 @@ def create_status(project_id: str):
     if "phase" in data and data["phase"] not in _VALID_PHASES:
         abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
 
+    if "phase" in data:
+        current_phase = service.get_current_phase(project.id)
+        if current_phase:
+            new_ord = service.PHASE_ORDER.get(data["phase"], 0)
+            cur_ord = service.PHASE_ORDER.get(current_phase, 0)
+            if new_ord < cur_ord:
+                abort(
+                    422,
+                    f"Phase '{data['phase']}' would move project backward"
+                    f" from '{current_phase}'; project phase is forward-only",
+                )
+
     section_id = data.get("project_section_id")
     if section_id:
         try:
@@ -115,6 +127,18 @@ def update_status(project_id: str, status_id: str):
 
     if "phase" in data and data["phase"] not in _VALID_PHASES:
         abort(422, f"Invalid phase '{data['phase']}'; valid: {_VALID_PHASES_STR}")
+
+    if "phase" in data:
+        current_phase = service.get_current_phase(project.id)
+        if current_phase:
+            new_ord = service.PHASE_ORDER.get(data["phase"], 0)
+            cur_ord = service.PHASE_ORDER.get(current_phase, 0)
+            if new_ord < cur_ord:
+                abort(
+                    422,
+                    f"Phase '{data['phase']}' would move project backward"
+                    f" from '{current_phase}'; project phase is forward-only",
+                )
 
     status = service.update_status(status, data)
     db.session.commit()

@@ -81,6 +81,11 @@ class TestCreateProject:
         resp = _create(client, project_type="library")
         assert resp.status_code == 422
 
+    def test_default_project_type_is_code(self, client):
+        resp = _create(client)
+        assert resp.status_code == 201
+        assert resp.get_json()["project_type"] == "code"
+
 
 class TestGetProject:
     def test_returns_project(self, client):

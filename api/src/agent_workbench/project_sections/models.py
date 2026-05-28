@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, Uuid
+from sqlalchemy import JSON, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ..database import SCHEMA, db
@@ -19,6 +19,9 @@ def _now() -> datetime:
 
 class ProjectSection(db.Model):  # type: ignore[name-defined]
     __tablename__ = "project_sections"
+    __table_args__ = (
+        UniqueConstraint("project_id", "slug", name="uq_project_sections_project_slug"),
+    )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4)
     project_id: Mapped[uuid.UUID] = mapped_column(

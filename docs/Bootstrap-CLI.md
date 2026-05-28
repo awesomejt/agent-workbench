@@ -67,4 +67,4 @@ When the API is not yet running (Phase 1 fallback), use the bootstrap scripts in
 5. `./scripts/task-heartbeat <task-id>` during longer work.
 6. `./scripts/task-complete <task-id>` or `./scripts/task-block <task-id> --note "..."`.
 
-In either case, agents must still update `TODO.md`, `MEMORY.md`, docs, and tests according to `AGENTS.md` and `AGENT_WORKFLOW.md` before claiming implementation is done.
+In either case, agents must still update `MEMORY.md`, docs, and tests according to `AGENTS.md` and `AGENT_WORKFLOW.md` before claiming implementation is done. `TODO.md` is a read-only historical reference; do not update it.

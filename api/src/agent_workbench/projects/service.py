@@ -26,7 +26,7 @@ def create_project(data: dict) -> Project:
     project = Project(
         name=data["name"],
         slug=data["slug"],
-        project_type=data.get("project_type", "development"),
+        project_type=data.get("project_type", "code"),
         git_remote_url=data.get("git_remote_url"),
         local_path=data.get("local_path"),
         environment=data.get("environment", "local"),

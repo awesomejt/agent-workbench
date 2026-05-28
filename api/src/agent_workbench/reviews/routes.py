@@ -7,6 +7,7 @@ from flask import Blueprint, abort, jsonify, request
 
 from ..database import db
 from ..projects import service as projects_service
+from ..tasks import service as tasks_service
 from . import service
 from .models import Review
 
@@ -88,9 +89,14 @@ def create_review(project_id: str):
     linked_task_id = data.get("linked_task_id")
     if linked_task_id:
         try:
-            uuid.UUID(linked_task_id)
+            tid = uuid.UUID(linked_task_id)
         except ValueError:
             abort(400, "linked_task_id must be a valid UUID")
+        task = tasks_service.get_task(tid)
+        if task is None:
+            abort(422, f"Task {linked_task_id} not found")
+        if task.project_id != project.id:
+            abort(422, "linked_task_id must belong to the same project as this review")
 
     review = service.create_review(project.id, data)
     db.session.commit()
@@ -127,9 +133,14 @@ def update_review(review_id: str):
     linked_task_id = data.get("linked_task_id")
     if linked_task_id:
         try:
-            uuid.UUID(linked_task_id)
+            tid = uuid.UUID(linked_task_id)
         except ValueError:
             abort(400, "linked_task_id must be a valid UUID")
+        task = tasks_service.get_task(tid)
+        if task is None:
+            abort(422, f"Task {linked_task_id} not found")
+        if task.project_id != review.project_id:
+            abort(422, "linked_task_id must belong to the same project as this review")
 
     review = service.update_review(review, data)
     db.session.commit()

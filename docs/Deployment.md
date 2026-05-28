@@ -121,7 +121,7 @@ Create a secrets file outside the repo (never in Git):
 ```bash
 # /etc/agent-workbench/env  (on the deployment host)
 APP_ENV=prod
-DATABASE_URL=postgresql+psycopg://agent_workbench:<pass>@postgresql.taylor.lan/agent_workbench_prod
+DATABASE_URL=postgresql+psycopg://awb:<pass>@postgresql.taylor.lan/agent_workbench
 SECRET_KEY=<strong-random-hex>
 API_HOST=0.0.0.0
 API_PORT=8000

@@ -238,3 +238,27 @@ class TestBlocksAvailableFilter:
         available_ids = {t["id"] for t in resp.get_json()["items"]}
         assert child["id"] in available_ids
         assert parent["id"] in available_ids
+
+    def test_direct_claim_blocked_by_incomplete_predecessor(self, client):
+        """POST /api/tasks/{id}/claim must reject tasks with incomplete 'blocks' predecessors."""
+        p = _make_project(client)
+        blocker = _make_task(client, p["id"], title="blocker")
+        dependent = _make_task(client, p["id"], title="dependent")
+        _make_rel(client, blocker["id"], dependent["id"], "blocks")
+
+        resp = client.post(f"/api/tasks/{dependent['id']}/claim", json={"agent_name": "agent-a"})
+        assert resp.status_code == 409
+
+    def test_direct_claim_allowed_after_blocker_completes(self, client):
+        """Claim succeeds once the blocking predecessor is completed."""
+        p = _make_project(client)
+        blocker = _make_task(client, p["id"], title="blocker")
+        dependent = _make_task(client, p["id"], title="dependent")
+        _make_rel(client, blocker["id"], dependent["id"], "blocks")
+
+        # Complete the blocker first
+        client.post(f"/api/tasks/{blocker['id']}/claim", json={"agent_name": "agent-a"})
+        client.post(f"/api/tasks/{blocker['id']}/complete", json={"agent_name": "agent-a"})
+
+        resp = client.post(f"/api/tasks/{dependent['id']}/claim", json={"agent_name": "agent-a"})
+        assert resp.status_code == 200

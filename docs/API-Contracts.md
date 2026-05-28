@@ -195,6 +195,9 @@ Key fields:
 - `status`
 - `priority`
 - `phase`
+- `role` — agent role hint (`researcher`, `planner`, `implementer`, `writer`, `reviewer`, `tester`, `orchestrator`)
+- `model_tier` — `local` or `cloud`
+- `estimated_duration_seconds`
 - `dependencies`
 - `assignee_type`, `assignee_name`
 - `claimed_by`, `claimed_until`, `lease_version`
@@ -202,9 +205,16 @@ Key fields:
 - `completion_evidence`
 - `created_at`, `updated_at`, `version`
 
+Relationship routes (blocks, subtask_of, duplicates, relates_to):
+
+- `GET /api/tasks/{task_id}/relationships`
+- `POST /api/tasks/{task_id}/relationships`
+- `DELETE /api/tasks/{task_id}/relationships/{rel_id}`
+
 Transition requirements:
 
 - Claim must be atomic and must fail if an unexpired lease exists for another agent.
+- Claim must also fail if any incomplete `blocks` predecessor exists.
 - Heartbeat must validate the current lease holder and extend `claimed_until`.
 - Complete/block must validate lease ownership or a documented override policy.
 - Every transition appends an event.
@@ -269,6 +279,17 @@ Key fields:
 - `payload`
 - `created_at`
 
+### AI Servers
+
+Canonical routes:
+
+- `GET /api/ai-servers`
+- `POST /api/ai-servers`
+- `GET /api/ai-servers/{server_id}`
+- `PATCH /api/ai-servers/{server_id}`
+
+Key fields: `id`, `name`, `provider`, `model_id`, `base_url`, `is_available`, `last_probed_at`, `created_at`, `updated_at`, `version`.
+
 ### Reviews
 
 Canonical routes:
@@ -317,5 +338,5 @@ Bootstrap scripts should keep their current command names while their backend ch
 
 - **Flat convenience routes:** Not for MVP. All routes are canonical multi-project. Per-project context is passed via URL or env config on the CLI side.
 - **OpenAPI strategy:** Deferred to post-MVP. `docs/API-Contracts.md` is canonical through MVP; `flask-smorest` is the target post-MVP generator.
-- **Status enum values:** Implemented. Tasks: `new`, `pending`, `in_progress`, `blocked`, `completed`, `rejected`, `duplicate`. Runs: `pending`, `running`, `completed`, `failed`. Reviews: `draft`, `published`, `accepted`, `rejected`. Project status uses `status` (e.g., `active`, `paused`, `blocked`) plus `phase` (`discovery`, `design`, `implementation`, `testing`, `review`).
+- **Status enum values:** Implemented. Tasks: `new`, `pending`, `in_progress`, `blocked`, `completed`, `rejected`, `duplicate`. Runs: `pending`, `running`, `completed`, `failed`. Reviews: `open`, `resolved`, `deferred` (severity: `critical`, `high`, `medium`, `low`, `info`). Project status uses `status` (e.g., `active`, `paused`, `blocked`) plus `phase` (`discovery`, `design`, `implementation`, `testing`, `review`).
 - **Event storage:** Implemented as database rows immediately (append-only `events` table). Structured logging fallback and retention policy are deferred to post-MVP.

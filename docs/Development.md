@@ -258,7 +258,7 @@ awb task complete <id> --agent claude-sonnet-4-6
 awb run complete <run-id> --summary "done"
 ```
 
-During the dogfood transition, `TODO.md` remains the authoritative human-readable record. Update both `awb` (via CLI) and `TODO.md` when completing tasks, until the workflow is fully validated.
+`awb` is the authoritative task source. `TODO.md` is a read-only historical reference; do not update it.
 
 ## Code Quality Gates
 

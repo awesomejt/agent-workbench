@@ -62,7 +62,7 @@ _check "GET /health returns 200" 200 "$BASE/health"
 _check "GET /api/projects returns 200" 200 "$BASE/api/projects"
 PROJECT_SLUG="smoke-$RUN_ID"
 PROJECT_RESP=$(_post_capture "$BASE/api/projects" \
-    "{\"name\":\"Smoke $RUN_ID\",\"slug\":\"$PROJECT_SLUG\",\"project_type\":\"generic\",\"environment\":\"local\"}")
+    "{\"name\":\"Smoke $RUN_ID\",\"slug\":\"$PROJECT_SLUG\",\"project_type\":\"code\",\"environment\":\"local\"}")
 PROJECT_STATUS=$(echo "$PROJECT_RESP" | head -1)
 PROJECT_ID=$(echo "$PROJECT_RESP" | tail -n +2 | python3 -c "import sys,json; print(json.load(sys.stdin)['id'])" 2>/dev/null || echo "")
 if [[ "$PROJECT_STATUS" == "201" && -n "$PROJECT_ID" ]]; then

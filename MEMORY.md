@@ -8,11 +8,10 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Current Status
 
-- Current phase: dogfood — API/CLI MVP is live, all Codex P0–P2 review findings resolved, export commands added.
-- Latest session (2026-05-27): All Codex P0–P2 review findings resolved (smoke target masking, blocks bypass in claim, phase regression, invalid project_type default, section slug uniqueness, review linked_task_id validation, docs contract drift). Export commands `awb export todo` and `awb export yaml` added. Onboarding script extended to accept `.yaml`/`.yml` files. Per-repo `.awb/config.yaml` convention established for maven-starter, opencode-setup, and agent-workbench.
-- Validation snapshot (2026-05-27): `make validate` passed, `make test` (231 passed), `make smoke` (6/6 passed, exit code now propagates), `make cli-vet`, `make build-cli`, `make cli-test` all passed.
-- Dogfood transition complete: `awb` is the primary task source; `TODO.md` is read-only reference.
-- Queue snapshot (2026-05-27): All Codex review findings resolved; no remaining open blockers from the 2026-05-25 review.
+- Current phase: production — API live at `https://awb-api.taylor.lan`, all projects registered, status.yaml retired.
+- Latest session (2026-05-28): Migrated all repos from `http://localhost:8000` to `https://awb-api.taylor.lan`. Registered agent-workbench and opencode-setup on prod AWB (maven-starter was already registered). Migrated opencode-setup TODO items (9 tasks created). Updated AWB task management docs across all three repos. Deprecated `status.yaml` in all repos in favour of `awb status`. Current AWB status: `active / review`.
+- Validation snapshot (2026-05-27): `make validate` passed, `make test` (231 passed), `make smoke` (6/6), `make cli-vet`, `make build-cli`, `make cli-test` all passed.
+- Dogfood transition complete: `awb` is the primary task and status source; `TODO.md` and `status.yaml` are read-only/fallback references.
 - Current blocker: non-local database credential/user details still require human confirmation before dev/stage/prod migration/deployment.
 
 ## Key Decisions
@@ -118,6 +117,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-28 - claude-sonnet-4-6
+
+- Task: Migrate all repos to prod AWB; retire status.yaml; update docs.
+- Files changed: `.awb/config.yaml` (agent-workbench, maven-starter, opencode-setup — all updated to https://awb-api.taylor.lan); `onboarding/archive/agent-workbench.md` (new — registered on prod); opencode-setup registered via API; `AGENTS.md`, `AGENT_WORKFLOW.md` (all three repos — awb status commands, per-repo config docs, prod URL); `status.yaml` (all three repos — deprecated with fallback notice); `MEMORY.md` (all three repos — current status and run log updated).
+- Validation: `awb project list` (3 projects visible), `awb status show` (active/review for agent-workbench), `awb task list` (opencode-setup: 9 tasks; maven-starter: 4 tasks).
+- Result: All agent-workbench task tracking now uses prod AWB. Local Compose stack no longer needed for coordination. status.yaml retired as primary state store.
+- Blockers or follow-up: Non-local DB credential confirmation still outstanding.
 
 ### 2026-05-27 - claude-sonnet-4-6 (session 12)
 

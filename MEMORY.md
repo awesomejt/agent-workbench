@@ -8,16 +8,22 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 
 ## Current Status
 
-- Current phase: dogfood — API/CLI MVP is live enough for self-coordination, with follow-up review findings recorded.
-- Latest CLI additions (2026-05-27): `awb task create` and `awb init` added; per-repo `.awb/config.yaml` convention established; `requireFlag` Cobra+Viper flag-priority bug fixed.
-- Latest review milestone (2026-05-25 Codex): formal project review recorded in `docs/reviews/2026-05-25-1632-codex-project-review.md`. Main risks: `awb --project` flag handling (now fixed), masked smoke failures, direct claim bypass of `blocks` dependencies, project phase high-water drift, invalid default `project_type`, section/review validation gaps, and docs contract drift.
-- Validation snapshot (2026-05-25 Codex): `make validate`, `make test` (211 passed), `make cli-vet`, `make build-cli`, `make cli-test`, `make cli-clean-build-check`, and `npm run build` passed. `make smoke` reported 1 failing smoke check but exited successfully because the Makefile target masks smoke script failures.
+- Current phase: dogfood — API/CLI MVP is live, all Codex P0–P2 review findings resolved, export commands added.
+- Latest session (2026-05-27): All Codex P0–P2 review findings resolved (smoke target masking, blocks bypass in claim, phase regression, invalid project_type default, section slug uniqueness, review linked_task_id validation, docs contract drift). Export commands `awb export todo` and `awb export yaml` added. Onboarding script extended to accept `.yaml`/`.yml` files. Per-repo `.awb/config.yaml` convention established for maven-starter, opencode-setup, and agent-workbench.
+- Validation snapshot (2026-05-27): `make validate` passed, `make test` (231 passed), `make smoke` (6/6 passed, exit code now propagates), `make cli-vet`, `make build-cli`, `make cli-test` all passed.
 - Dogfood transition complete: `awb` is the primary task source; `TODO.md` is read-only reference.
-- Queue snapshot (2026-05-25 Codex): `awb task list --available` for `agent-workbench` returned no available tasks.
+- Queue snapshot (2026-05-27): All Codex review findings resolved; no remaining open blockers from the 2026-05-25 review.
 - Current blocker: non-local database credential/user details still require human confirmation before dev/stage/prod migration/deployment.
 
 ## Key Decisions
 
+- `awb export todo` generates a `TODO.md` grouped by phase (with checkboxes) from live task data. `awb export yaml` generates a structured YAML snapshot of the project and all tasks. Both accept `--output -` to print to stdout and page through all tasks automatically. AWB remains the source of truth; exports are for offline/public use only.
+- Onboarding script (`scripts/onboard.py`) accepts three file formats: `*.md` (YAML front matter + body), `*.yaml`, and `*.yml` (pure YAML, no body). Projects are always processed before tasks in the same batch. Template files (`*.template.md`, `*.template.yaml`) are always ignored.
+- The `make smoke` target now propagates non-zero exits from `smoke-curl.sh`; smoke failures are no longer masked. `smoke-curl.sh` uses `project_type: code` (matching the API's default) rather than the previously incorrect `generic`.
+- Phase regression is rejected at the API level: `POST /api/projects/{id}/status` and the equivalent PATCH both return 422 if the incoming phase has a lower ordinal than the current high-water mark. `get_current_phase()` returns the max-ordinal phase across all status rows, not the most-recent row.
+- Atomic task claim now checks for incomplete `blocks` predecessors before the `UPDATE`. A task with uncompleted blockers returns 409 `LeaseConflictError`.
+- Section slug uniqueness is enforced by a `UniqueConstraint("project_id", "slug")` on `project_sections` and a corresponding Alembic migration. Duplicate slugs within the same project return 409.
+- `reviews.linked_task_id` is validated on create and update: task must exist and must belong to the same project as the review; violations return 422.
 - `awb task create` is the correct way for agents to record newly-discovered work mid-session; editing `TODO.md` directly is no longer permitted.
 - Per-repo config lives at `.awb/config.yaml` (created by `awb init --project <slug>`). Config search order: `.awb/config.yaml` → `./config.yaml` → `~/.config/awb/config.*` → `~/.config/agent-workbench/config.*`. An explicit `--flag` always wins over config-file values.
 - `requireFlag` was fixed to check Cobra's `f.Changed` before calling `viper.GetString` — this resolves the Codex-flagged risk where PersistentFlag values were silently overridden by config-file values when both were present.
@@ -111,6 +117,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-27 - claude-sonnet-4-6 (session 12)
+
+- Task: Resolve all Codex P0–P2 review findings; add export commands; add YAML onboarding; update docs.
+- Files changed: `scripts/smoke-curl.sh` (fix project_type generic→code), `Makefile` (unmask smoke exit), `api/src/agent_workbench/projects/service.py` (default project_type code), `project_status/service.py` (get_current_phase max-ordinal), `project_status/routes.py` (phase regression 422), `tasks/service.py` (blocks predecessor check in claim), `project_sections/models.py` (UniqueConstraint slug), `api/migrations/versions/*_add_unique_constraint_project_sections_slug.py` (new), `reviews/routes.py` (linked_task_id existence + ownership validation); `api/tests/test_projects.py`, `test_project_status.py`, `test_task_relationships.py`, `test_project_sections.py` (new), `test_reviews.py` (new); `docs/API-Contracts.md` (role/model_tier fields, relationships, ai_servers, review status corrections, blocks note); `docs/Development.md` (CLI config section, dogfood workflow, seed-dev description), `docs/Bootstrap-CLI.md` (TODO.md read-only note), `docs/Deployment.md` (prod DB URL fix); `scripts/onboard.py` (YAML/YML format support, template detection, discover helper); `cli/internal/api/types.go` (Role, ModelTier fields), `cli/cmd/export.go` (new parent cmd + listAllTasks), `cli/cmd/export_todo.go` (new), `cli/cmd/export_yaml.go` (new); `.awb/config.yaml` (new in agent-workbench, maven-starter, opencode-setup); `README.md`, `AGENTS.md`, `docs/Development.md`, `docs/Onboarding.md`, `MEMORY.md` (doc updates).
+- Validation: `make validate` passed, `make test` 231 passed (up from 211), `make smoke` 6/6 passed (exit propagates), `make cli-vet`, `make build-cli`, `make cli-test` passed.
+- Result: All 7 Codex P0–P2 findings resolved. Export commands operational. Onboarding accepts YAML files. Per-repo `.awb/config.yaml` committed to 3 repos. Docs fully updated.
+- Blockers or follow-up: non-local DB credential confirmation still outstanding.
 
 ### 2026-05-27 - claude-sonnet-4-6
 

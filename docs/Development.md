@@ -78,14 +78,27 @@ make cli-test               # go test ./...
 
 ## CLI Config
 
-Avoid repeating `--project` and `--agent` on every command by creating a config file:
+**Per-repo config** (preferred) — commit a `.awb/config.yaml` to the repo root so any agent or human working in that directory gets the right project automatically:
+
+```bash
+awb init --project agent-workbench   # writes .awb/config.yaml
+```
+
+```yaml
+# .awb/config.yaml
+project: agent-workbench
+api_url: http://localhost:8000
+```
+
+**User-level config** — covers all repos without their own `.awb/config.yaml`:
 
 ```yaml
 # ~/.config/awb/config.yaml
 api_url: http://localhost:8000
-project: agent-workbench
 agent: claude-sonnet-4-6
 ```
+
+Config resolution order (highest to lowest priority): explicit `--flag` → `AWB_*` env var → `.awb/config.yaml` → `./config.yaml` → `~/.config/awb/config.*`.
 
 The CLI also reads environment variables with the `AWB_` prefix:
 
@@ -153,7 +166,7 @@ AGENT_WORKBENCH_PROD_DATABASE_URL=... make migrate-prod
 
 ### Seed local data
 
-Populate the local database with project/section/task records from `TODO.md` state:
+Populate the local database with seed project/section/task records for development:
 
 ```bash
 make seed-dev       # idempotent — safe to re-run
@@ -225,7 +238,7 @@ cli/
   main.go
 scripts/
   install-awb.sh          installs awb to ~/.local/bin or ~/bin
-  seed_dev.py             seeds local DB from TODO.md state
+  seed_dev.py             seeds local DB with development data
   smoke-curl.sh           curl smoke checks
   task-{next,claim,...}   Markdown-backed bootstrap scripts (Phase 1 fallback)
 docs/
@@ -256,6 +269,10 @@ awb run heartbeat <run-id>
 # Finish
 awb task complete <id> --agent claude-sonnet-4-6
 awb run complete <run-id> --summary "done"
+
+# Export a TODO.md snapshot for offline review or public sharing
+awb export todo
+awb export yaml --output agent-workbench-snapshot.yaml
 ```
 
 `awb` is the authoritative task source. `TODO.md` is a read-only historical reference; do not update it.

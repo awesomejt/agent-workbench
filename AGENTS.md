@@ -43,7 +43,13 @@ awb task block <task-id> --reason "reason"
 awb task create --title "Do the thing" --phase implementation --priority 50
 ```
 
-Set `AWB_API_URL`, `AWB_PROJECT`, and `AWB_AGENT` via environment or `--flag` on each call. The CLI binary is at `cli/builds/awb` in the repo root.
+**Per-repo config** — if `.awb/config.yaml` exists in the working directory it is loaded automatically (no flags required for `project` and `api_url`). Create one with:
+
+```bash
+awb init --project <slug>   # writes .awb/config.yaml
+```
+
+Otherwise set `AWB_API_URL`, `AWB_PROJECT`, and `AWB_AGENT` via environment or `--flag` on each call. The CLI binary is at `cli/builds/awb` in the repo root; install with `make install-cli`.
 
 Task selection order: highest `priority` first, then oldest `created_at`. Prefer tasks with `blocks` relationships unblocked before moving to lower-priority items.
 

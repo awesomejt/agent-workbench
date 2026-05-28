@@ -38,16 +38,23 @@ awb task list --project <slug>
 awb task next --project <slug>          # next available (unlocked) pending task
 
 # Agent task lifecycle
-awb task claim   <id> --agent <name>
+awb task claim     <id> --agent <name>
 awb task heartbeat <id> --agent <name>
 awb task complete  <id> --agent <name>
 awb task block     <id> --agent <name> --reason "why"
+awb task create    --title "..." --phase implementation --priority 50
 
 # Run records (one run per agent session)
-awb run start --project <slug> [--task <id>] [--summary "goal"]
+awb run start     --project <slug> [--task <id>] [--summary "goal"]
 awb run heartbeat <run-id>
 awb run complete  <run-id> [--summary "outcome"]
 awb run fail      <run-id> [--summary "what failed"]
+
+# Export (snapshots for offline use or public repos)
+awb export todo                         # generate TODO.md from live tasks
+awb export yaml                         # generate <slug>-export.yaml snapshot
+awb export todo --output TASKS.md       # custom filename
+awb export yaml --output -              # print to stdout
 
 # Audit trail
 awb event list --project <slug>
@@ -56,20 +63,28 @@ awb status show --project <slug>
 # Administration
 awb agent list
 awb section list --project <slug>
+awb init --project <slug>               # write .awb/config.yaml in the current repo
 ```
 
 Add `--output json` to any command for machine-readable output.
 
-Configure defaults so you don't repeat `--project` and `--agent` every time:
+**Per-repo config** (preferred — run `awb init --project <slug>` to create):
+
+```yaml
+# .awb/config.yaml  (checked into the repo)
+project: agent-workbench
+api_url: http://localhost:8000
+```
+
+**User-level config** (covers all repos without their own `.awb/config.yaml`):
 
 ```yaml
 # ~/.config/awb/config.yaml
 api_url: http://localhost:8000
-project: agent-workbench
 agent: claude-sonnet-4-6
 ```
 
-Or via environment variables: `AWB_API_URL`, `AWB_PROJECT`, `AWB_AGENT`.
+Config resolution order: explicit `--flag` → `AWB_*` env var → `.awb/config.yaml` → `./config.yaml` → `~/.config/awb/config.*`. Environment variables: `AWB_API_URL`, `AWB_PROJECT`, `AWB_AGENT`.
 
 ## Project Structure
 
@@ -89,11 +104,12 @@ db/         Schema bootstrap SQL templates
 | `projects` | `GET/POST /api/projects`, `GET/PATCH /api/projects/<id>` | Project registry |
 | `project_sections` | `/api/projects/<id>/sections` | Sections/modules within a project |
 | `project_status` | `/api/projects/<id>/status` | Status history per project/section |
-| `tasks` | `/api/projects/<id>/tasks`, `/api/tasks/<id>/…` | Tasks, leases, lifecycle |
+| `tasks` | `/api/projects/<id>/tasks`, `/api/tasks/<id>/…` | Tasks, leases, lifecycle, relationships |
 | `agents` | `/api/agents` | Agent registry |
 | `runs` | `/api/runs` | Agent session run records |
 | `events` | `/api/projects/<id>/events`, `POST /api/events` | Append-only audit trail |
 | `reviews` | `/api/projects/<id>/reviews` | Cloud review findings and signoff |
+| `ai_servers` | `/api/ai-servers` | AI server registry and availability probing |
 
 Full contract details: [docs/API-Contracts.md](docs/API-Contracts.md).
 
@@ -120,21 +136,27 @@ make seed-dev       # seed local DB from TODO.md state (idempotent)
 
 ## Onboarding
 
-Human operators can author projects and tasks as Markdown files and have them
+Human operators can author projects and tasks as files and have them
 automatically registered in the workbench via `scripts/onboard.py`.
 
-Each file declares its type in YAML front matter:
+Two file formats are supported:
+
+- **Markdown with YAML front matter** (`*.md`) — front matter between `---` delimiters; body text becomes the task description.
+- **Pure YAML** (`*.yaml`, `*.yml`) — the entire file is the record definition; include `description:` inline if needed.
+
+Each file declares its type:
 
 - **`type: project`** — registers a new project (`POST /api/projects`)
 - **`type: task`** — creates a task in an existing project's inbox (omitting `type` defaults to `task`)
 
-Projects are always processed before tasks in the same run, so a project file
-and its task files can be submitted together in a single batch.
+Projects are always processed before tasks in the same run, so a project file and its task files can be submitted together in a single batch.
 
 ```bash
 # Copy a template and fill it in
 cp onboarding/project.template.md onboarding/my-project.md
 cp onboarding/task.template.md    onboarding/my-task.md
+# or use a YAML file directly
+cp onboarding/task.template.md    onboarding/my-task.yaml
 
 make onboard                        # process ready files (API on localhost:8000)
 ONBOARD_DRY_RUN=1 make onboard     # preview without changes
@@ -143,8 +165,8 @@ make onboard-archive                # move processed files to onboarding/archive
 ```
 
 On success the script sets `status: processed` and appends tracking fields
-(`project_id`/`task_id` and `processed_at`) to the file's front matter.
-Files with `status: draft` and `*.template.md` files are always ignored.
+(`project_id`/`task_id` and `processed_at`). Files with `status: draft`,
+`*.template.md`, and `*.template.yaml` files are always ignored.
 
 For an always-on monitoring setup (e.g. watching an SMB share), install
 self-contained stub scripts — see [docs/Onboarding.md](docs/Onboarding.md)

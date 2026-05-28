@@ -1,8 +1,8 @@
 # Onboarding
 
-The onboarding system lets humans author projects and tasks as Markdown files
-and have them automatically registered in the Agent Workbench API. Files live
-in `onboarding/` and are processed by `scripts/onboard.py`.
+The onboarding system lets humans author projects and tasks as files and have
+them automatically registered in the Agent Workbench API. Files live in
+`onboarding/` and are processed by `scripts/onboard.py`.
 
 Two modes exist:
 
@@ -13,15 +13,33 @@ Two modes exist:
 
 ---
 
+## File Formats
+
+Two file formats are supported and can be mixed in the same batch:
+
+| Format | Extensions | When to use |
+|---|---|---|
+| **Markdown with YAML front matter** | `*.md` | When you want a body (becomes task description) or prefer a readable narrative |
+| **Pure YAML** | `*.yaml`, `*.yml` | For programmatic generation, bulk import, or when no body is needed |
+
+For Markdown files, front matter sits between `---` delimiters at the top of
+the file. For YAML files, the entire file is the record definition — put
+`description:` directly in the YAML if a task description is needed.
+
+Files matching `*.template.md` and `*.template.yaml` are always ignored.
+
+---
+
 ## File Types
 
-Every onboarding file declares its type in YAML front matter. Two types are
+Every onboarding file declares its type in front matter. Two types are
 supported; the type determines which API endpoint is called.
 
 ### `type: project`
 
 Registers a new project via `POST /api/projects`.
 
+**Markdown (`my-project.md`):**
 ```markdown
 ---
 type: project
@@ -35,6 +53,19 @@ environment: local
 default_agent: opencode
 ---
 Optional notes — not sent to the API.
+```
+
+**Pure YAML (`my-project.yaml`):**
+```yaml
+type: project
+status: ready
+name: My Project
+slug: my-project
+project_type: code
+local_path: /shared/projects/dev/my-project
+git_remote_url: https://github.com/org/my-project
+environment: local
+default_agent: opencode
 ```
 
 | Field | Required | Values |
@@ -61,6 +92,7 @@ Creates a task in an existing project's inbox via
 `POST /api/projects/{id}/tasks`. Omitting `type` defaults to `task` for
 backward compatibility with files created before the `type` field existed.
 
+**Markdown (`my-task.md`):**
 ```markdown
 ---
 type: task
@@ -75,6 +107,19 @@ priority: 7
 Describe the task here. This body becomes the task description.
 ```
 
+**Pure YAML (`my-task.yaml`):**
+```yaml
+type: task
+status: ready
+title: Write integration tests
+project: my-project
+phase: testing
+role: tester
+model_tier: local
+priority: 7
+description: Describe the task here. Description must be inline for YAML files.
+```
+
 | Field | Required | Values |
 |---|---|---|
 | `type` | no | `task` (default when omitted) |
@@ -85,6 +130,7 @@ Describe the task here. This body becomes the task description.
 | `role` | no | `researcher` · `planner` · `implementer` · `writer` · `reviewer` · `tester` · `orchestrator` |
 | `model_tier` | no | `cloud` · `local` (default: `cloud`) |
 | `priority` | no | integer, higher = more urgent (default: `5`) |
+| `description` | no | task description; for YAML files use this field; for Markdown files the body text is used |
 
 On success the script appends:
 ```yaml
@@ -116,7 +162,7 @@ in a single batch.
 
 ```mermaid
 flowchart TD
-    A[scan onboarding/*.md\nexclude *.template.md] --> B{partition by type}
+    A[scan onboarding/\n*.md *.yaml *.yml\nexclude *.template.*] --> B{partition by type}
     B -->|type: project| C[project files]
     B -->|type: task\nor no type| D[task files]
     B -->|unknown type| E[error — logged\nskipped]
@@ -148,13 +194,14 @@ into `onboarding/archive/`. This keeps the working directory tidy without
 losing the record of what was created.
 
 `onboarding/archive/` is created automatically on the first run. Template
-files (`*.template.md`) are never touched. If a destination filename already
+files (`*.template.md`, `*.template.yaml`) are never touched. Both Markdown
+and YAML files are archived by the same pass. If a destination filename already
 exists in the archive, a numeric suffix is appended (`.1`, `.2`, …) to avoid
 silent overwrites.
 
 ```mermaid
 flowchart LR
-    A[scan onboarding/*.md\nexclude *.template.md] --> B{status:\nprocessed?}
+    A[scan onboarding/\n*.md *.yaml *.yml\nexclude *.template.*] --> B{status:\nprocessed?}
     B -->|no| C[skip]
     B -->|yes| D{archive/\nexists?}
     D -->|no| E[mkdir archive/]

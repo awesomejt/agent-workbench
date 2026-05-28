@@ -10,6 +10,8 @@ type Task struct {
 	Status                   string  `json:"status"`
 	Priority                 int     `json:"priority"`
 	Phase                    string  `json:"phase"`
+	Role                     *string `json:"role"`
+	ModelTier                *string `json:"model_tier"`
 	AssigneeType             *string `json:"assignee_type"`
 	AssigneeName             *string `json:"assignee_name"`
 	EstimatedDurationSeconds *int    `json:"estimated_duration_seconds"`

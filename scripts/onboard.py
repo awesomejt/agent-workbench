@@ -3,9 +3,25 @@
 # dependencies = ["pyyaml", "requests"]
 # ///
 """
-Onboarding tool — scans the onboarding/ folder for Markdown files with YAML
-front matter and creates projects and tasks in the Agent Workbench API for any
+Onboarding tool — scans the onboarding/ folder for files with project/task
+definitions and creates projects and tasks in the Agent Workbench API for any
 file whose status is "ready".
+
+Two file formats are supported:
+
+  Markdown with YAML front matter (*.md):
+    ---
+    type:   project | task
+    status: draft | ready | processed
+    ...
+    ---
+    Optional body text used as task description.
+
+  Pure YAML (*.yaml / *.yml):
+    type:   project | task
+    status: draft | ready | processed
+    ...
+    (No body; description must be in the front matter as a 'description' key.)
 
 Usage:
   uv run scripts/onboard.py [--onboarding-dir DIR] [--api-url URL] [--dry-run]
@@ -25,16 +41,17 @@ task files can be submitted together in a single batch.
   default_agent: default agent name
 
 --- type: task front matter (type may be omitted; defaults to task) ---
-  type:       task                              (optional, default)
-  status:     draft | ready | processed        (required)
-  title:      task title                        (required)
-  project:    project slug                      (required)
-  phase:      discovery | design | implementation | testing | review
-  role:       researcher | planner | implementer | writer | reviewer | tester | orchestrator
-  model_tier: cloud | local
-  priority:   integer (default 5, higher = more urgent)
+  type:        task                             (optional, default)
+  status:      draft | ready | processed       (required)
+  title:       task title                       (required)
+  project:     project slug                     (required)
+  phase:       discovery | design | implementation | testing | review
+  role:        researcher | planner | implementer | writer | reviewer | tester | orchestrator
+  model_tier:  cloud | local
+  priority:    integer (default 5, higher = more urgent)
+  description: task description (required for YAML files; Markdown files may use body text)
 
-Files matching *.template.md are always ignored.
+Files matching *.template.md / *.template.yaml are always ignored.
 On success each file is rewritten with status: processed plus tracking fields
 added to the front matter.
 """
@@ -62,8 +79,34 @@ _ca_bundle: str | bool = (
 _session = requests.Session()
 _session.verify = _ca_bundle
 
+_YAML_EXTS = {".yaml", ".yml"}
+_MD_EXT = ".md"
 
-def parse_front_matter(text: str) -> tuple[dict, str]:
+
+# ── file I/O ─────────────────────────────────────────────────────────────────
+
+def _is_yaml(path: Path) -> bool:
+    return path.suffix.lower() in _YAML_EXTS
+
+
+def read_file(path: Path) -> tuple[dict, str]:
+    """Return (front_matter, body) for a Markdown or YAML onboarding file."""
+    text = path.read_text()
+    if _is_yaml(path):
+        data = yaml.safe_load(text) or {}
+        return data, ""
+    return _parse_md_front_matter(text)
+
+
+def write_file(path: Path, fm: dict, body: str) -> None:
+    """Write updated front matter (and optional body) back to the file."""
+    if _is_yaml(path):
+        path.write_text(yaml.dump(fm, default_flow_style=False, allow_unicode=True, sort_keys=False))
+    else:
+        _write_md_front_matter(path, fm, body)
+
+
+def _parse_md_front_matter(text: str) -> tuple[dict, str]:
     if not text.startswith("---"):
         return {}, text
     end = text.find("\n---", 3)
@@ -74,10 +117,25 @@ def parse_front_matter(text: str) -> tuple[dict, str]:
     return data, body
 
 
-def write_front_matter(path: Path, data: dict, body: str) -> None:
+def _write_md_front_matter(path: Path, data: dict, body: str) -> None:
     fm = yaml.dump(data, default_flow_style=False, allow_unicode=True, sort_keys=False)
     path.write_text(f"---\n{fm}---\n\n{body}")
 
+
+def _is_template(path: Path) -> bool:
+    name = path.name
+    return name.endswith(".template.md") or name.endswith(".template.yaml") or name.endswith(".template.yml")
+
+
+def _discover_files(onboarding_dir: Path) -> list[Path]:
+    """Return all onboarding files (Markdown and YAML), sorted, templates excluded."""
+    files: list[Path] = []
+    for ext in ("*.md", "*.yaml", "*.yml"):
+        files.extend(onboarding_dir.glob(ext))
+    return sorted(f for f in files if not _is_template(f))
+
+
+# ── API helpers ───────────────────────────────────────────────────────────────
 
 def get_project_id(api_url: str, slug: str) -> str | None:
     resp = _session.get(f"{api_url}/api/projects", timeout=10)
@@ -93,17 +151,9 @@ def api_create_project(api_url: str, fm: dict) -> dict:
         "name": fm["name"],
         "slug": fm["slug"],
     }
-    if fm.get("project_type"):
-        payload["project_type"] = fm["project_type"]
-    if fm.get("local_path"):
-        payload["local_path"] = fm["local_path"]
-    if fm.get("git_remote_url"):
-        payload["git_remote_url"] = fm["git_remote_url"]
-    if fm.get("environment"):
-        payload["environment"] = fm["environment"]
-    if fm.get("default_agent"):
-        payload["default_agent"] = fm["default_agent"]
-
+    for field in ("project_type", "local_path", "git_remote_url", "environment", "default_agent"):
+        if fm.get(field):
+            payload[field] = fm[field]
     resp = _session.post(f"{api_url}/api/projects", json=payload, timeout=10)
     resp.raise_for_status()
     return resp.json()
@@ -124,7 +174,6 @@ def api_create_task(api_url: str, project_id: str, fm: dict, body: str) -> dict:
         payload["model_tier"] = fm["model_tier"]
     if fm.get("priority") is not None:
         payload["priority"] = int(fm["priority"])
-
     resp = _session.post(
         f"{api_url}/api/projects/{project_id}/tasks",
         json=payload,
@@ -134,17 +183,16 @@ def api_create_task(api_url: str, project_id: str, fm: dict, body: str) -> dict:
     return resp.json()
 
 
-def process_project_file(path: Path, api_url: str, dry_run: bool) -> str:
-    text = path.read_text()
-    fm, body = parse_front_matter(text)
+# ── file processors ───────────────────────────────────────────────────────────
 
-    status = fm.get("status", "draft")
-    if status != "ready":
-        return f"skip ({status})"
+def process_project_file(path: Path, api_url: str, dry_run: bool) -> str:
+    fm, body = read_file(path)
+
+    if fm.get("status", "draft") != "ready":
+        return f"skip ({fm.get('status', 'draft')})"
 
     name = str(fm.get("name", "")).strip()
     slug = str(fm.get("slug", "")).strip()
-
     if not name:
         return "error: missing required field 'name'"
     if not slug:
@@ -162,22 +210,18 @@ def process_project_file(path: Path, api_url: str, dry_run: bool) -> str:
     fm["status"] = "processed"
     fm["project_id"] = project["id"]
     fm["processed_at"] = datetime.now(timezone.utc).isoformat()
-    write_front_matter(path, fm, body)
-
+    write_file(path, fm, body)
     return f"created project {project['id']}"
 
 
 def process_task_file(path: Path, api_url: str, dry_run: bool) -> str:
-    text = path.read_text()
-    fm, body = parse_front_matter(text)
+    fm, body = read_file(path)
 
-    status = fm.get("status", "draft")
-    if status != "ready":
-        return f"skip ({status})"
+    if fm.get("status", "draft") != "ready":
+        return f"skip ({fm.get('status', 'draft')})"
 
     title = str(fm.get("title", "")).strip()
     project_slug = str(fm.get("project", "")).strip()
-
     if not title:
         return "error: missing required field 'title'"
     if not project_slug:
@@ -200,21 +244,17 @@ def process_task_file(path: Path, api_url: str, dry_run: bool) -> str:
     fm["status"] = "processed"
     fm["task_id"] = task["id"]
     fm["processed_at"] = datetime.now(timezone.utc).isoformat()
-    write_front_matter(path, fm, body)
-
+    write_file(path, fm, body)
     return f"created task {task['id']}"
 
 
 def archive_file(path: Path, archive_dir: Path, dry_run: bool) -> str:
-    text = path.read_text()
-    fm, _ = parse_front_matter(text)
-
+    fm, _ = read_file(path)
     if fm.get("status") != "processed":
         return f"skip ({fm.get('status', 'draft')})"
 
     dest = archive_dir / path.name
     if dest.exists():
-        # Avoid silent overwrite — append a counter suffix.
         stem, suffix = path.stem, path.suffix
         counter = 1
         while dest.exists():
@@ -233,11 +273,7 @@ def run_archive(onboarding_dir: Path, dry_run: bool) -> int:
     if not dry_run:
         archive_dir.mkdir(exist_ok=True)
 
-    files = sorted(
-        f for f in onboarding_dir.glob("*.md")
-        if not f.name.endswith(".template.md")
-    )
-
+    files = _discover_files(onboarding_dir)
     if not files:
         print("No onboarding files found.")
         return 0
@@ -249,15 +285,12 @@ def run_archive(onboarding_dir: Path, dry_run: bool) -> int:
         print(f"  {icon} {f.name}: {result}")
         if result.startswith("error"):
             errors += 1
-
     return errors
 
 
 def process_file(path: Path, api_url: str, dry_run: bool) -> str:
-    text = path.read_text()
-    fm, _ = parse_front_matter(text)
+    fm, _ = read_file(path)
     record_type = str(fm.get("type", "task")).strip().lower()
-
     if record_type == "project":
         return process_project_file(path, api_url, dry_run)
     elif record_type == "task":
@@ -266,12 +299,28 @@ def process_file(path: Path, api_url: str, dry_run: bool) -> str:
         return f"error: unknown type '{record_type}'; must be 'project' or 'task'"
 
 
+# ── main ─────────────────────────────────────────────────────────────────────
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Onboard Markdown prompts as workbench projects and tasks")
-    parser.add_argument("--onboarding-dir", default="onboarding", help="Directory to scan (default: onboarding/)")
-    parser.add_argument("--api-url", default="http://localhost:8000", help="Agent Workbench API URL")
-    parser.add_argument("--dry-run", action="store_true", help="Preview without creating records or modifying files")
-    parser.add_argument("--archive", action="store_true", help="Archive pass: move processed files to onboarding/archive/")
+    parser = argparse.ArgumentParser(
+        description="Onboard Markdown/YAML files as workbench projects and tasks"
+    )
+    parser.add_argument(
+        "--onboarding-dir", default="onboarding", help="Directory to scan (default: onboarding/)"
+    )
+    parser.add_argument(
+        "--api-url", default="http://localhost:8000", help="Agent Workbench API URL"
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview without creating records or modifying files",
+    )
+    parser.add_argument(
+        "--archive",
+        action="store_true",
+        help="Archive pass: move processed files to onboarding/archive/",
+    )
     args = parser.parse_args()
 
     onboarding_dir = Path(args.onboarding_dir)
@@ -281,26 +330,21 @@ def main() -> None:
 
     if args.archive:
         errors = run_archive(onboarding_dir, args.dry_run)
-        if errors:
-            sys.exit(1)
-        return
+        sys.exit(1 if errors else 0)
 
     api_url = args.api_url.rstrip("/")
-
-    all_files = sorted(f for f in onboarding_dir.glob("*.md") if not f.name.endswith(".template.md"))
+    all_files = _discover_files(onboarding_dir)
 
     if not all_files:
         print("No onboarding files found.")
         return
 
-    # Partition into projects and tasks so projects are always registered first.
     project_files: list[Path] = []
     task_files: list[Path] = []
     unknown_files: list[Path] = []
 
     for f in all_files:
-        text = f.read_text()
-        fm, _ = parse_front_matter(text)
+        fm, _ = read_file(f)
         record_type = str(fm.get("type", "task")).strip().lower()
         if record_type == "project":
             project_files.append(f)
@@ -330,8 +374,7 @@ def main() -> None:
                 errors += 1
 
     for f in unknown_files:
-        text = f.read_text()
-        fm, _ = parse_front_matter(text)
+        fm, _ = read_file(f)
         record_type = fm.get("type", "task")
         print(f"  ✗ {f.name}: error: unknown type '{record_type}'; must be 'project' or 'task'")
         errors += 1

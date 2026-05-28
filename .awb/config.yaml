@@ -1,2 +1,2 @@
 project: agent-workbench
-api_url: http://localhost:8000
+api_url: https://awb-api.taylor.lan

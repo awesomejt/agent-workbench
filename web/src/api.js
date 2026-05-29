@@ -42,12 +42,30 @@ export function fetchEvents(projectId, { perPage = 20 } = {}) {
   ).then(d => d.items ?? [])
 }
 
+export function fetchSections(projectId) {
+  return apiFetch(`/api/projects/${projectId}/sections`).then(d => d.items ?? [])
+}
+
+export function createTask(projectId, data) {
+  return fetch(`/api/projects/${projectId}/tasks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).then(async r => {
+    if (!r.ok) {
+      const body = await r.json().catch(() => ({}))
+      throw new Error(body.error?.message ?? `HTTP ${r.status}`)
+    }
+    return r.json()
+  })
+}
+
 export function fetchAgents({ perPage = 100 } = {}) {
   return apiFetch(`/api/agents?per_page=${perPage}`).then(d => d.items ?? [])
 }
 
 // NOTE: no GET /api/runs list endpoint exists yet. fetchRuns is a stub.
 // See AWB task for adding GET /api/projects/:id/runs.
-export function fetchRuns(_projectId, _opts = {}) {
+export function fetchRuns() {
   return Promise.resolve([])
 }

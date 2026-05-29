@@ -2,6 +2,7 @@ import { Routes, Route, NavLink, Outlet } from 'react-router-dom'
 import ProjectList from './routes/ProjectList'
 import ProjectDetail from './routes/ProjectDetail'
 import TaskDetail from './routes/TaskDetail'
+import TaskNew from './routes/TaskNew'
 import styles from './App.module.css'
 
 function Layout() {
@@ -29,6 +30,7 @@ export default function App() {
       <Route element={<Layout />}>
         <Route index element={<ProjectList />} />
         <Route path="projects/:projectId" element={<ProjectDetail />} />
+        <Route path="projects/:projectId/tasks/new" element={<TaskNew />} />
         <Route path="projects/:projectId/tasks/:taskId" element={<TaskDetail />} />
         <Route path="*" element={<NotFound />} />
       </Route>

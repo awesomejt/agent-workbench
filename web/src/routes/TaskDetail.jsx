@@ -1,0 +1,195 @@
+import { useParams, Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import { fetchTask } from '../api'
+import PhaseBadge from '../components/PhaseBadge'
+import { TaskStatusBadge } from '../components/StatusBadge'
+
+const REL_LABELS = {
+  blocks: 'Blocks',
+  blocked_by: 'Blocked by',
+  subtask_of: 'Subtask of',
+  duplicates: 'Duplicates',
+}
+
+function Field({ label, value, mono }) {
+  if (value == null || value === '') return null
+  return (
+    <div className="flex gap-2 py-1.5 border-b border-slate-100 last:border-0 text-sm">
+      <span className="text-slate-500 w-40 shrink-0">{label}</span>
+      <span className={`text-slate-900 flex-1 ${mono ? 'font-mono text-xs break-all' : ''}`}>
+        {value}
+      </span>
+    </div>
+  )
+}
+
+
+function RelationshipsSection({ taskId }) {
+  const { data: rels, isLoading } = useQuery({
+    queryKey: ['task-relationships', taskId],
+    queryFn: () =>
+      fetch(`/api/tasks/${taskId}/relationships`)
+        .then(r => {
+          if (!r.ok) throw new Error(`HTTP ${r.status}`)
+          return r.json()
+        })
+        .then(d => (Array.isArray(d) ? d : (d.items ?? d))),
+  })
+
+  if (isLoading) return <p className="text-slate-400 text-xs">Loading…</p>
+  if (!rels || rels.length === 0)
+    return <p className="text-slate-400 text-sm">None.</p>
+
+  const grouped = rels.reduce((acc, r) => {
+    const type = r.relationship_type
+    if (!acc[type]) acc[type] = []
+    acc[type].push(r)
+    return acc
+  }, {})
+
+  return (
+    <div className="space-y-3">
+      {Object.entries(grouped).map(([type, items]) => (
+        <div key={type}>
+          <h4 className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+            {REL_LABELS[type] ?? type}
+          </h4>
+          <ul className="list-none p-0 m-0 space-y-1">
+            {items.map(rel => {
+              const otherId =
+                rel.from_task_id === taskId ? rel.to_task_id : rel.from_task_id
+              return (
+                <li key={rel.id} className="text-sm">
+                  <span className="font-mono text-xs text-slate-400">{otherId}</span>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+export default function TaskDetail() {
+  const { projectId, taskId } = useParams()
+
+  const { data: task, error, isLoading } = useQuery({
+    queryKey: ['task', taskId],
+    queryFn: () => fetchTask(taskId),
+  })
+
+  if (isLoading) {
+    return <p className="text-slate-500" aria-live="polite">Loading…</p>
+  }
+
+  if (error) {
+    return (
+      <p role="alert" className="text-red-700 bg-red-50 border border-red-200 rounded p-3 text-sm">
+        Could not load task: {error.message}
+      </p>
+    )
+  }
+
+  if (!task) return null
+
+  const claimedUntil = task.claimed_until
+
+  return (
+    <div className="space-y-6 max-w-4xl">
+      {/* Breadcrumb */}
+      <nav aria-label="Breadcrumb" className="text-sm text-slate-500">
+        <Link to="/" className="hover:text-indigo-700">Projects</Link>
+        <span className="mx-2">›</span>
+        <Link to={`/projects/${projectId}`} className="hover:text-indigo-700">
+          {projectId.slice(0, 8)}…
+        </Link>
+        <span className="mx-2">›</span>
+        <span className="text-slate-900 font-medium truncate">{task.title}</span>
+      </nav>
+
+      {/* Task header */}
+      <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <div className="flex items-start gap-4 mb-3">
+          <h2 className="text-xl font-semibold text-slate-900 flex-1 m-0">{task.title}</h2>
+          <div className="flex items-center gap-2 shrink-0">
+            <TaskStatusBadge status={task.status} />
+            <PhaseBadge phase={task.phase} />
+          </div>
+        </div>
+
+        {task.description && (
+          <p className="text-sm text-slate-700 mb-4 m-0 whitespace-pre-wrap">{task.description}</p>
+        )}
+
+        <div className="divide-y divide-slate-100">
+          <Field label="Priority" value={task.priority} />
+          <Field label="Role" value={task.role} mono />
+          <Field label="Model tier" value={task.model_tier} mono />
+          <Field label="Assignee type" value={task.assignee_type} />
+          <Field label="Assignee name" value={task.assignee_name} />
+        </div>
+      </div>
+
+      {/* Lease state */}
+      {(task.claimed_by || task.status === 'in_progress') && (
+        <div className="bg-white border border-slate-200 rounded-lg p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Lease</h3>
+          <div className="divide-y divide-slate-100">
+            <Field label="Claimed by" value={task.claimed_by} mono />
+            {claimedUntil && (
+              <Field label="Claimed until" value={claimedUntil} mono />
+            )}
+            <Field label="Lease version" value={task.lease_version} />
+          </div>
+        </div>
+      )}
+
+      {/* Validation & Evidence */}
+      {(task.validation_expectations || task.completion_evidence) && (
+        <div className="bg-white border border-slate-200 rounded-lg p-5">
+          <h3 className="text-sm font-semibold text-slate-900 mb-3">Validation</h3>
+          {task.validation_expectations && (
+            <div className="mb-3">
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide mb-1">
+                Expectations
+              </p>
+              <p className="text-sm text-slate-700 m-0 whitespace-pre-wrap">
+                {task.validation_expectations}
+              </p>
+            </div>
+          )}
+          {task.completion_evidence && (
+            <div>
+              <p className="text-xs text-slate-500 font-semibold uppercase tracking-wide mb-1">
+                Completion evidence
+              </p>
+              <p className="text-sm text-slate-700 m-0 whitespace-pre-wrap">
+                {task.completion_evidence}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Relationships */}
+      <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <h3 className="text-sm font-semibold text-slate-900 mb-3">Relationships</h3>
+        <RelationshipsSection taskId={taskId} />
+      </div>
+
+      {/* Timestamps */}
+      <div className="bg-white border border-slate-200 rounded-lg p-5">
+        <h3 className="text-sm font-semibold text-slate-900 mb-3">Metadata</h3>
+        <div className="divide-y divide-slate-100">
+          <Field label="Task ID" value={task.id} mono />
+          <Field label="Project ID" value={task.project_id} mono />
+          <Field label="Section ID" value={task.project_section_id} mono />
+          <Field label="Created" value={new Date(task.created_at).toLocaleString()} />
+          <Field label="Updated" value={new Date(task.updated_at).toLocaleString()} />
+          <Field label="Version" value={task.version} />
+        </div>
+      </div>
+    </div>
+  )
+}

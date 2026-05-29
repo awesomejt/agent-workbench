@@ -46,8 +46,8 @@ export function fetchAgents({ perPage = 100 } = {}) {
   return apiFetch(`/api/agents?per_page=${perPage}`).then(d => d.items ?? [])
 }
 
-export function fetchRuns(projectId, { perPage = 50 } = {}) {
-  return apiFetch(
-    `/api/projects/${projectId}/runs?per_page=${perPage}`,
-  ).then(d => d.items ?? [])
+// NOTE: no GET /api/runs list endpoint exists yet. fetchRuns is a stub.
+// See AWB task for adding GET /api/projects/:id/runs.
+export function fetchRuns(_projectId, _opts = {}) {
+  return Promise.resolve([])
 }

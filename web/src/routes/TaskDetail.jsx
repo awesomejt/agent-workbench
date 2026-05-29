@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { fetchTask } from '../api'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { fetchTask, updateTask, completeTask } from '../api'
 import PhaseBadge from '../components/PhaseBadge'
 import { TaskStatusBadge } from '../components/StatusBadge'
+
+const PHASES = ['discovery', 'design', 'implementation', 'testing', 'review']
 
 const REL_LABELS = {
   blocks: 'Blocks',
@@ -22,7 +25,6 @@ function Field({ label, value, mono }) {
     </div>
   )
 }
-
 
 function RelationshipsSection({ taskId }) {
   const { data: rels, isLoading } = useQuery({
@@ -71,8 +73,170 @@ function RelationshipsSection({ taskId }) {
   )
 }
 
+function EditForm({ task, onCancel, onSaved }) {
+  const queryClient = useQueryClient()
+  const [title, setTitle] = useState(task.title)
+  const [description, setDescription] = useState(task.description ?? '')
+  const [phase, setPhase] = useState(task.phase ?? '')
+  const [priority, setPriority] = useState(task.priority != null ? String(task.priority) : '')
+
+  const { mutate, isPending, error } = useMutation({
+    mutationFn: data => updateTask(task.id, data),
+    onSuccess: updated => {
+      queryClient.setQueryData(['task', task.id], updated)
+      queryClient.invalidateQueries({ queryKey: ['tasks', task.project_id] })
+      onSaved(updated)
+    },
+  })
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    const data = { title: title.trim(), version: task.version }
+    if (description.trim() !== (task.description ?? '')) data.description = description.trim()
+    if (phase !== (task.phase ?? '')) data.phase = phase || null
+    const p = priority !== '' ? parseInt(priority, 10) : null
+    if (p !== task.priority) data.priority = p
+    mutate(data)
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      {error && (
+        <p role="alert" className="text-red-700 bg-red-50 border border-red-200 rounded p-3 text-sm">
+          {error.message}
+        </p>
+      )}
+      <div>
+        <label htmlFor="edit-title" className="block text-sm font-medium text-slate-700 mb-1">
+          Title <span className="text-red-500">*</span>
+        </label>
+        <input
+          id="edit-title"
+          type="text"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          required
+          className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+      <div>
+        <label htmlFor="edit-description" className="block text-sm font-medium text-slate-700 mb-1">
+          Description
+        </label>
+        <textarea
+          id="edit-description"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          rows={4}
+          className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-y"
+        />
+      </div>
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="edit-phase" className="block text-sm font-medium text-slate-700 mb-1">Phase</label>
+          <select
+            id="edit-phase"
+            value={phase}
+            onChange={e => setPhase(e.target.value)}
+            className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="">None</option>
+            {PHASES.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="edit-priority" className="block text-sm font-medium text-slate-700 mb-1">Priority</label>
+          <input
+            id="edit-priority"
+            type="number"
+            value={priority}
+            onChange={e => setPriority(e.target.value)}
+            min={0}
+            max={999}
+            className="w-full border border-slate-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+      </div>
+      <div className="flex items-center justify-end gap-3 pt-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-sm text-slate-600 hover:text-slate-900 px-4 py-2 rounded border border-slate-300 hover:bg-slate-50"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          disabled={isPending || !title.trim()}
+          className="text-sm bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
+          {isPending ? 'Saving…' : 'Save changes'}
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function StatusTransitions({ task }) {
+  const queryClient = useQueryClient()
+
+  const unblockMutation = useMutation({
+    mutationFn: () => updateTask(task.id, { status: 'pending', version: task.version }),
+    onSuccess: updated => {
+      queryClient.setQueryData(['task', task.id], updated)
+      queryClient.invalidateQueries({ queryKey: ['tasks', task.project_id] })
+      queryClient.invalidateQueries({ queryKey: ['task-count', task.project_id] })
+    },
+  })
+
+  const completeMutation = useMutation({
+    mutationFn: () => completeTask(task.id),
+    onSuccess: updated => {
+      queryClient.setQueryData(['task', task.id], updated)
+      queryClient.invalidateQueries({ queryKey: ['tasks', task.project_id] })
+      queryClient.invalidateQueries({ queryKey: ['task-count', task.project_id] })
+    },
+  })
+
+  const err = unblockMutation.error ?? completeMutation.error
+
+  if (task.status !== 'blocked' && task.status !== 'in_progress') return null
+
+  return (
+    <div className="bg-white border border-slate-200 rounded-lg p-5">
+      <h3 className="text-sm font-semibold text-slate-900 mb-3">Status Actions</h3>
+      {err && (
+        <p role="alert" className="text-red-700 bg-red-50 border border-red-200 rounded p-2 text-xs mb-3">
+          {err.message}
+        </p>
+      )}
+      <div className="flex gap-3 flex-wrap">
+        {task.status === 'blocked' && (
+          <button
+            onClick={() => unblockMutation.mutate()}
+            disabled={unblockMutation.isPending}
+            className="text-sm bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded hover:bg-slate-50 hover:border-slate-400 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {unblockMutation.isPending ? 'Unblocking…' : 'Unblock → pending'}
+          </button>
+        )}
+        {task.status === 'in_progress' && (
+          <button
+            onClick={() => completeMutation.mutate()}
+            disabled={completeMutation.isPending}
+            className="text-sm bg-emerald-600 text-white px-4 py-2 rounded hover:bg-emerald-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+          >
+            {completeMutation.isPending ? 'Completing…' : 'Mark completed'}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function TaskDetail() {
   const { projectId, taskId } = useParams()
+  const [editing, setEditing] = useState(false)
 
   const { data: task, error, isLoading } = useQuery({
     queryKey: ['task', taskId],
@@ -93,8 +257,6 @@ export default function TaskDetail() {
 
   if (!task) return null
 
-  const claimedUntil = task.claimed_until
-
   return (
     <div className="space-y-6 max-w-4xl">
       {/* Breadcrumb */}
@@ -108,38 +270,55 @@ export default function TaskDetail() {
         <span className="text-slate-900 font-medium truncate">{task.title}</span>
       </nav>
 
-      {/* Task header */}
+      {/* Task header / edit form */}
       <div className="bg-white border border-slate-200 rounded-lg p-5">
-        <div className="flex items-start gap-4 mb-3">
-          <h2 className="text-xl font-semibold text-slate-900 flex-1 m-0">{task.title}</h2>
-          <div className="flex items-center gap-2 shrink-0">
-            <TaskStatusBadge status={task.status} />
-            <PhaseBadge phase={task.phase} />
-          </div>
-        </div>
+        {editing ? (
+          <EditForm
+            task={task}
+            onCancel={() => setEditing(false)}
+            onSaved={() => setEditing(false)}
+          />
+        ) : (
+          <>
+            <div className="flex items-start gap-4 mb-3">
+              <h2 className="text-xl font-semibold text-slate-900 flex-1 m-0">{task.title}</h2>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setEditing(true)}
+                  className="text-xs text-slate-500 hover:text-slate-900 border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  Edit
+                </button>
+                <TaskStatusBadge status={task.status} />
+                <PhaseBadge phase={task.phase} />
+              </div>
+            </div>
 
-        {task.description && (
-          <p className="text-sm text-slate-700 mb-4 m-0 whitespace-pre-wrap">{task.description}</p>
+            {task.description && (
+              <p className="text-sm text-slate-700 mb-4 m-0 whitespace-pre-wrap">{task.description}</p>
+            )}
+
+            <div className="divide-y divide-slate-100">
+              <Field label="Priority" value={task.priority} />
+              <Field label="Role" value={task.role} mono />
+              <Field label="Model tier" value={task.model_tier} mono />
+              <Field label="Assignee type" value={task.assignee_type} />
+              <Field label="Assignee name" value={task.assignee_name} />
+            </div>
+          </>
         )}
-
-        <div className="divide-y divide-slate-100">
-          <Field label="Priority" value={task.priority} />
-          <Field label="Role" value={task.role} mono />
-          <Field label="Model tier" value={task.model_tier} mono />
-          <Field label="Assignee type" value={task.assignee_type} />
-          <Field label="Assignee name" value={task.assignee_name} />
-        </div>
       </div>
 
+      {/* Status transitions */}
+      <StatusTransitions task={task} />
+
       {/* Lease state */}
-      {(task.claimed_by || task.status === 'in_progress') && (
+      {task.claimed_by && (
         <div className="bg-white border border-slate-200 rounded-lg p-5">
           <h3 className="text-sm font-semibold text-slate-900 mb-3">Lease</h3>
           <div className="divide-y divide-slate-100">
             <Field label="Claimed by" value={task.claimed_by} mono />
-            {claimedUntil && (
-              <Field label="Claimed until" value={claimedUntil} mono />
-            )}
+            <Field label="Claimed until" value={task.claimed_until} mono />
             <Field label="Lease version" value={task.lease_version} />
           </div>
         </div>
@@ -178,7 +357,7 @@ export default function TaskDetail() {
         <RelationshipsSection taskId={taskId} />
       </div>
 
-      {/* Timestamps */}
+      {/* Metadata */}
       <div className="bg-white border border-slate-200 rounded-lg p-5">
         <h3 className="text-sm font-semibold text-slate-900 mb-3">Metadata</h3>
         <div className="divide-y divide-slate-100">

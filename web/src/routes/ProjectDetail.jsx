@@ -156,6 +156,12 @@ export default function ProjectDetail() {
             <p className="text-sm font-mono text-slate-500 mt-1 m-0">{project.slug}</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to={`/projects/${projectId}/runs`}
+              className="text-xs text-slate-500 hover:text-indigo-700 border border-slate-200 px-3 py-1.5 rounded hover:bg-slate-50 no-underline"
+            >
+              Runs & Events
+            </Link>
             {latestStatus && <ProjectStatusBadge status={latestStatus.status} />}
             {latestStatus && <PhaseBadge phase={latestStatus.phase} />}
           </div>

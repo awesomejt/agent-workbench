@@ -1,5 +1,6 @@
 import { Routes, Route, NavLink, Outlet } from 'react-router-dom'
 import ProjectList from './routes/ProjectList'
+import ProjectDetail from './routes/ProjectDetail'
 import styles from './App.module.css'
 
 function Layout() {
@@ -26,6 +27,7 @@ export default function App() {
     <Routes>
       <Route element={<Layout />}>
         <Route index element={<ProjectList />} />
+        <Route path="projects/:projectId" element={<ProjectDetail />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

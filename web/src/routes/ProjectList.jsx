@@ -22,16 +22,20 @@ const COUNT_LABELS = {
   blocked: 'blocked',
 }
 
+const ROW_QUERY_OPTS = { staleTime: 5 * 60_000, refetchInterval: false }
+
 function ProjectRow({ project }) {
   const { data: latestStatus } = useQuery({
     queryKey: ['project-status', project.id],
     queryFn: () => fetchProjectStatus(project.id),
+    ...ROW_QUERY_OPTS,
   })
 
   const countResults = useQueries({
     queries: STATUS_COUNTS.map(s => ({
       queryKey: ['task-count', project.id, s],
       queryFn: () => fetchTaskCount(project.id, s),
+      ...ROW_QUERY_OPTS,
     })),
   })
 

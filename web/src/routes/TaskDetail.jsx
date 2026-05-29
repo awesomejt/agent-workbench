@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { fetchTask, updateTask, completeTask } from '../api'
+import { fetchTask, updateTask, completeTask, fetchRelationships } from '../api'
 import PhaseBadge from '../components/PhaseBadge'
 import { TaskStatusBadge } from '../components/StatusBadge'
 
@@ -29,13 +29,7 @@ function Field({ label, value, mono }) {
 function RelationshipsSection({ taskId }) {
   const { data: rels, isLoading } = useQuery({
     queryKey: ['task-relationships', taskId],
-    queryFn: () =>
-      fetch(`/api/tasks/${taskId}/relationships`)
-        .then(r => {
-          if (!r.ok) throw new Error(`HTTP ${r.status}`)
-          return r.json()
-        })
-        .then(d => (Array.isArray(d) ? d : (d.items ?? d))),
+    queryFn: () => fetchRelationships(taskId),
   })
 
   if (isLoading) return <p className="text-slate-400 text-xs">Loading…</p>
@@ -180,22 +174,26 @@ function EditForm({ task, onCancel, onSaved }) {
 function StatusTransitions({ task }) {
   const queryClient = useQueryClient()
 
+  const invalidateAfterTransition = updated => {
+    queryClient.setQueryData(['task', task.id], updated)
+    queryClient.invalidateQueries({ queryKey: ['tasks', task.project_id] })
+    queryClient.invalidateQueries({ queryKey: ['task-count', task.project_id] })
+    queryClient.invalidateQueries({ queryKey: ['events', task.project_id] })
+  }
+
+  const refetchTask = () =>
+    queryClient.invalidateQueries({ queryKey: ['task', task.id] })
+
   const unblockMutation = useMutation({
     mutationFn: () => updateTask(task.id, { status: 'pending', version: task.version }),
-    onSuccess: updated => {
-      queryClient.setQueryData(['task', task.id], updated)
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.project_id] })
-      queryClient.invalidateQueries({ queryKey: ['task-count', task.project_id] })
-    },
+    onSuccess: invalidateAfterTransition,
+    onError: refetchTask,
   })
 
   const completeMutation = useMutation({
-    mutationFn: () => completeTask(task.id),
-    onSuccess: updated => {
-      queryClient.setQueryData(['task', task.id], updated)
-      queryClient.invalidateQueries({ queryKey: ['tasks', task.project_id] })
-      queryClient.invalidateQueries({ queryKey: ['task-count', task.project_id] })
-    },
+    mutationFn: () => completeTask(task.id, { agentName: task.claimed_by }),
+    onSuccess: invalidateAfterTransition,
+    onError: refetchTask,
   })
 
   const err = unblockMutation.error ?? completeMutation.error

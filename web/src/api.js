@@ -56,11 +56,11 @@ export function updateTask(taskId, data) {
   })
 }
 
-export function completeTask(taskId, { evidence = '' } = {}) {
+export function completeTask(taskId, { agentName, evidence = '' } = {}) {
   return fetch(`/api/tasks/${taskId}/complete`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ evidence }),
+    body: JSON.stringify({ agent_name: agentName, evidence }),
   }).then(async r => {
     if (!r.ok) {
       const body = await r.json().catch(() => ({}))
@@ -88,6 +88,10 @@ export function createTask(projectId, data) {
   })
 }
 
+export function fetchRelationships(taskId) {
+  return apiFetch(`/api/tasks/${taskId}/relationships`).then(d => d.items ?? [])
+}
+
 export function fetchAgents({ perPage = 100 } = {}) {
   return apiFetch(`/api/agents?per_page=${perPage}`).then(d => d.items ?? [])
 }
@@ -95,7 +99,5 @@ export function fetchAgents({ perPage = 100 } = {}) {
 export function fetchRuns(projectId, { taskId, perPage = 50 } = {}) {
   const params = new URLSearchParams({ per_page: perPage })
   if (taskId) params.set('task_id', taskId)
-  return apiFetch(
-    `/api/projects/${projectId}/runs?${params}`,
-  ).then(d => d.items ?? [])
+  return apiFetch(`/api/projects/${projectId}/runs?${params}`)
 }

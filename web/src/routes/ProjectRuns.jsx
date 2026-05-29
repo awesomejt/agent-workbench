@@ -91,10 +91,12 @@ export default function ProjectRuns() {
     queryFn: () => fetchProject(projectId),
   })
 
-  const { data: runs, isLoading: runsLoading } = useQuery({
+  const { data: runsData, isLoading: runsLoading } = useQuery({
     queryKey: ['runs', projectId],
     queryFn: () => fetchRuns(projectId, { perPage: 50 }),
   })
+  const runs = runsData?.items ?? []
+  const runsTotal = runsData?.total ?? null
 
   const { data: events, isLoading: eventsLoading } = useQuery({
     queryKey: ['events', projectId, 'all'],
@@ -120,18 +122,22 @@ export default function ProjectRuns() {
           <div className="px-4 py-3 border-b border-slate-200">
             <h2 id="runs-heading" className="font-semibold text-slate-900 m-0">
               Agent Runs
-              {runs && (
-                <span className="ml-2 text-sm font-normal text-slate-500">({runs.length})</span>
+              {runsTotal != null && (
+                <span className="ml-2 text-sm font-normal text-slate-500">
+                  {runs.length < runsTotal
+                    ? `${runs.length} of ${runsTotal}`
+                    : runsTotal}
+                </span>
               )}
             </h2>
           </div>
           {runsLoading && (
             <p className="text-slate-500 text-sm px-4 py-3">Loading…</p>
           )}
-          {!runsLoading && (!runs || runs.length === 0) && (
+          {!runsLoading && runs.length === 0 && (
             <p className="text-slate-500 text-sm px-4 py-3">No runs yet.</p>
           )}
-          {runs && runs.length > 0 && (
+          {runs.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full text-sm" aria-label="Agent runs">
                 <thead>

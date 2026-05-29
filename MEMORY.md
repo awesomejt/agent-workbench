@@ -9,7 +9,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Current Status
 
 - Current phase: production — API live at `https://awb-api.taylor.lan`, all projects registered, status.yaml retired.
-- Latest session (2026-05-28): Migrated all repos from `http://localhost:8000` to `https://awb-api.taylor.lan`. Registered agent-workbench and opencode-setup on prod AWB (maven-starter was already registered). Migrated opencode-setup TODO items (9 tasks created). Updated AWB task management docs across all three repos. Deprecated `status.yaml` in all repos in favour of `awb status`. Current AWB status: `active / review`.
+- Latest session (2026-05-29): Implemented all 8 Web-UI-Scope views (React Router + TanStack Query + Tailwind v4 + shadcn/ui base; project list with task counts + phase badges; project detail; task detail with inline edit and status transitions; add-task form; run list + event log; agent registry). Added GET /api/projects/:id/runs list endpoint to API (234 tests passing). Updated fetchRuns in web/src/api.js. Current AWB status: `active / review`.
+- Validation snapshot (2026-05-29): `make validate` clean (ruff + mypy), `make test` 234/234 passed, web `npm run build` clean (317KB JS, 18KB CSS), web `npm run lint` clean.
 - Validation snapshot (2026-05-27): `make validate` passed, `make test` (231 passed), `make smoke` (6/6), `make cli-vet`, `make build-cli`, `make cli-test` all passed.
 - Dogfood transition complete: `awb` is the primary task and status source; `TODO.md` and `status.yaml` are read-only/fallback references.
 - Current blocker: non-local database credential/user details still require human confirmation before dev/stage/prod migration/deployment.
@@ -117,6 +118,14 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-29 - claude-sonnet-4-6
+
+- Task: Implement all 8 Web-UI-Scope views and add GET /api/projects/:id/runs endpoint.
+- Files changed: `web/package.json` (react-router-dom v7, @tanstack/react-query v5, tailwindcss v4, @tailwindcss/vite, shadcn/ui base deps); `web/vite.config.js` (tailwindcss plugin, @/ alias); `web/src/index.css` (@import tailwindcss, @theme vars); `web/src/main.jsx` (BrowserRouter + QueryClientProvider with 30s refetch); `web/src/App.jsx` (Routes/Route/Outlet layout, Agents nav link, all 8 routes); `web/components.json` (shadcn config); `web/src/lib/utils.js` (cn helper); `web/eslint.config.js` (ESLint v9 flat config); `web/src/api.js` (all API helpers incl. createTask, updateTask, completeTask, fetchSections, fetchRuns); `web/src/components/PhaseBadge.jsx`, `StatusBadge.jsx`; `web/src/routes/ProjectList.jsx`, `ProjectDetail.jsx`, `TaskDetail.jsx`, `TaskNew.jsx`, `ProjectRuns.jsx`, `AgentRegistry.jsx`; `api/src/agent_workbench/runs/routes.py` (bp_projects + list_runs_for_project); `api/src/agent_workbench/runs/service.py` (list_runs); `api/src/agent_workbench/app.py` (register runs_project_bp); `api/tests/test_runs.py` (+3 tests); `MEMORY.md` (this update).
+- Validation: `make validate` clean, `make test` 234/234 passed, `npm run build` + `npm run lint` clean.
+- Result: Web UI MVP complete. All views in docs/Web-UI-Scope.md are implemented. API has runs list endpoint. AWB task queue cleared.
+- Blockers or follow-up: Cloud review gate recommended before broader use; non-local DB credential confirmation still outstanding.
 
 ### 2026-05-28 - claude-sonnet-4-6
 

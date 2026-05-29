@@ -51,6 +51,7 @@ def _register_blueprints(app: Flask) -> None:
     from .projects.routes import bp as projects_bp
     from .reviews.routes import bp as reviews_bp
     from .runs.routes import bp as runs_bp
+    from .runs.routes import bp_projects as runs_project_bp
     from .tasks.routes import bp as tasks_bp
 
     app.register_blueprint(projects_bp)
@@ -59,6 +60,7 @@ def _register_blueprints(app: Flask) -> None:
     app.register_blueprint(tasks_bp)
     app.register_blueprint(agents_bp)
     app.register_blueprint(runs_bp)
+    app.register_blueprint(runs_project_bp)
     app.register_blueprint(events_bp)
     app.register_blueprint(reviews_bp)
     app.register_blueprint(ai_servers_bp)

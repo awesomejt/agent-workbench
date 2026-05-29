@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import uuid
 
 from flask import Blueprint, abort, jsonify, request
@@ -12,6 +13,43 @@ from .models import Run
 from .service import RunStateError
 
 bp = Blueprint("runs", __name__, url_prefix="/api/runs")
+bp_projects = Blueprint("runs_by_project", __name__, url_prefix="/api/projects")
+
+
+@bp_projects.get("/<project_id>/runs")
+def list_runs_for_project(project_id: str):
+    try:
+        pid = uuid.UUID(project_id)
+    except ValueError:
+        abort(400, "project_id must be a valid UUID")
+    if projects_service.get_project(pid) is None:
+        abort(404, f"Project {project_id} not found")
+
+    task_id_raw = request.args.get("task_id")
+    task_uuid: uuid.UUID | None = None
+    if task_id_raw:
+        try:
+            task_uuid = uuid.UUID(task_id_raw)
+        except ValueError:
+            abort(400, "task_id must be a valid UUID")
+
+    try:
+        page = max(1, int(request.args.get("page", 1)))
+        per_page = min(100, max(1, int(request.args.get("per_page", 20))))
+    except ValueError, TypeError:
+        abort(400, "page and per_page must be integers")
+
+    items, total = service.list_runs(pid, task_id=task_uuid, page=page, per_page=per_page)
+    pages = math.ceil(total / per_page) if total > 0 else 1
+    return jsonify(
+        {
+            "items": [_serialize(r) for r in items],
+            "page": page,
+            "per_page": per_page,
+            "total": total,
+            "pages": pages,
+        }
+    )
 
 
 def _serialize(r: Run) -> dict:

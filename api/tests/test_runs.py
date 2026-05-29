@@ -226,3 +226,33 @@ class TestRuntimeMetrics:
         data = resp.get_json()
         assert data["model_id"] == "claude-sonnet-4-6"
         assert data["prompt_tokens"] == 900
+
+
+class TestListRunsForProject:
+    def test_lists_runs(self, client):
+        p = _make_project(client, slug="list-proj")
+        _make_run(client, p["id"])
+        _make_run(client, p["id"])
+        resp = client.get(f"/api/projects/{p['id']}/runs")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["total"] == 2
+        assert len(data["items"]) == 2
+
+    def test_filters_by_task_id(self, client):
+        p = _make_project(client, slug="filter-proj")
+        task = client.post(
+            f"/api/projects/{p['id']}/tasks",
+            json={"title": "t1"},
+        ).get_json()
+        _make_run(client, p["id"], task_id=task["id"])
+        _make_run(client, p["id"])
+        resp = client.get(f"/api/projects/{p['id']}/runs?task_id={task['id']}")
+        assert resp.status_code == 200
+        data = resp.get_json()
+        assert data["total"] == 1
+        assert data["items"][0]["task_id"] == task["id"]
+
+    def test_returns_404_for_unknown_project(self, client):
+        resp = client.get("/api/projects/00000000-0000-0000-0000-000000000000/runs")
+        assert resp.status_code == 404

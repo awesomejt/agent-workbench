@@ -27,6 +27,26 @@ def get_run(run_id: uuid.UUID) -> Run | None:
     return db.session.get(Run, run_id)
 
 
+def list_runs(
+    project_id: uuid.UUID,
+    task_id: uuid.UUID | None = None,
+    page: int = 1,
+    per_page: int = 20,
+) -> tuple[list[Run], int]:
+    from sqlalchemy import func, select
+
+    per_page = min(per_page, 100)
+    offset = (page - 1) * per_page
+    base = select(Run).where(Run.project_id == project_id)
+    if task_id is not None:
+        base = base.where(Run.task_id == task_id)
+    total = db.session.scalar(select(func.count()).select_from(base.subquery())) or 0
+    items = db.session.scalars(
+        base.order_by(Run.started_at.desc()).offset(offset).limit(per_page)
+    ).all()
+    return list(items), total
+
+
 def create_run(data: dict) -> Run:
     task_id = data.get("task_id")
     run = Run(

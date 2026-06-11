@@ -3,22 +3,30 @@
 Describes how OpenCode scheduled runs integrate with the Agent Workbench for
 unattended, task-driven development sessions.
 
+See `docs/Agent-Delegation.md` for the workflow-manager-neutral contract
+between AWB task leases and delegated agent work.
+
 ## Overview
 
 `scripts/opencode-run.sh` is the workbench-native wrapper for unattended
-OpenCode runs. It:
+OpenCode runs against this repository. The reusable runner for all projects
+lives in `opencode-setup` as `afk-run` / `opencode-orchestrator`.
+
+The wrapper:
 
 1. Calls `awb task next` to claim the highest-priority pending task.
 2. Builds a focused, task-specific prompt that includes the task ID, title,
    phase, and exact `awb` lifecycle commands.
-3. Invokes `opencode run --dir <repo>` with that prompt.
-4. The OpenCode agent reads the prompt, does the work, and calls
+3. Invokes `opencode run --agent awb-orchestrator --dir <repo>` with that
+   prompt unless another primary agent is explicitly selected.
+4. The primary OpenCode agent delegates to subagents when useful, does the
+   work, and calls
    `awb task complete` or `awb task block` before exiting.
 
-This is different from the general `afk-run.sh` approach (see
-[opencode-setup](file:///shared/projects/ai/opencode-setup)) which sends a
-discovery prompt and lets the agent choose its own task. `opencode-run.sh`
-pre-selects one task so the agent stays focused.
+This is the older repo-local runner. Prefer the general `afk-run.sh` /
+`opencode-orchestrator` approach in
+[opencode-setup](file:///shared/projects/ai/opencode-setup) for reusable
+scheduled runs across projects.
 
 ## Quick Start
 
@@ -31,13 +39,14 @@ make build-cli
 # Dry-run: see which task would be claimed and the full prompt
 AWB_API_URL=http://localhost:8000 \
 AWB_PROJECT=agent-workbench \
-AWB_AGENT=opencode \
+AWB_AGENT=awb-orchestrator \
 make opencode-run -- --dry-run
 
 # Live run
 AWB_API_URL=http://localhost:8000 \
 AWB_PROJECT=agent-workbench \
-AWB_AGENT=opencode \
+AWB_AGENT=awb-orchestrator \
+OPENCODE_AGENT=awb-orchestrator \
 OPENCODE_MODEL=omlx1/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-6bit \
 make opencode-run
 ```
@@ -48,9 +57,9 @@ make opencode-run
 |---|---|---|
 | `AWB_API_URL` | `http://localhost:8000` | Agent Workbench API base URL |
 | `AWB_PROJECT` | `agent-workbench` | Project slug |
-| `AWB_AGENT` | `opencode` | Agent name reported to the workbench |
+| `AWB_AGENT` | `awb-orchestrator` | Primary OpenCode agent name reported to the workbench |
 | `OPENCODE_MODEL` | *(opencode default)* | Model ID passed to `opencode run` |
-| `OPENCODE_AGENT` | `yolo` | OpenCode agent profile |
+| `OPENCODE_AGENT` | `awb-orchestrator` | Primary OpenCode agent profile |
 | `OPENCODE_DRY_RUN` | `0` | Set to `1` to print prompt without running |
 | `OPENCODE_LOG_FILE` | *(stderr only)* | Path to append log output |
 
@@ -64,18 +73,20 @@ export AWB_API_URL=... AWB_PROJECT=... AWB_AGENT=...
 AWB=/path/to/cli/builds/awb
 
 # Renew lease every few minutes
-$AWB task heartbeat <task-id> --agent opencode
+$AWB task heartbeat <task-id> --agent "$AWB_AGENT"
 
 # On success
-$AWB task complete <task-id> --agent opencode --evidence "<summary>"
+$AWB task complete <task-id> --agent "$AWB_AGENT" --evidence "<summary>"
 
 # If blocked
-$AWB task block <task-id> --agent opencode --reason "<reason>"
+$AWB task block <task-id> --agent "$AWB_AGENT" --reason "<reason>"
 ```
 
-The agent is responsible for calling one of those before it exits. If the
-agent crashes without completing, the lease expires naturally (default: 30
-minutes) and the task becomes available again for the next run.
+The primary agent is responsible for calling one of those before it exits.
+Subagents must not complete or block under their own names; the AWB lease owner
+stays the selected primary agent for the whole run. If the agent crashes
+without completing, the lease expires naturally (default: 30 minutes) and the
+task becomes available again for the next run.
 
 ## Lock File
 
@@ -101,7 +112,8 @@ Type=oneshot
 WorkingDirectory=/shared/projects/dev/agent-workbench
 Environment=AWB_API_URL=http://localhost:8000
 Environment=AWB_PROJECT=agent-workbench
-Environment=AWB_AGENT=opencode
+Environment=AWB_AGENT=awb-orchestrator
+Environment=OPENCODE_AGENT=awb-orchestrator
 Environment=OPENCODE_MODEL=omlx1/Qwen3.5-27B-Claude-4.6-Opus-Distilled-MLX-6bit
 Environment=OPENCODE_LOG_FILE=%h/.local/share/agent-workbench/opencode-run.log
 ExecStart=/shared/projects/dev/agent-workbench/scripts/opencode-run.sh
@@ -131,7 +143,7 @@ systemctl --user enable --now opencode-run.timer
 ### cron
 
 ```cron
-*/5 * * * * AWB_API_URL=http://localhost:8000 AWB_PROJECT=agent-workbench AWB_AGENT=opencode \
+*/5 * * * * AWB_API_URL=http://localhost:8000 AWB_PROJECT=agent-workbench AWB_AGENT=awb-orchestrator OPENCODE_AGENT=awb-orchestrator \
   OPENCODE_MODEL=... OPENCODE_LOG_FILE=~/.local/share/agent-workbench/opencode-run.log \
   /shared/projects/dev/agent-workbench/scripts/opencode-run.sh
 ```
@@ -139,9 +151,10 @@ systemctl --user enable --now opencode-run.timer
 ## Relationship to opencode-setup
 
 `opencode-setup` (`/shared/projects/ai/opencode-setup`) provides the general
-`afk-run.sh` runner, which can target any repository and sends a discovery
-prompt. It now detects the `awb` CLI and the bootstrap scripts when they are
-present.
+`afk-run.sh` runner, which can target any repository and sends a focused AWB
+task prompt. It also owns the OpenCode Markdown agents:
+`awb-orchestrator`, `task-manager`, `implementor`, `tester`, `reviewer`, and
+`documentor`.
 
 `opencode-run.sh` (this repo) is the workbench-specific wrapper that pre-selects
 one task and builds a focused prompt. Use it when running against

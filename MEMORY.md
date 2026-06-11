@@ -9,7 +9,8 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Current Status
 
 - Current phase: production — API live at `https://awb-api.taylor.lan`, all projects registered, status.yaml retired.
-- Latest session (2026-05-29): Implemented all 8 Web-UI-Scope views (React Router + TanStack Query + Tailwind v4 + shadcn/ui base; project list with task counts + phase badges; project detail; task detail with inline edit and status transitions; add-task form; run list + event log; agent registry). Added GET /api/projects/:id/runs list endpoint to API (234 tests passing). Updated fetchRuns in web/src/api.js. Current AWB status: `active / review`.
+- Latest session (2026-05-29): Generalized the delegated-agent workflow so Hermes, OpenCode, n8n, and other managers share the same AWB lease-owner contract. Replaced the OpenCode-specific AWB contract with `docs/Agent-Delegation.md`, updated `AGENT_WORKFLOW.md`, and kept OpenCode-specific primary/subagent details in `opencode-setup`.
+- Prior session (2026-05-29): Implemented all 8 Web-UI-Scope views (React Router + TanStack Query + Tailwind v4 + shadcn/ui base; project list with task counts + phase badges; project detail; task detail with inline edit and status transitions; add-task form; run list + event log; agent registry). Added GET /api/projects/:id/runs list endpoint to API (234 tests passing). Updated fetchRuns in web/src/api.js. Current AWB status: `active / review`.
 - Validation snapshot (2026-05-29): `make validate` clean (ruff + mypy), `make test` 234/234 passed, web `npm run build` clean (317KB JS, 18KB CSS), web `npm run lint` clean.
 - Validation snapshot (2026-05-27): `make validate` passed, `make test` (231 passed), `make smoke` (6/6), `make cli-vet`, `make build-cli`, `make cli-test` all passed.
 - Dogfood transition complete: `awb` is the primary task and status source; `TODO.md` and `status.yaml` are read-only/fallback references.
@@ -18,6 +19,7 @@ Keep this file concise and durable. Do not paste full chat transcripts here; sto
 ## Key Decisions
 
 - `status.yaml` is deprecated. Project status is now tracked exclusively via `awb status show/create/update` against `https://awb-api.taylor.lan`. The file is kept only as a last-resort fallback when the API is unreachable. Do not edit it in normal operation.
+- Delegated agent runs use a single AWB lease owner per run. Hermes, OpenCode, n8n, OpenClaw, or other workflow managers may delegate internally, but lifecycle commands (`heartbeat`, `complete`, `block`) stay under the primary `AWB_AGENT` identity.
 - `awb export todo` generates a `TODO.md` grouped by phase (with checkboxes) from live task data. `awb export yaml` generates a structured YAML snapshot of the project and all tasks. Both accept `--output -` to print to stdout and page through all tasks automatically. AWB remains the source of truth; exports are for offline/public use only.
 - Onboarding script (`scripts/onboard.py`) accepts three file formats: `*.md` (YAML front matter + body), `*.yaml`, and `*.yml` (pure YAML, no body). Projects are always processed before tasks in the same batch. Template files (`*.template.md`, `*.template.yaml`) are always ignored.
 - The `make smoke` target now propagates non-zero exits from `smoke-curl.sh`; smoke failures are no longer masked. `smoke-curl.sh` uses `project_type: code` (matching the API's default) rather than the previously incorrect `generic`.
@@ -118,6 +120,22 @@ Record findings from real systems, live services, browser/device testing, deploy
 ## Agent Run Log
 
 Newest entries first.
+
+### 2026-05-29 - Codex - Hermes-Compatible Delegation Contract
+
+- Task: `31d32ff8-c392-4719-8ef0-78f3fbec258f` — generalize agent delegation workflow for Hermes-compatible runners.
+- Files changed: `docs/Agent-Delegation.md`, `AGENT_WORKFLOW.md`, `docs/OpenCode-Workflow.md`, `scripts/opencode-run.sh`, `MEMORY.md`.
+- Related changes in `opencode-setup`: OpenCode-specific references now point at the generic AWB delegation contract while keeping implementation details in the OpenCode setup repo.
+- Validation: `bash -n scripts/opencode-run.sh`, `git diff --check` in this repo; `git diff --check` in `opencode-setup`.
+- Result: AWB now documents a workflow-manager-neutral delegation contract. OpenCode remains one implementation; Hermes can use the same lease-owner rule without a bridge repo.
+
+### 2026-05-29 - Codex - OpenCode Subagent Workflow
+
+- Task: User-requested cross-repo alignment for OpenCode subagent orchestration with Agent Workbench.
+- Files changed in this repo: `docs/Agent-Delegation.md` (initially added as `docs/OpenCode-Subagents.md`, then generalized), `docs/OpenCode-Workflow.md`, `scripts/opencode-run.sh`, `MEMORY.md`.
+- Related changes in `opencode-setup`: added `awb-orchestrator`, `task-manager`, `implementor`, `tester`, `reviewer`, and `documentor` OpenCode agent profiles; updated orchestrator fallback default/docs/tests/prompts.
+- Validation: `bash -n scripts/opencode-run.sh`, `git diff --check` in this repo; in `opencode-setup`, `python -m unittest discover -s tests`, shell syntax checks, and `git diff --check` passed.
+- Result: AWB now documents the single-lease-owner contract; OpenCode setup implements the primary/subagent workflow entrypoint.
 
 ### 2026-05-29 - claude-sonnet-4-6
 

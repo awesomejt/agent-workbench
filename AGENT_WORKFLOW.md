@@ -34,8 +34,11 @@ Run this quick check before implementation tasks.
 
 The workbench API is live at `https://awb-api.taylor.lan`. Use the `awb` CLI for all task and status coordination — `status.yaml` is deprecated and `TODO.md` is a read-only historical reference.
 
-For unattended scheduled runs use `scripts/opencode-run.sh` (see
-`docs/OpenCode-Workflow.md`). For manual or CI-driven runs follow this loop:
+For unattended scheduled runs, use a configured workflow manager such as Hermes,
+OpenCode, n8n, or OpenClaw. The shared lease/delegation rules live in
+`docs/Agent-Delegation.md`; OpenCode-specific runner details live in
+`docs/OpenCode-Workflow.md` and, for reusable automation, the `opencode-setup`
+repo. For manual or CI-driven runs follow this loop:
 
 1. Pull the latest changes.
 2. Read `AGENTS.md`, `PROJECT_BRIEF.md`, `MEMORY.md`, and any docs relevant

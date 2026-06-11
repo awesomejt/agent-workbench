@@ -10,9 +10,9 @@
 # Environment:
 #   AWB_API_URL   Agent Workbench API base URL (default: http://localhost:8000)
 #   AWB_PROJECT   Project slug (default: agent-workbench)
-#   AWB_AGENT     Agent name reported to the workbench (default: opencode)
+#   AWB_AGENT     Agent name reported to the workbench (default: awb-orchestrator)
 #   OPENCODE_MODEL  Model passed to opencode run
-#   OPENCODE_AGENT  OpenCode agent profile (default: yolo)
+#   OPENCODE_AGENT  OpenCode primary agent profile (default: AWB_AGENT)
 #   OPENCODE_DRY_RUN  Set to 1 to print intended actions without invoking opencode
 #   OPENCODE_LOG_FILE Optional path to append log output
 set -euo pipefail
@@ -22,10 +22,10 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 AWB="${AWB_CLI:-${REPO_ROOT}/cli/builds/awb}"
 AWB_API_URL="${AWB_API_URL:-http://localhost:8000}"
 AWB_PROJECT="${AWB_PROJECT:-agent-workbench}"
-AWB_AGENT="${AWB_AGENT:-opencode}"
+AWB_AGENT="${AWB_AGENT:-awb-orchestrator}"
 
 MODEL="${OPENCODE_MODEL:-}"
-OC_AGENT="${OPENCODE_AGENT:-yolo}"
+OC_AGENT="${OPENCODE_AGENT:-$AWB_AGENT}"
 DRY_RUN="${OPENCODE_DRY_RUN:-0}"
 VERBOSE=0
 
@@ -51,7 +51,7 @@ Options:
   --dry-run         Print the resolved task and prompt without invoking opencode.
   --verbose         Log resolved parameters before running.
   --model <model>   Override OPENCODE_MODEL.
-  --agent <agent>   Override OPENCODE_AGENT (OpenCode agent profile).
+  --agent <agent>   Override OPENCODE_AGENT (OpenCode primary agent profile).
   -h, --help        Show this help.
 USAGE
 }
@@ -162,6 +162,9 @@ Use these commands to manage the task lifecycle. Set the env vars or pass as fla
 - Validate the change. Record any validation gaps or blockers.
 - Commit completed work when validation passes.
 - Mark the task complete or blocked before exiting.
+- If running with a delegated-agent workflow, keep AWB lifecycle commands under
+  the primary AWB_AGENT identity. Delegated workers must not claim, complete, or
+  block the task under their own names.
 PROMPT
 )"
 
